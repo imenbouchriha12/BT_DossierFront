@@ -1,0 +1,249 @@
+<div class="min-h-screen bg-surface/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Historique des modifications</h1>
+        <p class="text-body-md text-on-surface-variant mt-1">Journal d'audit complet du système</p>
+      </div>
+      <button (click)="resetFilters()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all text-label-sm font-medium">
+        <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+        Réinitialiser les filtres
+      </button>
+    </div>
+
+    <!-- Stats bar -->
+    <div *ngIf="!loading && items.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-outline-variant/30 p-4 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-[22px]">history</span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-on-surface">{{ total }}</p>
+            <p class="text-label-sm text-on-surface-variant">Total entrées</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 p-4 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-blue-600 text-[22px]">edit_note</span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-on-surface">{{ getActionCount('Modification') }}</p>
+            <p class="text-label-sm text-on-surface-variant">Modifications</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 p-4 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-600 text-[22px]">add_circle</span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-on-surface">{{ getActionCount('Création') }}</p>
+            <p class="text-label-sm text-on-surface-variant">Créations</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 p-4 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-amber-600 text-[22px]">archive</span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-on-surface">{{ getActionCount('Archivage') + getActionCount('Suppression') }}</p>
+            <p class="text-label-sm text-on-surface-variant">Archives / Suppr.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm mb-6 overflow-hidden">
+      <div class="px-5 py-3 bg-surface-container-low border-b border-outline-variant/20 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-primary">filter_list</span>
+        <span class="text-label-sm font-semibold text-on-surface uppercase tracking-wider">Filtres</span>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Table</label>
+            <div class="relative">
+              <select [(ngModel)]="filterTable" (change)="search()" class="w-full h-10 pl-3 pr-10 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all">
+                <option value="">Toutes les tables</option>
+                <option *ngFor="let t of tables" [value]="t">{{ t }}</option>
+              </select>
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Action</label>
+            <div class="relative">
+              <select [(ngModel)]="filterAction" (change)="search()" class="w-full h-10 pl-3 pr-10 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all">
+                <option value="">Toutes les actions</option>
+                <option *ngFor="let a of actions" [value]="a">{{ a }}</option>
+              </select>
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Utilisateur</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 material-symbols-outlined text-[18px]">search</span>
+              <input [(ngModel)]="filterUser" (keyup.enter)="search()" placeholder="Rechercher..." class="w-full h-10 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/50">
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Date début</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 material-symbols-outlined text-[18px]">calendar_today</span>
+              <input [(ngModel)]="filterDateDebut" (change)="search()" type="date" class="w-full h-10 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all">
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Date fin</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 material-symbols-outlined text-[18px]">calendar_today</span>
+              <input [(ngModel)]="filterDateFin" (change)="search()" type="date" class="w-full h-10 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-24">
+      <div class="relative w-16 h-16">
+        <div class="absolute inset-0 rounded-full border-4 border-primary/10"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"></div>
+      </div>
+      <p class="mt-4 text-body-md text-on-surface-variant">Chargement de l'historique...</p>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading && items.length === 0" class="bg-white rounded-2xl border border-outline-variant/30 shadow-sm p-16 text-center">
+      <div class="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-5">
+        <span class="material-symbols-outlined text-[40px] text-on-surface-variant">history_toggle_off</span>
+      </div>
+      <h3 class="text-xl font-bold text-on-surface mb-2">Aucune modification trouvée</h3>
+      <p class="text-body-md text-on-surface-variant max-w-md mx-auto">Essayez d'ajuster vos filtres ou de modifier la période de recherche.</p>
+      <button *ngIf="hasActiveFilters" (click)="resetFilters()" class="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm">
+        <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+        Effacer les filtres
+      </button>
+    </div>
+
+    <!-- Timeline / Cards -->
+    <div *ngIf="!loading && items.length > 0" class="space-y-3">
+      <div *ngFor="let item of items; let i = index" class="group">
+        <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary/20 overflow-hidden">
+          <div class="flex items-stretch">
+            <!-- Timeline accent bar -->
+            <div class="w-1 flex-shrink-0 rounded-l-xl" [ngClass]="getActionBarColor(item.action)"></div>
+
+            <!-- Main content -->
+            <div class="flex-1 px-5 py-4">
+              <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <!-- Left: Icon + Action -->
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="getActionBgColor(item.action)">
+                    <span class="material-symbols-outlined text-[20px]" [ngClass]="getActionTextColor(item.action)">{{ getActionIcon(item.action) }}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-body-md font-semibold text-on-surface">{{ item.action }}</span>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-container-low text-label-sm text-on-surface-variant border border-outline-variant/20">
+                        <span class="material-symbols-outlined text-[14px]" [ngClass]="getTableIconColor(item.tableModifiee)">{{ getIcon(item.tableModifiee) }}</span>
+                        {{ item.tableModifiee }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      <div class="flex items-center gap-1.5">
+                        <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary flex-shrink-0">
+                          {{ getInitials(item.utilisateurNom) }}
+                        </div>
+                        <span class="text-label-sm text-on-surface-variant font-medium">{{ item.utilisateurNom }}</span>
+                      </div>
+                      <span class="text-outline/40">•</span>
+                      <span class="text-label-sm text-on-surface-variant/70 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">schedule</span>
+                        {{ item.dateHeure | date:'dd MMM yyyy, HH:mm' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: expand toggle -->
+                <button (click)="toggleExpand(item.id)" class="flex-shrink-0 w-8 h-8 rounded-lg hover:bg-surface-container-low flex items-center justify-center transition-all text-on-surface-variant/60 hover:text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[18px] transition-transform duration-200" [class.rotate-180]="expandedIds.has(item.id)">expand_more</span>
+                </button>
+              </div>
+
+              <!-- Expanded details -->
+              <div *ngIf="expandedIds.has(item.id)" class="mt-4 pt-4 border-t border-outline-variant/20">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div class="text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span class="material-symbols-outlined text-[14px]">article</span>
+                      Ancienne valeur
+                    </div>
+                    <div class="bg-surface-container-low rounded-lg p-3 font-mono text-[13px] text-on-surface-variant leading-relaxed overflow-x-auto max-h-32 overflow-y-auto">
+                      {{ item.ancienneValeur || '—' }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span class="material-symbols-outlined text-[14px]">edit_note</span>
+                      Nouvelle valeur
+                    </div>
+                    <div class="bg-primary/5 rounded-lg p-3 font-mono text-[13px] text-on-surface leading-relaxed overflow-x-auto max-h-32 overflow-y-auto">
+                      {{ item.nouvelleValeur || '—' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 text-label-xs text-on-surface-variant/50 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[12px]">tag</span>
+                  Entité #{{ item.entiteId }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && items.length > 0" class="mt-6 bg-white rounded-xl border border-outline-variant/30 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <span class="text-label-sm text-on-surface-variant">
+        <span class="font-semibold text-on-surface">{{ (page - 1) * pageSize + 1 }}</span>
+        —
+        <span class="font-semibold text-on-surface">{{ Math.min(page * pageSize, total) }}</span>
+        sur
+        <span class="font-semibold text-on-surface">{{ total }}</span>
+        modifications
+      </span>
+      <div class="flex items-center gap-1.5">
+        <button (click)="search(page - 1)" [disabled]="page <= 1"
+          class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-low text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-outline-variant/20">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+        <button *ngFor="let p of pages" (click)="search(p)"
+          class="min-w-[36px] h-9 px-2 rounded-lg text-label-sm font-semibold transition-all duration-150"
+          [ngClass]="{
+            'bg-primary text-white shadow-sm': p === page,
+            'text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/20': p !== page
+          }">
+          {{ p }}
+        </button>
+        <button (click)="search(page + 1)" [disabled]="page >= totalPages"
+          class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-low text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-outline-variant/20">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

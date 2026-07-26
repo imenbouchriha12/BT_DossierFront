@@ -1,0 +1,567 @@
+<nav class="flex items-center gap-xs text-label-sm text-on-surface-variant mb-lg">
+  <a class="hover:text-primary" routerLink="/tableau-de-bord">Dashboard</a>
+  <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+  <a class="hover:text-primary" routerLink="/liste-clients">Clients</a>
+  <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+  <span class="text-primary font-bold">Dossier Client {{ client?.codeClient }}</span>
+</nav>
+
+@if (loading) {
+<div class="p-xl text-center text-on-surface-variant">
+  <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+</div>
+} @else if (error) {
+<div class="p-xl text-center text-error">{{ error }}</div>
+} @else if (client) {
+
+<!-- Alerts -->
+@if (success) {
+<div class="mb-lg p-4 bg-primary-container text-on-primary-container rounded-xl border border-primary/20 flex items-center gap-3">
+  <span class="material-symbols-outlined text-[20px]">check_circle</span>
+  <span class="text-body-sm font-medium">{{ success }}</span>
+</div>
+}
+@if (error) {
+<div class="mb-lg p-4 bg-error-container text-on-error-container rounded-xl border border-error/20 flex items-center gap-3">
+  <span class="material-symbols-outlined text-[20px]">error</span>
+  <span class="text-body-sm font-medium">{{ error }}</span>
+</div>
+}
+
+<div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm mb-lg flex flex-col md:flex-row md:items-center justify-between gap-lg">
+  <div class="flex items-center gap-lg">
+    <div class="w-20 h-20 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-display-lg font-black shrink-0">
+      <span>{{ getInitials() }}</span>
+    </div>
+    <div>
+      <h2 class="text-headline-lg font-bold">{{ client.prenom }} {{ client.nom }}</h2>
+      <div class="flex items-center gap-md mt-sm">
+        <span class="bg-surface-container px-sm py-xs rounded-lg text-label-sm text-on-surface-variant">CODE: {{ client.codeClient }}</span>
+        <span class="font-bold px-sm py-xs rounded-full text-label-sm flex items-center gap-xs"
+          [ngClass]="statutClass">
+          <span class="w-2 h-2 rounded-full" [class]="statutDotClass"></span>
+          {{ client.statut }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="flex items-center gap-sm flex-wrap">
+    @if (!isBlocked && (authService.hasRole('Admin') || authService.hasRole('Superviseur'))) {
+    <button class="action-icon-btn action-icon-red" (click)="openBlockModal()" title="Bloquer">
+      <span class="material-symbols-outlined">block</span>
+    </button>
+    }
+    @if (isBlocked && (authService.hasRole('Admin') || authService.hasRole('Superviseur'))) {
+    <button class="action-icon-btn action-icon-green" (click)="openUnblockModal()" title="Débloquer">
+      <span class="material-symbols-outlined">lock_open</span>
+    </button>
+    }
+    @if (authService.hasRole('Admin') || authService.hasRole('Superviseur')) {
+    <button class="action-icon-btn action-icon-purple" (click)="openPortalModal()" title="Lien Portail">
+      <span class="material-symbols-outlined">link</span>
+    </button>
+    }
+    <button class="action-icon-btn action-icon-primary"
+      [routerLink]="['/modifier-client', client.id]" title="Modifier Profil">
+      <span class="material-symbols-outlined">edit</span>
+    </button>
+  </div>
+</div>
+
+@if (isBlocked && client.motifBlocage) {
+<div class="mb-lg p-lg bg-error/5 border-l-4 border-error rounded-xl flex items-start gap-md shadow-sm">
+  <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+    <span class="material-symbols-outlined text-error text-[24px]">gpp_maybe</span>
+  </div>
+  <div class="flex-1">
+    <p class="text-title-sm font-bold text-error mb-xs">Client bloqué</p>
+    <p class="text-body-md text-on-surface">{{ client!.motifBlocage }}</p>
+  </div>
+</div>
+}
+
+<!-- Tabs -->
+<div class="mb-xl relative border-b border-outline-variant/30">
+  <div class="flex items-center gap-xl overflow-x-auto no-scrollbar">
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'general'"
+      [class.text-on-surface-variant]="activeTab !== 'general'"
+      (click)="switchTab('general')">
+      Informations générales
+      @if (activeTab === 'general') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'pro'"
+      [class.text-on-surface-variant]="activeTab !== 'pro'"
+      (click)="switchTab('pro')">
+      Détails professionnels
+      @if (activeTab === 'pro') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'docs'"
+      [class.text-on-surface-variant]="activeTab !== 'docs'"
+      (click)="switchTab('docs')">
+      Documents @if (documents.length > 0) {
+      <span class="ml-1.5 text-label-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{{ documents.length }}</span>
+      }
+      @if (activeTab === 'docs') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-xl">
+  <div class="lg:col-span-8 space-y-lg">
+    @if (activeTab === 'general') {
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <h3 class="text-title-lg font-bold mb-lg border-b border-outline-variant/20 pb-sm">Identité & Coordonnées</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Nom Complet</p>
+          <p class="text-body-lg font-bold text-on-surface">{{ client.prenom }} {{ client.nom }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Date de naissance</p>
+          <p class="text-body-lg text-on-surface">{{ client.dateNaissance | date:'dd MMMM yyyy' }} ({{ calculateAge() }} ans)</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Sexe</p>
+          <p class="text-body-lg text-on-surface">{{ client.sexe === 'M' ? 'Masculin' : 'Féminin' }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Nationalité</p>
+          <p class="text-body-lg text-on-surface">{{ client.nationalite }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Email</p>
+          <p class="text-body-lg text-on-surface">{{ client.email }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Téléphone</p>
+          <p class="text-body-lg text-on-surface">{{ client.telephone }}</p>
+        </div>
+        <div class="space-y-sm md:col-span-2">
+          <p class="text-label-sm text-on-surface-variant uppercase">Adresse</p>
+          <p class="text-body-lg text-on-surface">{{ client.adresse }}, {{ client.ville }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Date de création</p>
+          <p class="text-body-lg text-on-surface">{{ client.dateCreation | date:'dd MMM yyyy HH:mm' }}</p>
+        </div>
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Statut</p>
+          <p class="text-body-lg text-on-surface">{{ client.statut }}</p>
+        </div>
+      </div>
+    </div>
+    }
+
+    @if (activeTab === 'pro') {
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <h3 class="text-title-lg font-bold mb-lg border-b border-outline-variant/20 pb-sm">Profil Professionnel</h3>
+      @if (client.detail) {
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
+        <div class="bg-surface-container-low p-md rounded-xl">
+          <p class="text-label-sm text-on-surface-variant uppercase mb-xs">Profession</p>
+          <p class="text-title-md font-bold text-primary">{{ client.detail.profession || 'Non renseignée' }}</p>
+        </div>
+        <div class="bg-surface-container-low p-md rounded-xl">
+          <p class="text-label-sm text-on-surface-variant uppercase mb-xs">Employeur</p>
+          <p class="text-title-md font-bold text-on-surface">{{ client.detail.employeur || 'Non renseigné' }}</p>
+        </div>
+        <div class="bg-primary/5 p-md rounded-xl border border-primary/10">
+          <p class="text-label-sm text-primary uppercase mb-xs">Revenu Mensuel</p>
+          <p class="text-title-md font-bold text-primary">{{ client.detail.revenuMensuel > 0 ? (client.detail.revenuMensuel | number:'1.2-2') + ' €' : 'Non renseigné' }}</p>
+        </div>
+      </div>
+      <div class="mt-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+        <div class="flex items-start gap-md">
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-sm rounded-lg">business_center</span>
+          <div>
+            <p class="text-label-sm text-on-surface-variant">Secteur d'Activité</p>
+            <p class="text-body-md">{{ client.detail.secteurActivite || 'Non renseigné' }}</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-md">
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-sm rounded-lg">family_history</span>
+          <div>
+            <p class="text-label-sm text-on-surface-variant">Situation Familiale</p>
+            <p class="text-body-md">{{ client.detail.situationFamiliale || 'Non renseignée' }}</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-md">
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-sm rounded-lg">home</span>
+          <div>
+            <p class="text-label-sm text-on-surface-variant">Type de Résidence</p>
+            <p class="text-body-md">{{ client.detail.typeResidence === 'R' ? 'Résident' : 'Non Résident' }}</p>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <p class="text-body-md text-on-surface-variant text-center py-xl">Aucune information professionnelle renseignée.</p>
+      }
+    </div>
+    }
+
+    @if (activeTab === 'docs') {
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <div class="flex items-center justify-between mb-lg">
+        <h3 class="text-title-lg font-bold">Documents</h3>
+        <div class="flex items-center gap-md">
+          <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm"
+            (click)="toggleUpload()">
+            @if (showUpload) {
+            <span class="material-symbols-outlined text-[18px]">close</span>
+            Fermer
+            } @else {
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Ajouter
+            }
+          </button>
+          <button class="text-primary font-label-md font-bold text-label-sm hover:underline" [routerLink]="['/gestion-documents']">Voir tout</button>
+        </div>
+      </div>
+
+      <!-- Upload Form -->
+      @if (showUpload) {
+      <div class="mb-lg p-lg bg-primary/5 border border-primary/20 rounded-xl space-y-4">
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Type de document</label>
+          <select [(ngModel)]="uploadType" class="w-full h-10 pl-3 pr-8 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all">
+            <option value="">Sélectionner...</option>
+            <option value="CIN">Pièce d'identité (CIN)</option>
+            <option value="Contrat">Contrat</option>
+            <option value="Justificatif">Justificatif de domicile</option>
+            <option value="RIB">RIB / IBAN</option>
+            <option value="Passport">Passeport</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Fichier</label>
+          <div class="relative border-2 border-dashed border-outline-variant/40 rounded-lg p-4 text-center hover:border-primary/40 transition-colors cursor-pointer bg-white"
+            (click)="fileInput.click()">
+            @if (uploadFile) {
+            <div class="flex items-center justify-center gap-2 text-body-sm text-primary">
+              <span class="material-symbols-outlined text-[18px]">description</span>
+              <span class="font-medium truncate max-w-[200px]">{{ uploadFile.name }}</span>
+              <span class="text-on-surface-variant/60">({{ (uploadFile.size / 1024).toFixed(0) }} Ko)</span>
+            </div>
+            } @else {
+            <div>
+              <span class="material-symbols-outlined text-[32px] text-on-surface-variant/40">cloud_upload</span>
+              <p class="mt-1 text-body-sm text-on-surface-variant">Cliquez pour sélectionner un fichier</p>
+              <p class="text-label-xs text-on-surface-variant/50">PDF, JPG, PNG - 10 Mo max</p>
+            </div>
+            }
+          </div>
+          <input #fileInput class="hidden" type="file" (change)="onFileSelected($event)" />
+        </div>
+        <div class="flex gap-3">
+          <button class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-primary text-white rounded-lg text-label-sm font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            (click)="uploadDocument()" [disabled]="!uploadType || !uploadFile || uploading">
+            @if (uploading) {
+            <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+            Upload en cours...
+            } @else {
+            <span class="material-symbols-outlined text-[18px]">upload</span>
+            Uploader
+            }
+          </button>
+          <button class="px-4 py-2.5 border border-outline-variant/50 rounded-lg text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-all"
+            (click)="toggleUpload()">Annuler</button>
+        </div>
+      </div>
+      }
+
+      @if (loadingDocs) {
+      <p class="text-center text-on-surface-variant py-xl">Chargement...</p>
+      } @else if (documents.length === 0) {
+      <div class="text-center py-xl">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">description</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucun document pour ce client.</p>
+      </div>
+      } @else {
+      <div class="divide-y divide-outline-variant/10">
+        @for (doc of documents; track doc.id) {
+        <div class="py-3 flex items-center gap-4 group hover:bg-surface-container-low/50 rounded-lg px-2 -mx-2 transition-colors">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            [ngClass]="doc.statutValidation === 'Validé' ? 'bg-green-100' : doc.statutValidation === 'Rejeté' ? 'bg-red-100' : 'bg-amber-100'">
+            <span class="material-symbols-outlined text-[20px]"
+              [ngClass]="doc.statutValidation === 'Validé' ? 'text-green-700' : doc.statutValidation === 'Rejeté' ? 'text-red-700' : 'text-amber-700'">
+              {{ getIcon(doc.typeDocument) }}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-body-md font-semibold text-on-surface">{{ doc.typeDocument }}</p>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold border"
+                [ngClass]="doc.statutValidation === 'Validé' ? 'bg-green-50 text-green-700 border-green-200' : doc.statutValidation === 'Rejeté' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'">
+                {{ doc.statutValidation }}
+              </span>
+            </div>
+            <p class="text-label-sm text-on-surface-variant truncate mt-0.5">{{ doc.nomFichier }}</p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            @if (documentService.isPreviewable(doc.nomFichier)) {
+            <button class="w-9 h-9 rounded-lg hover:bg-purple-50 flex items-center justify-center transition-all text-purple-600"
+              (click)="previewDocument(doc)" title="Aperçu">
+              <span class="material-symbols-outlined text-[18px]">visibility</span>
+            </button>
+            }
+            <button class="w-9 h-9 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all text-primary"
+              (click)="downloadDocument(doc.id)" title="Télécharger">
+              <span class="material-symbols-outlined text-[18px]">download</span>
+            </button>
+            @if ((authService.hasRole('Admin') || authService.hasRole('Superviseur')) && doc.statutValidation === 'En attente') {
+            <button class="w-9 h-9 rounded-lg hover:bg-green-50 flex items-center justify-center transition-all text-green-600"
+              (click)="validateDocument(doc.id)" title="Valider">
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            </button>
+            <button class="w-9 h-9 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all text-red-600"
+              (click)="rejectDocument(doc.id)" title="Rejeter">
+              <span class="material-symbols-outlined text-[18px]">cancel</span>
+            </button>
+            }
+            @if (authService.hasRole('Admin')) {
+            <button class="w-9 h-9 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all text-error"
+              (click)="deleteDocument(doc.id)" title="Supprimer">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <div class="lg:col-span-4 space-y-lg">
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <h3 class="text-title-md font-bold mb-xl">Résumé du Dossier</h3>
+      <div class="space-y-lg">
+        <div class="flex justify-between items-center pb-sm border-b border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Code Client</p>
+          <p class="text-body-md font-bold text-primary">{{ client.codeClient }}</p>
+        </div>
+        <div class="flex justify-between items-center pb-sm border-b border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Ville</p>
+          <p class="text-body-md font-bold">{{ client.ville }}</p>
+        </div>
+        <div class="flex justify-between items-center pb-sm border-b border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Âge</p>
+          <p class="text-body-md font-bold">{{ calculateAge() }} ans</p>
+        </div>
+        <div class="flex justify-between items-center pb-sm border-b border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Date Création</p>
+          <p class="text-body-md font-bold">{{ client.dateCreation | date:'dd/MM/yyyy' }}</p>
+        </div>
+        <div class="flex justify-between items-center pb-sm border-b border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Documents</p>
+          <p class="text-body-md font-bold">{{ documents.length }}</p>
+        </div>
+        @if (isBlocked && client.motifBlocage) {
+        <div class="p-sm bg-error/5 border border-error/20 rounded-lg">
+          <p class="text-label-sm text-error font-semibold mb-xs">Motif de blocage</p>
+          <p class="text-body-sm text-on-surface">{{ client!.motifBlocage }}</p>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+}
+
+<!-- Modal Blocage / Déblocage -->
+@if (showBlockModal) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="closeBlockModal()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md p-xl space-y-lg z-10">
+    @if (isBlocking) {
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-error text-[28px]">block</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Bloquer le client</h3>
+        <p class="text-body-sm text-on-surface-variant">Le client ne pourra plus effectuer d'opérations.</p>
+      </div>
+    </div>
+    <div>
+      <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Motif de blocage <span class="text-error">*</span></label>
+      <textarea [(ngModel)]="blockReason" rows="3" placeholder="Expliquez la raison du blocage..."
+        class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-error/20 focus:border-error transition-all resize-none"></textarea>
+    </div>
+    <div class="flex gap-3 justify-end">
+      <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
+        (click)="closeBlockModal()">Annuler</button>
+      <button class="px-lg py-md rounded-xl bg-error text-white hover:bg-error/90 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
+        (click)="submitBlock()" [disabled]="!blockReason.trim() || blocking">
+        @if (blocking) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined text-[18px]">block</span>
+        }
+        Confirmer le blocage
+      </button>
+    </div>
+    } @else {
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+        <span class="material-symbols-outlined text-green-600 text-[28px]">lock_open</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Débloquer le client</h3>
+        <p class="text-body-sm text-on-surface-variant">Le statut sera recalculé automatiquement.</p>
+      </div>
+    </div>
+    @if (client?.motifBlocage) {
+    <div class="p-sm bg-error/5 border border-error/20 rounded-xl">
+      <p class="text-label-sm text-error font-semibold mb-xs">Motif actuel :</p>
+      <p class="text-body-sm text-on-surface">{{ client!.motifBlocage }}</p>
+    </div>
+    }
+    <div class="flex gap-3 justify-end">
+      <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
+        (click)="closeBlockModal()">Annuler</button>
+      <button class="px-lg py-md rounded-xl bg-green-600 text-white hover:bg-green-700 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
+        (click)="submitUnblock()" [disabled]="blocking">
+        @if (blocking) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined text-[18px]">lock_open</span>
+        }
+        Confirmer le déblocage
+      </button>
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- Modal Portail -->
+@if (showPortalModal) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="closePortalModal()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg p-xl space-y-lg z-10">
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+        <span class="material-symbols-outlined text-purple-600 text-[28px]">link</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Lien Portail Documents</h3>
+        <p class="text-body-sm text-on-surface-variant">Envoyer au client pour déposer ses documents en ligne.</p>
+      </div>
+    </div>
+
+    @if (portalSuccess) {
+    <div class="p-4 bg-green-50 border border-green-200 rounded-xl space-y-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-green-600 text-[20px]">check_circle</span>
+        <span class="text-body-sm font-medium text-green-800">{{ portalSuccess }}</span>
+      </div>
+      @if (portalLink) {
+      <div class="bg-white p-3 rounded-lg border border-green-200">
+        <p class="text-label-sm text-on-surface-variant mb-1">Lien généré :</p>
+        <div class="flex items-center gap-2">
+          <code class="text-body-sm text-primary break-all flex-1 font-mono">{{ portalLink }}</code>
+          <button class="shrink-0 w-9 h-9 rounded-lg hover:bg-primary/10 flex items-center justify-center transition-all text-primary"
+            (click)="copyPortalLink()" title="Copier le lien">
+            <span class="material-symbols-outlined text-[18px]">content_copy</span>
+          </button>
+        </div>
+        @if (portalExpiration) {
+        <p class="text-label-sm text-on-surface-variant mt-2">Expire le {{ portalExpiration | date:'dd/MM/yyyy HH:mm' }}</p>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    @if (portalError) {
+    <div class="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+      <span class="material-symbols-outlined text-red-600 text-[20px]">error</span>
+      <span class="text-body-sm text-red-800">{{ portalError }}</span>
+    </div>
+    }
+
+    <div class="flex gap-3 justify-end">
+      <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
+        (click)="closePortalModal()">Fermer</button>
+      @if (!portalSuccess) {
+      <button class="px-lg py-md rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
+        (click)="sendPortalLink()" [disabled]="portalSending">
+        @if (portalSending) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+        Envoi...
+        } @else {
+        <span class="material-symbols-outlined text-[18px]">mail</span>
+        Générer et envoyer
+        }
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<!-- Preview Modal -->
+@if (showPreview) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/60" (click)="closePreview()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col z-10 overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-purple-600 text-[20px]">visibility</span>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-title-md font-bold text-on-surface truncate">{{ previewFilename }}</h3>
+          <p class="text-label-sm text-on-surface-variant">Aperçu du document</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="w-9 h-9 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all text-primary"
+          (click)="downloadDocument(previewDocId)" title="Télécharger">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+        </button>
+        <button class="w-9 h-9 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all text-on-surface-variant"
+          (click)="closePreview()" title="Fermer">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 min-h-0 bg-surface-container">
+      @if (previewLoading) {
+        <div class="h-full flex items-center justify-center">
+          <div class="text-center space-y-3">
+            <span class="material-symbols-outlined animate-spin inline-block text-4xl text-primary">sync</span>
+            <p class="text-body-sm text-on-surface-variant">Chargement de l'aperçu...</p>
+          </div>
+        </div>
+      } @else if (previewError) {
+        <div class="h-full flex items-center justify-center">
+          <div class="text-center space-y-3">
+            <span class="material-symbols-outlined text-[48px] text-error">error</span>
+            <p class="text-body-md text-on-surface">{{ previewError }}</p>
+          </div>
+        </div>
+      } @else if (isPreviewPdf) {
+        <iframe [src]="previewUrl" class="w-full h-full border-0"></iframe>
+      } @else if (isPreviewImage) {
+        <div class="h-full flex items-center justify-center p-4 overflow-auto">
+          <img [src]="previewUrl" class="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
+        </div>
+      }
+    </div>
+  </div>
+</div>
+}

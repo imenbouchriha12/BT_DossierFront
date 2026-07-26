@@ -1,0 +1,184 @@
+<header
+  class="sticky top-0 z-40 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/30 h-16 flex items-center px-4 lg:px-8 justify-between"
+>
+  <div class="flex items-center gap-xl">
+    <button
+      class="lg:hidden material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors"
+      (click)="menuToggle.emit()"
+    >menu</button>
+    <span
+      class="text-title-lg font-headline-lg text-primary tracking-tight hidden sm:block"
+      >GestionBanque</span
+    >
+  </div>
+
+  <div class="flex items-center gap-md">
+    <!-- Search -->
+    <div class="relative search-container">
+      <div class="relative hidden sm:block">
+        <input
+          class="bg-surface-container-low border border-outline-variant/30 rounded-full pl-10 pr-4 py-1.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64"
+          placeholder="Rechercher..."
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput()"
+          (focus)="onSearchFocus()"
+        />
+        <span
+          class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60"
+          >search</span
+        >
+        <span
+          *ngIf="loadingSearch"
+          class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin"
+          >progress_activity</span
+        >
+      </div>
+
+      <!-- Search dropdown -->
+      <div
+        *ngIf="showSearchDropdown && searchResults && searchResults.totalCount > 0"
+        class="absolute top-full mt-2 right-0 w-96 bg-surface border border-outline-variant/30 rounded-xl shadow-lg overflow-hidden"
+      >
+        <div *ngIf="searchResults.clients.length > 0" class="p-2">
+          <div class="text-label-sm text-on-surface-variant px-3 py-1 uppercase tracking-wider">Clients</div>
+          <a
+            *ngFor="let client of searchResults.clients"
+            [routerLink]="['/detail-client', client.id]"
+            (click)="selectSearchResult()"
+            class="flex items-center gap-3 px-3 py-2 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-primary text-lg">person</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-body-md font-medium truncate">{{ client.prenom }} {{ client.nom }}</div>
+              <div class="text-label-sm text-on-surface-variant truncate">{{ client.codeClient }} - {{ client.ville }}</div>
+            </div>
+            <span
+              class="text-label-sm px-2 py-0.5 rounded-full"
+              [ngClass]="{
+                'bg-success/10 text-success': client.statut === 'Actif',
+                'bg-warning/10 text-warning': client.statut === 'EnAttente',
+                'bg-error/10 text-error': client.statut === 'Bloque'
+              }"
+            >{{ client.statut }}</span>
+          </a>
+        </div>
+
+        <div *ngIf="searchResults.documents.length > 0" class="p-2 border-t border-outline-variant/20">
+          <div class="text-label-sm text-on-surface-variant px-3 py-1 uppercase tracking-wider">Documents</div>
+          <a
+            *ngFor="let doc of searchResults.documents"
+            [routerLink]="['/gestion-documents']"
+            (click)="selectSearchResult()"
+            class="flex items-center gap-3 px-3 py-2 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-primary text-lg">description</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-body-md font-medium truncate">{{ doc.typeDocument }}</div>
+              <div class="text-label-sm text-on-surface-variant truncate">{{ doc.nomClient }} - {{ doc.nomFichier }}</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div
+        *ngIf="showSearchDropdown && searchQuery.length >= 2 && searchResults && searchResults.totalCount === 0"
+        class="absolute top-full mt-2 right-0 w-96 bg-surface border border-outline-variant/30 rounded-xl shadow-lg p-4 text-center text-on-surface-variant text-body-md"
+      >
+        Aucun résultat trouvé
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="relative notification-container">
+      <button
+        class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors relative"
+        (click)="toggleNotifications()"
+      >
+        notifications
+        <span
+          *ngIf="notificationCount() > 0"
+          class="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-surface"
+        ></span>
+      </button>
+
+      <!-- Notification dropdown -->
+      <div
+        *ngIf="showNotifications"
+        class="absolute top-full mt-2 right-0 w-80 bg-surface border border-outline-variant/30 rounded-xl shadow-lg overflow-hidden"
+      >
+        <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/20">
+          <span class="text-title-sm font-semibold">Notifications</span>
+          <button
+            *ngIf="notificationCount() > 0"
+            (click)="markAllAsLu()"
+            class="text-label-sm text-primary hover:text-primary/80 transition-colors"
+          >Tout marquer comme lu</button>
+        </div>
+
+        <div *ngIf="notifications.length === 0" class="p-4 text-center text-on-surface-variant text-body-md">
+          Aucune notification
+        </div>
+
+        <div
+          *ngFor="let notif of notifications"
+          class="px-4 py-3 hover:bg-surface-container-low transition-colors cursor-pointer border-b border-outline-variant/10 last:border-b-0"
+          [ngClass]="{ 'bg-primary/5': !notif.estLu }"
+          (click)="markAsLu($event, notif.id)"
+        >
+          <div class="flex items-start gap-3">
+            <span
+              class="material-symbols-outlined text-lg flex-shrink-0 mt-0.5"
+              [ngClass]="{
+                'text-primary': notif.type === 'Info',
+                'text-success': notif.type === 'Succès',
+                'text-warning': notif.type === 'Avertissement',
+                'text-error': notif.type === 'Erreur'
+              }"
+            >
+              {{
+                notif.type === 'Succès'
+                  ? 'check_circle'
+                  : notif.type === 'Avertissement'
+                  ? 'warning'
+                  : notif.type === 'Erreur'
+                  ? 'error'
+                  : 'info'
+              }}
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="text-body-md font-medium truncate">{{ notif.titre }}</div>
+              <div class="text-label-sm text-on-surface-variant line-clamp-2">{{ notif.message }}</div>
+              <div class="text-label-xs text-on-surface-variant/60 mt-1">{{ notif.dateCreation | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <div *ngIf="!notif.estLu" class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <button
+      class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors"
+      (click)="toggleDarkMode()"
+      [title]="isDark ? 'Mode clair' : 'Mode sombre'"
+    >
+      {{ isDark ? 'light_mode' : 'dark_mode' }}
+    </button>
+
+    <!-- User -->
+    <div class="flex items-center gap-sm">
+      <span *ngIf="auth.currentUser() as user" class="text-label-md font-label-md text-on-surface-variant hidden md:block">
+        {{ user.username }}
+      </span>
+      <div
+        class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30"
+      >
+        <img *ngIf="userPhotoUrl" [src]="userPhotoUrl" class="w-full h-full object-cover" alt=""/>
+        <div *ngIf="!userPhotoUrl" class="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-label-md">
+          {{ userInitial }}
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

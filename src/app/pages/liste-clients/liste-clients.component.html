@@ -1,0 +1,436 @@
+<div class="min-h-screen bg-surface/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+          {{ showArchived ? 'Clients archivés' : 'Clients' }}
+        </h1>
+        <p class="text-body-md text-on-surface-variant mt-1">
+          {{ showArchived ? 'Consultez et restaurez les clients archivés.' : "Gérez l'ensemble de vos clients." }}
+        </p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        @if (authService.hasRole('Admin') || authService.hasRole('Superviseur')) {
+        <button
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border transition-all text-label-sm font-medium"
+          [ngClass]="showArchived ? 'bg-error/10 text-error border-error/30 hover:bg-error/20' : 'border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low'"
+          (click)="toggleArchived()"
+        >
+          <span class="material-symbols-outlined text-[18px]">archive</span>
+          {{ showArchived ? 'Voir actifs' : 'Archivés' }}
+        </button>
+        }
+        @if (!showArchived) {
+        <button
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium"
+          (click)="toggleFilters()"
+        >
+          <span class="material-symbols-outlined text-[18px]">filter_list</span>
+          Filtres
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm"
+          (click)="exportExcel()"
+        >
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          Export
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm"
+          routerLink="/nouveau-client"
+        >
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Nouveau
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Error -->
+    @if (error) {
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-body-md flex items-center gap-3 shadow-sm">
+      <span class="material-symbols-outlined text-red-600">error</span>
+      {{ error }}
+    </div>
+    }
+
+    <!-- Quick Search -->
+    @if (!showArchived) {
+    <div class="mb-6">
+      <div class="relative max-w-md">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[20px]">search</span>
+        <input
+          class="w-full h-11 pl-11 pr-4 bg-white border border-outline-variant/40 rounded-xl text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/50 shadow-sm"
+          placeholder="Rechercher par nom..."
+          [(ngModel)]="quickSearch"
+          (input)="onQuickSearch()"
+        />
+        @if (quickSearch) {
+        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant" (click)="clearQuickSearch()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Filter Panel -->
+    @if (!showArchived) {
+    <div
+      class="bg-white rounded-xl border border-outline-variant/30 shadow-sm mb-6 overflow-hidden transition-all duration-300"
+      [style.maxHeight]="filterOpen ? '500px' : '0'"
+      [style.opacity]="filterOpen ? '1' : '0'"
+      [class.p-0]="!filterOpen"
+      [class.opacity-0]="!filterOpen"
+      [class.max-h-0]="!filterOpen"
+      [class.border-transparent]="!filterOpen"
+    >
+      @if (filterOpen) {
+      <div>
+        <div class="px-5 py-3 bg-surface-container-low border-b border-outline-variant/20 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-primary">filter_alt</span>
+            <span class="text-label-sm font-semibold text-on-surface uppercase tracking-wider">Filtres avancés</span>
+          </div>
+          <span class="text-label-xs text-on-surface-variant">{{ total }} résultat(s)</span>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Code client</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">tag</span>
+                <input class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" placeholder="1455678924" [(ngModel)]="searchCode" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Nom</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">badge</span>
+                <input class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" placeholder="Dupont" [(ngModel)]="searchNom" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Prénom</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">person</span>
+                <input class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" placeholder="Jean" [(ngModel)]="searchPrenom" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Ville</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">location_city</span>
+                <select class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all" [(ngModel)]="searchVille">
+                  <option value="">Toutes les villes</option>
+                  @for (v of villes; track v) {
+                  <option [value]="v">{{ v }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Statut</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">flag</span>
+                <select class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all" [(ngModel)]="searchStatut">
+                  <option value="">Tous les statuts</option>
+                  <option value="Actif">Actif</option>
+                  <option value="EnAttente">En attente</option>
+                  <option value="Bloqué">Bloqué</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Date début</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">calendar_today</span>
+                <input class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" type="date" [(ngModel)]="searchDateDebut" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Date fin</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 material-symbols-outlined text-[16px]">calendar_today</span>
+                <input class="w-full h-10 pl-8 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" type="date" [(ngModel)]="searchDateFin" />
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center mt-5 pt-4 border-t border-outline-variant/20">
+            <button class="text-label-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" (click)="resetFilters()">
+              <span class="material-symbols-outlined text-[16px]">clear_all</span>
+              Réinitialiser
+            </button>
+            <button class="inline-flex items-center gap-1.5 px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm" (click)="applyFilters()">
+              <span class="material-symbols-outlined text-[16px]">search</span>
+              Rechercher
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Stats summary -->
+    @if (!loading && clients.length > 0 && !showArchived) {
+    <div class="flex items-center gap-4 mb-6 text-label-sm flex-wrap">
+      <span class="text-on-surface-variant"><span class="font-semibold text-on-surface">{{ total }}</span> client(s)</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-outline-variant/50"></span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ totalActifs }} actifs</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> {{ totalEnAttente }} en attente</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> {{ totalBloques }} bloqués</span>
+    </div>
+    }
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+      @if (loading) {
+      <div class="flex flex-col items-center justify-center py-24">
+        <div class="relative w-12 h-12">
+          <div class="absolute inset-0 rounded-full border-4 border-primary/10"></div>
+          <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"></div>
+        </div>
+        <p class="mt-4 text-body-md text-on-surface-variant">Chargement des clients...</p>
+      </div>
+      } @else if (clients.length === 0) {
+      <div class="py-16 text-center">
+        <div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-[32px] text-on-surface-variant">{{ showArchived ? 'archive' : 'group_off' }}</span>
+        </div>
+        <h3 class="text-title-md font-bold text-on-surface mb-1">
+          {{ showArchived ? 'Aucun client archivé' : 'Aucun client trouvé' }}
+        </h3>
+        <p class="text-body-md text-on-surface-variant max-w-sm mx-auto">
+          {{ showArchived ? 'Les clients que vous archivez apparaîtront ici.' : 'Essayez de modifier vos filtres ou créez un nouveau client.' }}
+        </p>
+        @if (!showArchived) {
+        <button class="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm" routerLink="/nouveau-client">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Nouveau client
+        </button>
+        }
+      </div>
+      } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low border-b border-outline-variant/20">
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider">Code</th>
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider">Client</th>
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden sm:table-cell">Ville</th>
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider">Statut</th>
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Création</th>
+              <th class="px-5 py-3.5 text-label-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            @for (client of clients; track client.id) {
+            <tr class="hover:bg-surface-container-lowest transition-colors group" [class.opacity-60]="client.estArchive">
+              <td class="px-5 py-4">
+                <span class="text-body-sm font-mono font-semibold text-primary">{{ client.codeClient }}</span>
+              </td>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-label-sm flex-shrink-0">
+                    {{ (client.prenom.charAt(0) || '') + (client.nom.charAt(0) || '') }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-body-md font-medium text-on-surface truncate">{{ client.prenom }} {{ client.nom }}</p>
+                    <p class="text-label-sm text-on-surface-variant/70 truncate hidden sm:block">{{ client.telephone || '—' }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-4 hidden sm:table-cell">
+                <span class="text-body-md text-on-surface-variant">{{ client.ville || '—' }}</span>
+              </td>
+              <td class="px-5 py-4">
+                <div class="space-y-1">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-medium border"
+                    [ngClass]="getStatutClass(client.statut)">
+                    <span class="material-symbols-outlined text-[14px]">{{ getStatutIcon(client.statut) }}</span>
+                    {{ client.statut }}
+                  </span>
+                  @if (client.statut === 'Bloqué' && client.motifBlocage) {
+                  <p class="text-label-xs text-error max-w-[180px] truncate" [title]="client.motifBlocage">
+                    {{ client.motifBlocage }}
+                  </p>
+                  }
+                </div>
+              </td>
+              <td class="px-5 py-4 hidden lg:table-cell">
+                <span class="text-body-md text-on-surface-variant">{{ client.dateCreation | date:'dd/MM/yyyy' }}</span>
+              </td>
+              <td class="px-5 py-4 text-right">
+                @if (confirmActionId === client.id) {
+                <div class="flex items-center gap-1.5 justify-end">
+                  <span class="text-label-sm font-medium"
+                    [class.text-error]="confirmActionType === 'archive'"
+                    [class.text-primary]="confirmActionType === 'restore'">
+                    {{ confirmActionType === 'archive' ? 'Archiver ?' : 'Restaurer ?' }}
+                  </span>
+                  <button class="w-7 h-7 rounded-md bg-error text-white flex items-center justify-center hover:bg-error/90 transition-all" (click)="executeAction(client.id)" title="Confirmer">
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                  </button>
+                  <button class="w-7 h-7 rounded-md bg-surface-container-high text-on-surface-variant flex items-center justify-center hover:bg-surface-container-highest transition-all" (click)="cancelConfirm()" title="Annuler">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+                } @else {
+                <div class="flex items-center justify-end gap-1">
+                  <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 transition-all" [routerLink]="['/detail-client', client.id]" title="Voir le détail">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                  </button>
+                  @if (!showArchived) {
+                  <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 transition-all" [routerLink]="['/modifier-client', client.id]" title="Modifier">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                  }
+                  @if ((authService.hasRole('Admin') || authService.hasRole('Superviseur')) && !showArchived) {
+                    @if (client.statut === 'Bloqué') {
+                    <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-green-600 hover:bg-green-50 transition-all" (click)="openUnblockModal(client.id)" title="Débloquer">
+                      <span class="material-symbols-outlined text-[18px]">lock_open</span>
+                    </button>
+                    } @else {
+                    <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-all" (click)="openBlockModal(client.id)" title="Bloquer">
+                      <span class="material-symbols-outlined text-[18px]">block</span>
+                    </button>
+                    }
+                  }
+                  @if (authService.hasRole('Admin') && !showArchived) {
+                  <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-all" (click)="confirmArchive(client.id)" title="Archiver">
+                    <span class="material-symbols-outlined text-[18px]">archive</span>
+                  </button>
+                  }
+                  @if (authService.hasRole('Admin') && showArchived) {
+                  <button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 transition-all" (click)="confirmRestore(client.id)" title="Restaurer">
+                    <span class="material-symbols-outlined text-[18px]">unarchive</span>
+                  </button>
+                  }
+                </div>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-6 bg-white rounded-xl border border-outline-variant/30 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="text-label-sm text-on-surface-variant">
+            <span class="font-semibold text-on-surface">{{ (currentPage - 1) * pageSize + 1 }}</span>
+            —
+            <span class="font-semibold text-on-surface">{{ currentPage * pageSize > total ? total : currentPage * pageSize }}</span>
+            sur
+            <span class="font-semibold text-on-surface">{{ total }}</span>
+            clients
+          </span>
+          <div class="flex items-center gap-1.5">
+            <label class="text-label-xs text-on-surface-variant">Lignes</label>
+            <select class="h-8 px-2 bg-surface-container-low border border-outline-variant/50 rounded-lg text-label-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none cursor-pointer" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+            </select>
+          </div>
+        </div>
+        @if (totalPages > 1) {
+        <div class="flex items-center gap-1.5">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+            class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-low text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-outline-variant/20">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          @for (p of pages; track p) {
+          <button (click)="goToPage(p)"
+            class="min-w-[36px] h-9 px-2 rounded-lg text-label-sm font-semibold transition-all duration-150"
+            [ngClass]="{
+              'bg-primary text-white shadow-sm': p === currentPage,
+              'text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/20': p !== currentPage
+            }">
+            {{ p }}
+          </button>
+          }
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+            class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-low text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-outline-variant/20">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Blocage -->
+@if (showBlockModal) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="closeBlockModal()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md p-xl space-y-lg z-10">
+    @if (blockClientId && getBlockedClient()?.statut !== 'Bloqué') {
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-error text-[28px]">block</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Bloquer le client</h3>
+        <p class="text-body-sm text-on-surface-variant">{{ getBlockedClient()?.prenom }} {{ getBlockedClient()?.nom }}</p>
+      </div>
+    </div>
+    <div>
+      <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Motif de blocage <span class="text-error">*</span></label>
+      <textarea [(ngModel)]="blockReason" rows="3" placeholder="Expliquez la raison du blocage..."
+        class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-error/20 focus:border-error transition-all resize-none"></textarea>
+    </div>
+    <div class="flex gap-3 justify-end">
+      <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
+        (click)="closeBlockModal()">Annuler</button>
+      <button class="px-lg py-md rounded-xl bg-error text-white hover:bg-error/90 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
+        (click)="submitBlock()" [disabled]="!blockReason.trim() || blocking">
+        @if (blocking) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined text-[18px]">block</span>
+        }
+        Confirmer
+      </button>
+    </div>
+    } @else {
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+        <span class="material-symbols-outlined text-green-600 text-[28px]">lock_open</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Débloquer le client</h3>
+        <p class="text-body-sm text-on-surface-variant">{{ getBlockedClient()?.prenom }} {{ getBlockedClient()?.nom }}</p>
+      </div>
+    </div>
+    @if (getBlockedClient()?.motifBlocage) {
+    <div class="p-sm bg-error/5 border border-error/20 rounded-xl">
+      <p class="text-label-sm text-error font-semibold mb-xs">Motif actuel :</p>
+      <p class="text-body-sm text-on-surface">{{ getBlockedClient()?.motifBlocage }}</p>
+    </div>
+    }
+    <div class="flex gap-3 justify-end">
+      <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
+        (click)="closeBlockModal()">Annuler</button>
+      <button class="px-lg py-md rounded-xl bg-green-600 text-white hover:bg-green-700 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
+        (click)="submitUnblock()" [disabled]="blocking">
+        @if (blocking) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined text-[18px]">lock_open</span>
+        }
+        Débloquer
+      </button>
+    </div>
+    }
+  </div>
+</div>
+}

@@ -1,0 +1,399 @@
+<div class="min-h-screen bg-surface p-lg space-y-lg">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
+    <div>
+      <nav class="flex items-center gap-sm text-on-surface-variant/70 text-sm mb-1">
+        <span class="material-symbols-outlined text-[16px]">home</span>
+        <span>/</span>
+        <span class="text-on-surface">Agenda & Rappels</span>
+      </nav>
+      <h1 class="text-headline-lg font-headline-lg text-on-surface">Agenda & Rappels</h1>
+      <p class="text-body-sm font-body-sm text-on-surface-variant/70 mt-1">Gérez vos rappels, rendez-vous et tâches</p>
+    </div>
+    <div class="flex items-center gap-sm">
+      <div class="inline-flex bg-surface-container rounded-xl p-1 border border-outline-variant/30">
+        <button *ngFor="let v of ['agenda', 'month', 'week']"
+          class="px-3 py-1.5 rounded-lg text-label-sm font-label-sm transition-all"
+          [class]="currentView === v ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'"
+          (click)="currentView = $any(v)">
+          {{ v === 'agenda' ? 'Agenda' : v === 'month' ? 'Mois' : 'Semaine' }}
+        </button>
+      </div>
+      <button class="flex items-center gap-sm bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-md font-label-md hover:bg-primary/90 transition-colors shadow-sm"
+        (click)="openCreate()">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Nouveau rappel
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-md" *ngIf="stats">
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center">
+      <div class="text-headline-sm font-headline-sm text-on-surface">{{ stats.total }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">Total</div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center">
+      <div class="text-headline-sm font-headline-sm text-amber-600">{{ stats.pending }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">En attente</div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center">
+      <div class="text-headline-sm font-headline-sm text-blue-600">{{ stats.inProgress }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">En cours</div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center">
+      <div class="text-headline-sm font-headline-sm text-emerald-600">{{ stats.completed }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">Terminés</div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center cursor-pointer hover:border-error/50 transition-colors"
+      [class]="filterStatus === 'EnCours' && filterPriority ? '' : ''" (click)="filterStatus = 'EnCours'; applyFilter()">
+      <div class="text-headline-sm font-headline-sm text-error">{{ stats.overdue }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">En retard</div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 text-center">
+      <div class="text-headline-sm font-headline-sm text-red-600">{{ stats.urgent }}</div>
+      <div class="text-label-sm font-label-sm text-on-surface-variant/70">Urgents</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap items-center gap-sm bg-surface-container-low rounded-xl p-md border border-outline-variant/20">
+    <span class="material-symbols-outlined text-on-surface-variant/50 text-[20px]">filter_list</span>
+    <select [(ngModel)]="filterType" (change)="applyFilter()"
+      class="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-label-sm font-label-sm text-on-surface focus:outline-none focus:border-primary">
+      <option value="">Tous les types</option>
+      <option value="Appel">Appel</option>
+      <option value="Email">Email</option>
+      <option value="Rendez-vous">Rendez-vous</option>
+      <option value="Relance">Relance</option>
+      <option value="Document">Document</option>
+      <option value="Autre">Autre</option>
+    </select>
+    <select [(ngModel)]="filterPriority" (change)="applyFilter()"
+      class="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-label-sm font-label-sm text-on-surface focus:outline-none focus:border-primary">
+      <option value="">Toutes priorités</option>
+      <option value="Basse">Basse</option>
+      <option value="Normale">Normale</option>
+      <option value="Haute">Haute</option>
+      <option value="Critique">Critique</option>
+    </select>
+    <select [(ngModel)]="filterStatus" (change)="applyFilter()"
+      class="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-label-sm font-label-sm text-on-surface focus:outline-none focus:border-primary">
+      <option value="">Tous les statuts</option>
+      <option value="EnAttente">En attente</option>
+      <option value="EnCours">En cours</option>
+      <option value="Termine">Terminé</option>
+      <option value="Annule">Annulé</option>
+    </select>
+    <button *ngIf="activeFilterCount > 0" (click)="clearFilters()"
+      class="flex items-center gap-1 text-error text-label-sm font-label-sm hover:text-error/80 transition-colors ml-auto">
+      <span class="material-symbols-outlined text-[16px]">close</span>
+      Effacer ({{ activeFilterCount }})
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-lg">
+    <!-- Main Content -->
+    <div class="xl:col-span-3 space-y-lg">
+
+      <!-- AGENDA VIEW (list) -->
+      <div *ngIf="currentView === 'agenda'" class="space-y-md">
+        <div *ngIf="overdueReminders.length > 0" class="bg-error/5 border border-error/20 rounded-xl p-md">
+          <div class="flex items-center gap-sm mb-sm">
+            <span class="material-symbols-outlined text-error text-[20px]">warning</span>
+            <span class="text-title-md font-title-md text-error">En retard ({{ overdueReminders.length }})</span>
+          </div>
+          <div class="space-y-sm">
+            <div *ngFor="let r of overdueReminders" class="flex items-center gap-md p-md bg-surface rounded-lg border border-outline-variant/20">
+              <span class="material-symbols-outlined text-error text-[20px]">{{ typeIcon(r.type) }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-label-md font-label-md text-on-surface truncate">{{ r.title }}</div>
+                <div class="text-body-xs font-body-xs text-error/80">{{ formatDateTime(r.dueDate) }}</div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-error/10 text-error">{{ r.priority }}</span>
+              <button (click)="openEdit(r)" class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined text-[16px]">edit</span>
+              </button>
+              <button (click)="markComplete(r)" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="filteredReminders.length === 0 && !loading" class="text-center py-16 bg-surface-container-low rounded-xl border border-outline-variant/20">
+          <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">event_available</span>
+          <p class="text-body-lg font-body-lg text-on-surface-variant/50 mt-2">Aucun rappel trouvé</p>
+        </div>
+
+        <div *ngFor="let r of filteredReminders" class="flex items-center gap-md p-md bg-surface-container-low rounded-xl border border-outline-variant/20 hover:shadow-md transition-shadow"
+          [class.border-l-4]="r.status !== 'Termine'"
+          [class.border-l-error]="isOverdue(r) && r.status !== 'Termine'"
+          [class.border-l-amber-500]="!isOverdue(r) && r.priority === 'Haute' && r.status !== 'Termine'"
+          [class.border-l-red-600]="r.priority === 'Critique' && r.status !== 'Termine'"
+          [class.opacity-50]="r.status === 'Termine'">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            [class]="r.status === 'Termine' ? 'bg-emerald-50 text-emerald-600' : isOverdue(r) ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'">
+            <span class="material-symbols-outlined text-[20px]">{{ r.status === 'Termine' ? 'check_circle' : typeIcon(r.type) }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-sm">
+              <span class="text-label-md font-label-md text-on-surface truncate"
+                [class.line-through]="r.status === 'Termine'">{{ r.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
+                [class]="r.status === 'Termine' ? 'bg-emerald-50 text-emerald-600' : r.status === 'EnCours' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'">
+                {{ statusLabel(r.status) }}
+              </span>
+            </div>
+            <div class="flex items-center gap-md mt-0.5">
+              <span class="text-body-xs font-body-xs text-on-surface-variant/70 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">schedule</span>
+                {{ formatDateTime(r.dueDate) }}
+              </span>
+              <span *ngIf="r.clientName" class="text-body-xs font-body-xs text-on-surface-variant/70 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">person</span>
+                {{ r.clientName }}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
+              [class]="r.priority === 'Critique' ? 'bg-red-50 text-red-600' : r.priority === 'Haute' ? 'bg-orange-50 text-orange-600' : r.priority === 'Basse' ? 'bg-slate-50 text-slate-500' : 'bg-surface-container text-on-surface-variant'">
+              {{ r.priority }}
+            </span>
+            <button (click)="openEdit(r)" *ngIf="r.status !== 'Termine'"
+              class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
+            </button>
+            <button (click)="markComplete(r)" *ngIf="r.status !== 'Termine'"
+              class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            </button>
+            <button (click)="deleteReminder(r)"
+              class="p-1.5 rounded-lg hover:bg-error/5 text-error/60 hover:text-error transition-colors">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MONTH VIEW -->
+      <div *ngIf="currentView === 'month'" class="bg-surface-container-low rounded-xl border border-outline-variant/20 overflow-hidden">
+        <div class="flex items-center justify-between p-md border-b border-outline-variant/20">
+          <button (click)="prevMonth()" class="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="text-title-md font-title-md text-on-surface capitalize">{{ monthLabel }}</span>
+          <button (click)="nextMonth()" class="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-7">
+          <div *ngFor="let day of weekdays" class="p-2 text-center text-label-sm font-label-sm text-on-surface-variant/70 border-b border-outline-variant/10">
+            {{ day }}
+          </div>
+          <div *ngFor="let day of calendarDays"
+            class="min-h-[90px] p-1.5 border-b border-r border-outline-variant/10 cursor-pointer transition-colors"
+            [class]="!day ? 'bg-surface-container-lowest/50' : isToday(day) ? 'bg-primary/5' : 'hover:bg-surface-container-high/50'"
+            (click)="day && selectDay(day)">
+            <div *ngIf="day" class="text-right px-1">
+              <span class="text-body-xs font-body-xs"
+                [class]="isToday(day) ? 'bg-primary text-on-primary w-6 h-6 rounded-full inline-flex items-center justify-center font-semibold' : 'text-on-surface-variant/70'">
+                {{ day.getDate() }}
+              </span>
+            </div>
+            <div *ngIf="day && getRemindersForDay(day).length > 0" class="mt-0.5 space-y-0.5">
+              <div *ngFor="let r of getRemindersForDay(day).slice(0, 3)"
+                class="text-[10px] leading-tight px-1 py-0.5 rounded truncate"
+                [class]="r.status === 'Termine' ? 'bg-emerald-50 text-emerald-700' : isOverdue(r) ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'">
+                {{ r.title }}
+              </div>
+              <div *ngIf="getRemindersForDay(day).length > 3" class="text-[10px] text-on-surface-variant/50 px-1">
+                +{{ getRemindersForDay(day).length - 3 }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEEK VIEW -->
+      <div *ngIf="currentView === 'week'" class="space-y-md">
+        <div class="flex items-center justify-between mb-md">
+          <button (click)="selectedDate.setDate(selectedDate.getDate() - 7); buildWeek()"
+            class="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="text-title-md font-title-md text-on-surface">
+            {{ weekDays[0].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) }} — {{ weekDays[6].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+          </span>
+          <button (click)="selectedDate.setDate(selectedDate.getDate() + 7); buildWeek()"
+            class="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-7 gap-2">
+          <div *ngFor="let day of weekDays; let i = index"
+            class="bg-surface-container-low rounded-xl border border-outline-variant/20 p-md min-h-[120px]"
+            [class]="isToday(day) ? 'border-primary' : ''">
+            <div class="text-center mb-2">
+              <div class="text-label-sm font-label-sm text-on-surface-variant/70">{{ weekdays[i] }}</div>
+              <div class="text-title-lg font-title-lg"
+                [class]="isToday(day) ? 'text-primary' : 'text-on-surface'">
+                {{ day.getDate() }}
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div *ngFor="let r of getRemindersForDay(day).slice(0, 4)"
+                class="text-[11px] px-2 py-1 rounded-lg truncate cursor-pointer hover:opacity-80 transition-opacity"
+                [class]="r.status === 'Termine' ? 'bg-emerald-50 text-emerald-700' : isOverdue(r) ? 'bg-error/10 text-error' : r.priority === 'Critique' ? 'bg-red-50 text-red-700' : 'bg-primary/10 text-primary'"
+                (click)="openEdit(r)">
+                {{ r.title }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Today & Overdue -->
+    <div class="xl:col-span-1 space-y-md">
+      <div class="bg-surface-container-low rounded-xl border border-outline-variant/20 p-md">
+        <h3 class="text-title-sm font-title-sm text-on-surface mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-[18px] text-primary">today</span>
+          À venir
+        </h3>
+        <div class="space-y-sm" *ngIf="todayReminders.length > 0">
+          <div *ngFor="let r of todayReminders" class="p-sm rounded-lg bg-surface border border-outline-variant/10 hover:shadow-sm transition-shadow cursor-pointer"
+            (click)="openEdit(r)">
+            <div class="flex items-center gap-sm">
+              <span class="material-symbols-outlined text-[14px]" [class]="isOverdue(r) ? 'text-error' : 'text-primary'">{{ typeIcon(r.type) }}</span>
+              <span class="text-label-sm font-label-sm text-on-surface truncate">{{ r.title }}</span>
+            </div>
+            <div class="text-body-xs font-body-xs text-on-surface-variant/60 mt-0.5 pl-5">{{ formatDateTime(r.dueDate) }}</div>
+          </div>
+        </div>
+        <p *ngIf="todayReminders.length === 0" class="text-body-sm font-body-sm text-on-surface-variant/50 text-center py-4">
+          Aucun rappel à venir
+        </p>
+      </div>
+
+      <div class="bg-surface-container-low rounded-xl border border-outline-variant/20 p-md" *ngIf="overdueReminders.length > 0">
+        <h3 class="text-title-sm font-title-sm text-error mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+          En retard
+        </h3>
+        <div class="space-y-sm">
+          <div *ngFor="let r of overdueReminders" class="p-sm rounded-lg bg-error/5 border border-error/10 cursor-pointer hover:shadow-sm transition-shadow"
+            (click)="openEdit(r)">
+            <div class="flex items-center gap-sm">
+              <span class="material-symbols-outlined text-[14px] text-error">{{ typeIcon(r.type) }}</span>
+              <span class="text-label-sm font-label-sm text-on-surface truncate">{{ r.title }}</span>
+            </div>
+            <div class="text-body-xs font-body-xs text-error/70 mt-0.5 pl-5">{{ formatDateTime(r.dueDate) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="bg-surface-container-low rounded-xl border border-outline-variant/20 p-md" *ngIf="stats">
+        <h3 class="text-title-sm font-title-sm text-on-surface mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-[18px] text-primary">bar_chart</span>
+          Résumé
+        </h3>
+        <div class="space-y-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-body-sm font-body-sm text-on-surface-variant/70">Taux de complétion</span>
+            <span class="text-label-sm font-label-sm text-emerald-600">
+              {{ stats.total > 0 ? ((stats.completed / stats.total) * 100 | number:'1.0-0') : 0 }}%
+            </span>
+          </div>
+          <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full transition-all"
+              [style.width.%]="stats.total > 0 ? (stats.completed / stats.total) * 100 : 0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Create/Edit -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click.self)="showModal = false">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-surface-container-low rounded-2xl shadow-2xl w-full max-w-lg p-lg space-y-lg animate-in">
+    <div class="flex items-center justify-between">
+      <h2 class="text-title-lg font-title-lg text-on-surface">{{ isEditing ? 'Modifier le rappel' : 'Nouveau rappel' }}</h2>
+      <button (click)="showModal = false" class="p-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="space-y-md">
+      <div>
+        <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Titre *</label>
+        <input type="text" [(ngModel)]="formData.title"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors"
+          placeholder="Ex: Rappel d'appel client...">
+      </div>
+
+      <div>
+        <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Description</label>
+        <textarea [(ngModel)]="formData.description" rows="3"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors resize-none"
+          placeholder="Détails du rappel..."></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-md">
+        <div>
+          <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Type</label>
+          <select [(ngModel)]="formData.type"
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors">
+            <option value="Appel">Appel</option>
+            <option value="Email">Email</option>
+            <option value="Rendez-vous">Rendez-vous</option>
+            <option value="Relance">Relance</option>
+            <option value="Document">Document</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Priorité</label>
+          <select [(ngModel)]="formData.priority"
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors">
+            <option value="Basse">Basse</option>
+            <option value="Normale">Normale</option>
+            <option value="Haute">Haute</option>
+            <option value="Critique">Critique</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Date & heure *</label>
+        <input type="datetime-local" [(ngModel)]="formData.dueDate"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-label-sm font-label-sm text-on-surface-variant/70 mb-1">Client associé</label>
+        <select [(ngModel)]="formData.clientId"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors">
+          <option [ngValue]="undefined">Aucun client</option>
+          <option *ngFor="let c of clients" [ngValue]="c.id">{{ c.prenom }} {{ c.nom }} ({{ c.codeClient }})</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-sm pt-md border-t border-outline-variant/20">
+      <button (click)="showModal = false"
+        class="px-4 py-2.5 rounded-xl text-label-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors">
+        Annuler
+      </button>
+      <button (click)="save()"
+        class="px-6 py-2.5 rounded-xl text-label-md font-label-md bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm">
+        {{ isEditing ? 'Enregistrer' : 'Créer' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,185 @@
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-2xl">
+  <div>
+    <h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+      {{ editMode ? 'Modifier le Client' : 'Nouveau Client' }}
+    </h2>
+    <p class="text-body-md font-body-md text-on-surface-variant">
+      {{ editMode ? 'Modification du profil client' : 'Enregistrement d\'un nouveau profil client' }}
+    </p>
+  </div>
+</div>
+
+@if (error) {
+<div class="mb-lg p-md bg-error-container text-on-error-container rounded-lg border border-error/20">{{ error }}</div>
+}
+@if (success) {
+<div class="mb-lg p-md bg-primary-container text-on-primary-container rounded-lg border border-primary/20">{{ success }}</div>
+}
+
+@if (loading) {
+<div class="p-xl text-center text-on-surface-variant">
+  <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+</div>
+} @else {
+<div class="max-w-3xl mx-auto">
+  <div class="bg-white rounded-xl border border-outline-variant/30 shadow-xl overflow-hidden flex flex-col">
+    <div class="bg-surface-container-low px-lg py-xl border-b border-outline-variant/20">
+      <div class="relative flex justify-between">
+        <div class="absolute top-5 left-[10%] right-[10%] h-[2px] bg-outline-variant/30 -z-0"></div>
+        <div class="absolute top-5 left-[10%] h-[2px] bg-primary transition-all duration-500 -z-0"
+          [style.width.%]="((currentStep - 1) / 2) * 80"></div>
+        <div class="relative z-10 flex flex-col items-center gap-sm w-1/3">
+          <div [class]="getStepCircleClass(1)">1</div>
+          <span [class]="getStepLabelClass(1)">Identité</span>
+        </div>
+        <div class="relative z-10 flex flex-col items-center gap-sm w-1/3">
+          <div [class]="getStepCircleClass(2)">2</div>
+          <span [class]="getStepLabelClass(2)">Contact</span>
+        </div>
+        <div class="relative z-10 flex flex-col items-center gap-sm w-1/3">
+          <div [class]="getStepCircleClass(3)">3</div>
+          <span [class]="getStepLabelClass(3)">Profession</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-lg md:p-xl flex-1 min-h-[400px]">
+      @if (currentStep === 1) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+        <div class="col-span-full">
+          <h3 class="text-title-md font-title-md text-on-surface mb-xs">Informations Personnelles</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">Veuillez saisir les informations légales du client.</p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Nom <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Dupont" type="text" [(ngModel)]="formData.nom" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Prénom <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Jean" type="text" [(ngModel)]="formData.prenom" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Date de Naissance <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" type="date" [(ngModel)]="formData.dateNaissance" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Sexe <span class="text-error">*</span></label>
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.sexe">
+            <option value="">Sélectionner</option>
+            <option value="M">Masculin</option>
+            <option value="F">Féminin</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-xs col-span-full">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Nationalité <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Française" type="text" [(ngModel)]="formData.nationalite" />
+        </div>
+      </div>
+      }
+
+      @if (currentStep === 2) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+        <div class="col-span-full">
+          <h3 class="text-title-md font-title-md text-on-surface mb-xs">Coordonnées</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">Précisez comment nous pouvons contacter le client.</p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Téléphone <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="+33 6 12 34 56 78" type="tel" [(ngModel)]="formData.telephone" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Email <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="jean.dupont@email.com" type="email" [(ngModel)]="formData.email" />
+        </div>
+        <div class="flex flex-col gap-xs col-span-full">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Adresse <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="15 Avenue des Champs-Élysées" type="text" [(ngModel)]="formData.adresse" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Ville <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Paris" type="text" [(ngModel)]="formData.ville" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Statut</label>
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.statut">
+            <option value="Actif">Actif</option>
+            <option value="EnAttente">En attente</option>
+            <option value="Bloqué">Bloqué</option>
+          </select>
+        </div>
+      </div>
+      }
+
+      @if (currentStep === 3) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+        <div class="col-span-full">
+          <h3 class="text-title-md font-title-md text-on-surface mb-xs">Informations Professionnelles</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">Détails professionnels du client.</p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Profession</label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Médecin" type="text" [(ngModel)]="formData.detail!.profession" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Employeur</label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Hôpital Paris" type="text" [(ngModel)]="formData.detail!.employeur" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Secteur d'Activité</label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Santé" type="text" [(ngModel)]="formData.detail!.secteurActivite" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Revenu Mensuel (€)</label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="4500" type="number" step="0.01" [(ngModel)]="formData.detail!.revenuMensuel" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Situation Familiale</label>
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.detail!.situationFamiliale">
+            <option value="">Sélectionner</option>
+            <option value="Célibataire">Célibataire</option>
+            <option value="Marié(e)">Marié(e)</option>
+            <option value="Divorcé(e)">Divorcé(e)</option>
+            <option value="Veuf(ve)">Veuf(ve)</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Type de Résidence</label>
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.detail!.typeResidence">
+            <option value="R">Résident (R)</option>
+            <option value="NR">Non Résident (NR)</option>
+          </select>
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="p-lg md:p-xl bg-surface-container-low border-t border-outline-variant/30 flex justify-between items-center">
+      <button class="flex items-center gap-sm px-xl py-sm text-on-surface-variant font-label-md text-label-md rounded-lg border border-outline-variant hover:bg-white transition-all"
+        [class.invisible]="currentStep === 1" (click)="prevStep()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Précédent
+      </button>
+
+      @if (currentStep < 3) {
+      <button class="flex items-center gap-sm px-xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
+        (click)="nextStep()" [disabled]="!isStepValid" [class.opacity-50]="!isStepValid">
+        Suivant
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+      }
+
+      @if (currentStep === 3) {
+      <button class="flex items-center gap-sm px-2xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
+        (click)="onSubmit()" [disabled]="saving" [class.opacity-50]="saving">
+        @if (saving) {
+        <span class="material-symbols-outlined animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined">check</span>
+        }
+        {{ editMode ? 'Enregistrer les modifications' : 'Confirmer la création' }}
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}

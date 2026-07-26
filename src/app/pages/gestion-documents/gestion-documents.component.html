@@ -1,0 +1,467 @@
+<div class="doc-page">
+  <div class="doc-container">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header class="doc-header">
+      <div class="flex items-center gap-2 text-xs mb-1">
+        <span class="text-on-surface-variant">Accueil</span>
+        <span class="material-symbols-outlined text-[14px] text-on-surface-variant/40">chevron_right</span>
+        <span class="text-primary font-semibold">Documents</span>
+      </div>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="doc-title">Gestion Documentaire</h1>
+          <p class="doc-subtitle">Consultez, téléversez et validez les documents de vos clients.</p>
+        </div>
+        @if (selectedClient) {
+        <button class="btn-primary" (click)="toggleUpload()">
+          <span class="material-symbols-outlined text-[18px]">{{ showUpload ? 'close' : 'add' }}</span>
+          {{ showUpload ? 'Fermer' : 'Nouveau document' }}
+        </button>
+        }
+      </div>
+    </header>
+
+    <!-- ═══════════════ ALERTS ═══════════════ -->
+    @if (error) {
+    <div class="alert alert-error">
+      <span class="material-symbols-outlined text-[18px] text-red-500">error</span>
+      <span class="text-sm font-medium text-red-700">{{ error }}</span>
+    </div>
+    }
+    @if (success) {
+    <div class="alert alert-success">
+      <span class="material-symbols-outlined text-[18px] text-emerald-500">check_circle</span>
+      <span class="text-sm font-medium text-emerald-700">{{ success }}</span>
+    </div>
+    }
+
+    <!-- ═══════════════ SEARCH BAR ═══════════════ -->
+    <div class="search-section">
+      <div class="search-card">
+        <div class="search-card-header">
+          <span class="material-symbols-outlined text-[16px] text-primary">person_search</span>
+          <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Sélectionner un client</span>
+        </div>
+        <div class="search-card-body">
+          <div class="search-input-wrap">
+            <span class="material-symbols-outlined search-input-icon">search</span>
+            <input
+              [(ngModel)]="searchTerm"
+              (input)="searchTerm ? null : selectedClient = null"
+              class="search-input"
+              placeholder="Rechercher par code client, nom ou prénom..."
+              autocomplete="off" />
+            @if (searchTerm && !selectedClient) {
+            <button class="search-clear" (click)="searchTerm = ''; selectedClient = null">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
+            }
+          </div>
+          @if (searchTerm && !selectedClient) {
+          <div class="search-dropdown">
+            @for (c of filteredClients; track c.id) {
+            <button class="search-result" (click)="selectClient(c)">
+              <div class="search-result-avatar">{{ getInitials(c.prenom + ' ' + c.nom) }}</div>
+              <div class="search-result-info">
+                <span class="search-result-name">{{ c.prenom }} {{ c.nom }}</span>
+                <span class="search-result-code">{{ c.codeClient }}</span>
+              </div>
+              <span class="material-symbols-outlined text-[16px] text-on-surface-variant/30">arrow_forward</span>
+            </button>
+            }
+            @if (filteredClients.length === 0) {
+            <div class="search-empty">
+              <span class="material-symbols-outlined text-[24px] text-on-surface-variant/30">search_off</span>
+              <span>Aucun client trouvé pour "{{ searchTerm }}"</span>
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SELECTED CLIENT INFO ═══════════════ -->
+    @if (selectedClient) {
+    <div class="client-banner">
+      <div class="client-banner-avatar">{{ getInitials(selectedClient.prenom + ' ' + selectedClient.nom) }}</div>
+      <div class="client-banner-info">
+        <h2 class="client-banner-name">{{ selectedClient.prenom }} {{ selectedClient.nom }}</h2>
+        <div class="client-banner-meta">
+          <span class="client-banner-tag">
+            <span class="material-symbols-outlined text-[12px]">badge</span>
+            {{ selectedClient.codeClient }}
+          </span>
+          @if (selectedClient.ville) {
+          <span class="client-banner-tag">
+            <span class="material-symbols-outlined text-[12px]">location_city</span>
+            {{ selectedClient.ville }}
+          </span>
+          }
+          @if (selectedClient.email) {
+          <span class="client-banner-tag">
+            <span class="material-symbols-outlined text-[12px]">mail</span>
+            {{ selectedClient.email }}
+          </span>
+          }
+        </div>
+      </div>
+      <a [routerLink]="['/detail-client', selectedClient.id]" class="client-banner-link">
+        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+        Voir le dossier
+      </a>
+    </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ═══                MAIN CONTENT                    ═══ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    @if (!selectedClient) {
+
+    <!-- Empty state: no client -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <span class="material-symbols-outlined text-[48px]">folder_off</span>
+      </div>
+      <h2 class="empty-state-title">Aucun client sélectionné</h2>
+      <p class="empty-state-desc">
+        Recherchez un client dans la barre ci-dessus pour consulter et gérer l'ensemble de ses documents.
+      </p>
+      <div class="empty-state-hints">
+        <div class="empty-hint">
+          <span class="material-symbols-outlined text-[20px] text-primary">search</span>
+          <span>Entrez un code client, un nom ou un prénom</span>
+        </div>
+        <div class="empty-hint">
+          <span class="material-symbols-outlined text-[20px] text-emerald-600">upload_file</span>
+          <span>Puis déposez de nouveaux documents</span>
+        </div>
+        <div class="empty-hint">
+          <span class="material-symbols-outlined text-[20px] text-violet-600">verified</span>
+          <span>Validez ou rejetez les documents en attente</span>
+        </div>
+      </div>
+    </div>
+
+    } @else if (loading) {
+
+    <!-- Loading -->
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des documents...</p>
+    </div>
+
+    } @else {
+
+    <!-- ═══ Upload Panel ═══ -->
+    @if (showUpload) {
+    <div class="upload-panel">
+      <div class="upload-panel-header">
+        <span class="material-symbols-outlined text-[20px] text-primary">upload_file</span>
+        <div>
+          <h3 class="text-sm font-bold text-on-surface">Déposer un document</h3>
+          <p class="text-xs text-on-surface-variant">Ajoutez un nouveau fichier au dossier du client</p>
+        </div>
+      </div>
+      <div class="upload-panel-body">
+        <div class="upload-form">
+          <div class="upload-field">
+            <label class="upload-label">
+              <span class="material-symbols-outlined text-[14px]">category</span>
+              Type de document
+            </label>
+            <div class="select-wrap">
+              <select [(ngModel)]="uploadType" class="upload-select">
+                <option value="">Choisir un type...</option>
+                <option value="CIN">Pièce d'identité (CIN)</option>
+                <option value="Contrat">Contrat</option>
+                <option value="Justificatif">Justificatif de domicile</option>
+                <option value="RIB">RIB / Relevé d'identité bancaire</option>
+                <option value="Passport">Passeport</option>
+                <option value="Autre">Autre document</option>
+              </select>
+              <span class="material-symbols-outlined select-arrow">expand_more</span>
+            </div>
+          </div>
+          <div class="upload-field">
+            <label class="upload-label">
+              <span class="material-symbols-outlined text-[14px]">attach_file</span>
+              Fichier
+            </label>
+            @if (!uploadFile) {
+            <div class="upload-dropzone" (click)="fileInput.click()">
+              <input #fileInput class="hidden" type="file" (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx" />
+              <span class="material-symbols-outlined text-[28px] text-on-surface-variant/30">cloud_upload</span>
+              <p class="text-xs font-medium text-on-surface-variant mt-1">Cliquez ou glissez un fichier</p>
+              <p class="text-[10px] text-on-surface-variant/40 mt-0.5">PDF, JPG, PNG, DOC — Max 10 Mo</p>
+            </div>
+            } @else {
+            <div class="upload-file-preview">
+              <div class="upload-file-icon">
+                <span class="material-symbols-outlined text-primary text-[20px]">description</span>
+              </div>
+              <div class="upload-file-info">
+                <p class="text-xs font-semibold text-on-surface truncate">{{ uploadFile.name }}</p>
+                <p class="text-[10px] text-on-surface-variant">{{ (uploadFile.size / 1024).toFixed(1) }} Ko · {{ uploadFile.name.split('.').pop()?.toUpperCase() }}</p>
+              </div>
+              <button class="upload-file-remove" (click)="uploadFile = null">
+                <span class="material-symbols-outlined text-[14px]">close</span>
+              </button>
+            </div>
+            }
+          </div>
+          <div class="upload-actions">
+            <button class="btn-primary-sm" (click)="uploadDocument()" [disabled]="!uploadType || !uploadFile || uploading">
+              @if (uploading) {
+              <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+              Envoi...
+              } @else {
+              <span class="material-symbols-outlined text-[16px]">upload</span>
+              Déposer
+              }
+            </button>
+            <button class="btn-ghost-sm" (click)="toggleUpload()">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ═══ Stats ═══ -->
+    @if (documents.length > 0) {
+    <div class="doc-stats">
+      <button class="stat-card" [class.stat-card-active]="!filterStatut" (click)="setFilterStatut('')">
+        <div class="stat-card-icon bg-primary/10">
+          <span class="material-symbols-outlined text-[18px] text-primary">folder</span>
+        </div>
+        <div class="stat-card-value">{{ total }}</div>
+        <div class="stat-card-label">Total</div>
+      </button>
+      <button class="stat-card" [class.stat-card-active]="filterStatut === 'En attente'" (click)="setFilterStatut('En attente')">
+        <div class="stat-card-icon bg-amber-50">
+          <span class="material-symbols-outlined text-[18px] text-amber-600">pending</span>
+        </div>
+        <div class="stat-card-value">{{ getStatutCount('En attente') }}</div>
+        <div class="stat-card-label">En attente</div>
+      </button>
+      <button class="stat-card" [class.stat-card-active]="filterStatut === 'Validé'" (click)="setFilterStatut('Validé')">
+        <div class="stat-card-icon bg-emerald-50">
+          <span class="material-symbols-outlined text-[18px] text-emerald-600">check_circle</span>
+        </div>
+        <div class="stat-card-value">{{ getStatutCount('Validé') }}</div>
+        <div class="stat-card-label">Validés</div>
+      </button>
+      <button class="stat-card" [class.stat-card-active]="filterStatut === 'Rejeté'" (click)="setFilterStatut('Rejeté')">
+        <div class="stat-card-icon bg-red-50">
+          <span class="material-symbols-outlined text-[18px] text-red-600">cancel</span>
+        </div>
+        <div class="stat-card-value">{{ getStatutCount('Rejeté') }}</div>
+        <div class="stat-card-label">Rejetés</div>
+      </button>
+    </div>
+    }
+
+    <!-- ═══ Document List ═══ -->
+    <div class="doc-list-panel">
+      <div class="doc-list-header">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-primary">description</span>
+          <span class="text-sm font-bold text-on-surface">Documents</span>
+          <span class="doc-count-badge">{{ filteredTotal }}</span>
+        </div>
+        <div class="doc-list-controls">
+          <label class="text-[11px] font-medium text-on-surface-variant">Afficher :</label>
+          <select [(ngModel)]="pageSize" (change)="changePageSize($event)" class="page-select">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="doc-list-filters">
+        <button class="filter-chip" [class.filter-chip-active]="!filterStatut" (click)="setFilterStatut('')">
+          Tous
+        </button>
+        <button class="filter-chip filter-chip-pending" [class.filter-chip-active]="filterStatut === 'En attente'" (click)="setFilterStatut('En attente')">
+          <span class="material-symbols-outlined text-[12px]">pending</span>
+          En attente
+          <span class="filter-chip-count">{{ getStatutCount('En attente') }}</span>
+        </button>
+        <button class="filter-chip filter-chip-validated" [class.filter-chip-active]="filterStatut === 'Validé'" (click)="setFilterStatut('Validé')">
+          <span class="material-symbols-outlined text-[12px]">check_circle</span>
+          Validés
+          <span class="filter-chip-count">{{ getStatutCount('Validé') }}</span>
+        </button>
+        <button class="filter-chip filter-chip-rejected" [class.filter-chip-active]="filterStatut === 'Rejeté'" (click)="setFilterStatut('Rejeté')">
+          <span class="material-symbols-outlined text-[12px]">cancel</span>
+          Rejetés
+          <span class="filter-chip-count">{{ getStatutCount('Rejeté') }}</span>
+        </button>
+      </div>
+
+      @if (filteredDocuments.length === 0) {
+      <!-- Empty list -->
+      <div class="doc-list-empty">
+        <span class="material-symbols-outlined text-[40px] text-on-surface-variant/20">inbox</span>
+        @if (filterStatut) {
+        <p class="text-sm font-semibold text-on-surface">Aucun document « {{ filterStatut }} »</p>
+        <p class="text-xs text-on-surface-variant">Aucun document avec ce statut pour ce client.</p>
+        <button class="btn-ghost-xs" (click)="setFilterStatut('')">Voir tous les documents</button>
+        } @else {
+        <p class="text-sm font-semibold text-on-surface">Aucun document</p>
+        <p class="text-xs text-on-surface-variant">Ce client n'a pas encore de documents.</p>
+        <button class="btn-primary-xs" (click)="toggleUpload()">
+          <span class="material-symbols-outlined text-[14px]">add</span>
+          Déposer un document
+        </button>
+        }
+      </div>
+      } @else {
+
+      <!-- Document rows -->
+      <div class="doc-rows">
+        @for (doc of filteredDocuments; track doc.id) {
+        <div class="doc-row">
+          <div class="doc-row-icon" [ngClass]="{
+            'doc-icon-pending': doc.statutValidation === 'En attente',
+            'doc-icon-validated': doc.statutValidation === 'Validé',
+            'doc-icon-rejected': doc.statutValidation === 'Rejeté'
+          }">
+            <span class="material-symbols-outlined text-[20px]">{{ getIcon(doc.typeDocument) }}</span>
+          </div>
+          <div class="doc-row-info">
+            <div class="doc-row-top">
+              <span class="doc-row-type">{{ doc.typeDocument }}</span>
+              <span class="doc-status-badge" [ngClass]="{
+                'doc-status-pending': doc.statutValidation === 'En attente',
+                'doc-status-validated': doc.statutValidation === 'Validé',
+                'doc-status-rejected': doc.statutValidation === 'Rejeté'
+              }">
+                @switch (doc.statutValidation) {
+                  @case ('Validé') { <span class="material-symbols-outlined text-[10px]">check</span> }
+                  @case ('Rejeté') { <span class="material-symbols-outlined text-[10px]">close</span> }
+                  @default { <span class="material-symbols-outlined text-[10px]">schedule</span> }
+                }
+                {{ doc.statutValidation }}
+              </span>
+            </div>
+            <div class="doc-row-meta">
+              <span class="doc-meta-item">
+                <span class="material-symbols-outlined text-[12px]">description</span>
+                {{ doc.nomFichier }}
+              </span>
+              <span class="doc-meta-sep">·</span>
+              <span class="doc-meta-item">
+                <span class="material-symbols-outlined text-[12px]">calendar_today</span>
+                {{ doc.dateAjout | date:'dd MMM yyyy' }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-row-actions">
+            @if (documentService.isPreviewable(doc.nomFichier)) {
+            <button class="doc-action doc-action-preview" (click)="previewDocument(doc)" title="Aperçu">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+            </button>
+            }
+            <button class="doc-action doc-action-download" (click)="downloadDocument(doc.id)" title="Télécharger">
+              <span class="material-symbols-outlined text-[16px]">download</span>
+            </button>
+            @if ((authService.hasRole('Admin') || authService.hasRole('Superviseur')) && doc.statutValidation === 'En attente') {
+            <button class="doc-action doc-action-validate" (click)="validateDocument(doc.id)" title="Valider">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            </button>
+            <button class="doc-action doc-action-reject" (click)="rejectDocument(doc.id)" title="Rejeter">
+              <span class="material-symbols-outlined text-[16px]">block</span>
+            </button>
+            }
+            @if (authService.hasRole('Admin')) {
+            <button class="doc-action doc-action-delete" (click)="deleteDocument(doc.id)" title="Supprimer">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1 && !filterStatut) {
+      <div class="doc-pagination">
+        <span class="text-xs text-on-surface-variant">
+          <span class="font-semibold text-on-surface">{{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, total) }}</span>
+          sur {{ total }} documents
+        </span>
+        <div class="pagination-controls">
+          <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">
+            <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+          </button>
+          @for (p of pages; track p) {
+          <button class="page-btn" [class.page-btn-active]="p === currentPage" (click)="goToPage(p)">
+            {{ p }}
+          </button>
+          }
+          <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">
+            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+      }
+
+      }
+    </div>
+
+    }
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══               PREVIEW MODAL                        ═══ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (showPreview) {
+<div class="preview-overlay" (click)="closePreview()">
+  <div class="preview-modal" (click)="$event.stopPropagation()">
+    <div class="preview-header">
+      <div class="preview-header-info">
+        <div class="preview-header-icon">
+          <span class="material-symbols-outlined text-[20px]">visibility</span>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-on-surface truncate max-w-[300px]">{{ previewFilename }}</h3>
+          <p class="text-[11px] text-on-surface-variant">Aperçu du document</p>
+        </div>
+      </div>
+      <div class="preview-header-actions">
+        <button class="preview-btn-action" (click)="downloadDocument(previewDocId)" title="Télécharger">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+        </button>
+        <button class="preview-btn-close" (click)="closePreview()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="preview-body">
+      @if (previewLoading) {
+      <div class="preview-loading">
+        <div class="loading-spinner"></div>
+        <p class="text-xs text-on-surface-variant mt-2">Chargement de l'aperçu...</p>
+      </div>
+      } @else if (previewError) {
+      <div class="preview-error">
+        <span class="material-symbols-outlined text-[40px] text-red-400">error</span>
+        <p class="text-sm text-on-surface mt-2">{{ previewError }}</p>
+      </div>
+      } @else if (isPreviewPdf) {
+      <iframe [src]="previewUrl" class="preview-iframe"></iframe>
+      } @else if (isPreviewImage) {
+      <div class="preview-image-wrap">
+        <img [src]="previewUrl" class="preview-image" />
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}

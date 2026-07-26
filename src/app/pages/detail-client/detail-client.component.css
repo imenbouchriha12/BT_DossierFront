@@ -1,0 +1,136 @@
+/* ── Minimal icon-only action buttons ────────────────────────────────── */
+
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.action-icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.action-icon-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Primary — navy icon */
+
+.action-icon-primary {
+  border-color: #c7d2e8;
+  background: #f0f3fa;
+  color: #1a3a8f;
+}
+
+.action-icon-primary:hover {
+  border-color: #a8b8d8;
+  background: #e4eaf6;
+}
+
+/* Green — unblock */
+
+.action-icon-green {
+  border-color: #c3e6d5;
+  background: #eef8f2;
+  color: #1b7a4a;
+}
+
+.action-icon-green:hover {
+  border-color: #9fd4bb;
+  background: #ddf2e6;
+}
+
+/* Purple — portal */
+
+.action-icon-purple {
+  border-color: #d5cde8;
+  background: #f3f0fa;
+  color: #6b4fad;
+}
+
+.action-icon-purple:hover {
+  border-color: #b8abd8;
+  background: #ebe6f5;
+}
+
+/* Red — block */
+
+.action-icon-red {
+  border-color: #e8c8cb;
+  background: #fdf0f1;
+  color: #c9303e;
+}
+
+.action-icon-red:hover {
+  border-color: #d9a4a8;
+  background: #fbe4e6;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────── */
+
+.dark .action-icon-btn {
+  background: var(--surface-container-low);
+  border-color: var(--outline-variant);
+}
+
+.dark .action-icon-primary {
+  border-color: rgba(91, 127, 214, 0.3);
+  background: rgba(91, 127, 214, 0.1);
+  color: #8aa6e8;
+}
+
+.dark .action-icon-primary:hover {
+  background: rgba(91, 127, 214, 0.18);
+  border-color: rgba(91, 127, 214, 0.45);
+}
+
+.dark .action-icon-green {
+  border-color: rgba(46, 166, 106, 0.3);
+  background: rgba(46, 166, 106, 0.1);
+  color: #5cc98a;
+}
+
+.dark .action-icon-green:hover {
+  background: rgba(46, 166, 106, 0.18);
+  border-color: rgba(46, 166, 106, 0.45);
+}
+
+.dark .action-icon-purple {
+  border-color: rgba(149, 120, 212, 0.3);
+  background: rgba(149, 120, 212, 0.1);
+  color: #b49be0;
+}
+
+.dark .action-icon-purple:hover {
+  background: rgba(149, 120, 212, 0.18);
+  border-color: rgba(149, 120, 212, 0.45);
+}
+
+.dark .action-icon-red {
+  border-color: rgba(232, 96, 110, 0.3);
+  background: rgba(232, 96, 110, 0.1);
+  color: #f0808c;
+}
+
+.dark .action-icon-red:hover {
+  background: rgba(232, 96, 110, 0.18);
+  border-color: rgba(232, 96, 110, 0.45);
+}

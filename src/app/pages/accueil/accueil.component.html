@@ -1,0 +1,458 @@
+<header
+  class="bg-surface/70 backdrop-blur-xl docked full-width top-0 sticky z-50 border-b border-outline-variant/30 shadow-sm"
+>
+  <div
+    class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16"
+  >
+    <div class="text-title-lg font-title-lg font-black text-primary">
+      GestionBanque
+    </div>
+    <nav class="hidden md:flex items-center gap-xl">
+      <a
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+        href="#fonctionnalites"
+        >Fonctionnalités</a
+      >
+      <a
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+        href="#securite"
+        >Sécurité</a
+      >
+      <a
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+        href="#apropos"
+        >À propos</a
+      >
+      <a
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+        href="#contact"
+        >Contact</a
+      >
+    </nav>
+    <div class="flex items-center gap-md">
+      <div class="flex items-center gap-sm">
+        <span
+          class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors"
+          >notifications</span
+        >
+        <span
+          class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors"
+          >account_circle</span
+        >
+      </div>
+      <button
+        class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all"
+        routerLink="/connexion"
+      >
+        Commencer
+      </button>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
+    <div
+      class="absolute inset-0 bg-gradient-to-b from-transparent to-background/50"
+    ></div>
+    <div
+      class="relative px-margin-desktop max-w-container-max mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-xl items-center"
+    >
+      <div class="space-y-lg reveal active">
+        <h1
+          class="text-display-lg font-display-lg leading-tight text-on-background"
+        >
+          La gestion intelligente de vos
+          <span class="text-primary">dossiers clients</span> bancaires
+        </h1>
+        <p class="text-body-lg font-body-lg text-on-surface-variant max-w-lg">
+          Centralisez, sécurisez et accélérez le traitement de vos documents
+          financiers grâce à notre plateforme conforme RGPD de nouvelle
+          génération.
+        </p>
+        <div class="flex flex-wrap gap-md">
+          <button
+            class="bg-primary text-on-primary px-xl py-md rounded-xl font-title-md text-title-md shadow-[0_0_20px_-5px_rgba(29,78,216,0.5)] hover:shadow-[0_0_30px_-5px_rgba(29,78,216,0.7)] transition-all flex items-center gap-sm"
+            routerLink="/connexion"
+          >
+            Accéder à la plateforme
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+          <button
+            class="border border-outline-variant px-xl py-md rounded-xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-variant/20 transition-all"
+          >
+            En savoir plus
+          </button>
+        </div>
+      </div>
+      <div
+        class="relative hidden lg:block reveal active"
+        style="transition-delay: 200ms"
+      >
+        <div
+          class="relative z-10 p-sm bg-white rounded-2xl shadow-2xl border border-outline-variant/30 transform perspective-1000 rotate-y-[-5deg]"
+        >
+          <img
+            class="rounded-xl w-full"
+            alt="Dashboard UI mockup"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVFxoTUtTaBlBwW1Q00L9uM5jJkSqWhMAo-OuI5ocINLVB2aO3wLtWemRbH6TiM8FWCwPaiCTdr3t0JlUTDZ_XBNeqTVhfFOQfFqIaCG5KFNb6zosut8Us7-2dG78U2FCF7MB4Eva0m9_4o20GGxPWVQlheqIbwAYuBGsFLmjgr3U_SLV59jKVpRIG0Xai0HXocRWEg61bnvs_bqWzGR2NswSQ208AuejXn4mz06LLFHVD95kaNzPc7CcW_6JhkvIgL1d_l5l0BtU"
+          />
+          <div
+            class="absolute -top-12 -left-8 glass-card p-md rounded-xl shadow-xl border border-white/50 animate-float"
+          >
+            <div class="flex items-center gap-sm">
+              <div
+                class="w-10 h-10 bg-surface-container-high rounded-full flex items-center justify-center"
+              >
+                <span
+                  class="material-symbols-outlined text-primary"
+                  style="font-variation-settings: 'FILL' 1"
+                  >verified</span
+                >
+              </div>
+              <div>
+                <div class="text-label-md font-label-md">Dossier Validé</div>
+                <div class="text-label-sm font-label-sm text-on-surface-variant">
+                  Client #4920
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="absolute -bottom-8 -right-8 glass-card p-md rounded-xl shadow-xl border border-white/50 animate-float"
+            style="animation-delay: 1s"
+          >
+            <div class="flex items-center gap-sm">
+              <span class="material-symbols-outlined text-primary"
+                >trending_up</span
+              >
+              <div class="text-title-md font-title-md">+24% Efficacité</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="apropos" class="py-xl bg-surface-container-low border-y border-outline-variant/20 scroll-mt-20">
+    <div
+      class="px-margin-desktop max-w-container-max mx-auto flex flex-wrap justify-center md:justify-between gap-xl"
+    >
+      <div class="flex flex-col items-center md:items-start">
+        <span class="text-headline-md font-headline-md text-primary"
+          >+10,000</span
+        >
+        <span
+          class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
+          >dossiers traités</span
+        >
+      </div>
+      <div class="flex flex-col items-center md:items-start">
+        <span class="text-headline-md font-headline-md text-primary">100%</span>
+        <span
+          class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
+          >traçabilité auditée</span
+        >
+      </div>
+      <div class="flex flex-col items-center md:items-start">
+        <span
+          class="flex items-center gap-sm text-headline-md font-headline-md text-primary"
+        >
+          RGPD
+          <span
+            class="material-symbols-outlined text-primary"
+            style="font-variation-settings: 'FILL' 1"
+            >security</span
+          >
+        </span>
+        <span
+          class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
+          >Conformité totale</span
+        >
+      </div>
+      <div class="flex flex-col items-center md:items-start">
+        <span class="text-headline-md font-headline-md text-primary">24/7</span>
+        <span
+          class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
+          >Support prioritaire</span
+        >
+      </div>
+    </div>
+  </section>
+  <section id="fonctionnalites" class="py-2xl bg-white scroll-mt-20">
+    <div class="px-margin-desktop max-w-container-max mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-2xl reveal">
+        <h2 class="text-headline-lg font-headline-lg text-on-background mb-md">
+          L'excellence opérationnelle pour vos équipes
+        </h2>
+        <p class="text-body-lg font-body-lg text-on-surface-variant">
+          Une suite d'outils conçue pour les professionnels exigeants du secteur
+          bancaire et financier.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg">
+        <div
+          class="group p-xl bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/40 hover:-translate-y-2 transition-all duration-300 reveal"
+          style="transition-delay: 100ms"
+        >
+          <div
+            class="w-14 h-14 bg-surface-container/50 rounded-full flex items-center justify-center mb-xl group-hover:bg-primary group-hover:text-white transition-colors"
+          >
+            <span
+              class="material-symbols-outlined text-primary text-3xl group-hover:text-white"
+              >hub</span
+            >
+          </div>
+          <h3 class="text-title-md font-title-md mb-sm">Centralisation</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">
+            Regroupez toutes les pièces justificatives sur une interface
+            unifiée et collaborative.
+          </p>
+        </div>
+        <div
+          class="group p-xl bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/40 hover:-translate-y-2 transition-all duration-300 reveal"
+          style="transition-delay: 200ms"
+        >
+          <div
+            class="w-14 h-14 bg-surface-container/50 rounded-full flex items-center justify-center mb-xl group-hover:bg-primary group-hover:text-white transition-colors"
+          >
+            <span
+              class="material-symbols-outlined text-primary text-3xl group-hover:text-white"
+              >description</span
+            >
+          </div>
+          <h3 class="text-title-md font-title-md mb-sm">Documents</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">
+            Indexation intelligente et reconnaissance automatique des types de
+            documents.
+          </p>
+        </div>
+        <div
+          class="group p-xl bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/40 hover:-translate-y-2 transition-all duration-300 reveal"
+          style="transition-delay: 300ms"
+        >
+          <div
+            class="w-14 h-14 bg-surface-container/50 rounded-full flex items-center justify-center mb-xl group-hover:bg-primary group-hover:text-white transition-colors"
+          >
+            <span
+              class="material-symbols-outlined text-primary text-3xl group-hover:text-white"
+              >sync_alt</span
+            >
+          </div>
+          <h3 class="text-title-md font-title-md mb-sm">Import/Export</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">
+            Connectez vos outils existants via API ou imports massifs sécurisés.
+          </p>
+        </div>
+        <div
+          class="group p-xl bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/40 hover:-translate-y-2 transition-all duration-300 reveal"
+          style="transition-delay: 400ms"
+        >
+          <div
+            class="w-14 h-14 bg-surface-container/50 rounded-full flex items-center justify-center mb-xl group-hover:bg-primary group-hover:text-white transition-colors"
+          >
+            <span
+              class="material-symbols-outlined text-primary text-3xl group-hover:text-white"
+              >history</span
+            >
+          </div>
+          <h3 class="text-title-md font-title-md mb-sm">Traçabilité</h3>
+          <p class="text-body-md font-body-md text-on-surface-variant">
+            Historique complet de toutes les actions effectuées pour un audit
+            simplifié.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="py-2xl bg-surface">
+    <div class="px-margin-desktop max-w-container-max mx-auto">
+      <div class="text-center mb-2xl reveal">
+        <h2 class="text-headline-lg font-headline-lg text-on-background">
+          Comment ça marche ?
+        </h2>
+      </div>
+      <div class="relative">
+        <div
+          class="absolute top-1/2 left-0 w-full h-1 bg-outline-variant/20 -translate-y-1/2 hidden lg:block"
+        ></div>
+        <div
+          class="absolute top-1/2 left-0 h-1 bg-primary w-0 -translate-y-1/2 hidden lg:block transition-all duration-1000 ease-in-out"
+          id="timeline-progress"
+        ></div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-xl relative z-10">
+          <div class="text-center reveal" style="transition-delay: 100ms">
+            <div
+              class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-lg ring-4 ring-white"
+            >
+              1
+            </div>
+            <h4 class="text-title-md font-title-md mb-sm">Connexion</h4>
+            <p class="text-body-md font-body-md text-on-surface-variant px-sm">
+              Importez vos clients et leurs structures.
+            </p>
+          </div>
+          <div class="text-center reveal" style="transition-delay: 200ms">
+            <div
+              class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-lg ring-4 ring-white"
+            >
+              2
+            </div>
+            <h4 class="text-title-md font-title-md mb-sm">Collecte</h4>
+            <p class="text-body-md font-body-md text-on-surface-variant px-sm">
+              Récupérez les justificatifs par portail sécurisé.
+            </p>
+          </div>
+          <div class="text-center reveal" style="transition-delay: 300ms">
+            <div
+              class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-lg ring-4 ring-white"
+            >
+              3
+            </div>
+            <h4 class="text-title-md font-title-md mb-sm">Vérification</h4>
+            <p class="text-body-md font-body-md text-on-surface-variant px-sm">
+              Contrôle assisté par IA de la validité des pièces.
+            </p>
+          </div>
+          <div class="text-center reveal" style="transition-delay: 400ms">
+            <div
+              class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-lg ring-4 ring-white"
+            >
+              4
+            </div>
+            <h4 class="text-title-md font-title-md mb-sm">Clôture</h4>
+            <p class="text-body-md font-body-md text-on-surface-variant px-sm">
+              Archivez ou transférez le dossier complet.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="securite" class="py-2xl bg-white overflow-hidden scroll-mt-20">
+    <div class="px-margin-desktop max-w-container-max mx-auto">
+      <div class="flex flex-col lg:flex-row items-center gap-2xl">
+        <div class="lg:w-1/2 reveal">
+          <div
+            class="inline-flex items-center gap-sm px-md py-xs bg-error-container text-on-error-container rounded-full text-label-sm font-label-sm mb-lg"
+          >
+            <span class="material-symbols-outlined text-[14px]">lock</span>
+            HAUTE SÉCURITÉ
+          </div>
+          <h2 class="text-headline-lg font-headline-lg text-on-background mb-lg">
+            Un coffre-fort numérique pour vos actifs les plus précieux
+          </h2>
+          <div class="space-y-lg">
+            <div class="flex gap-md">
+              <div
+                class="shrink-0 w-10 h-10 bg-surface-container-high rounded-lg flex items-center justify-center"
+              >
+                <span class="material-symbols-outlined text-primary">key</span>
+              </div>
+              <div>
+                <h4 class="text-title-md font-title-md">
+                  Chiffrement de bout en bout
+                </h4>
+                <p class="text-body-md font-body-md text-on-surface-variant">
+                  Vos données sont chiffrées en transit (TLS 1.3) et au repos
+                  (AES-256).
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-md">
+              <div
+                class="shrink-0 w-10 h-10 bg-surface-container-high rounded-lg flex items-center justify-center"
+              >
+                <span class="material-symbols-outlined text-primary"
+                  >verified_user</span
+                >
+              </div>
+              <div>
+                <h4 class="text-title-md font-title-md">
+                  Accès basés sur les rôles (RBAC)
+                </h4>
+                <p class="text-body-md font-body-md text-on-surface-variant">
+                  Contrôlez précisément qui peut voir ou modifier chaque
+                  dossier.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="lg:w-1/2 grid grid-cols-2 gap-md reveal"
+          style="transition-delay: 200ms"
+        >
+          <div
+            class="p-lg bg-surface rounded-2xl border border-outline-variant/30 flex flex-col items-center text-center"
+          >
+            <div
+              class="w-24 h-24 bg-contain bg-no-repeat mb-md"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHUWN4E55QeiuxvjvpdJn89DT4T3tXnREDAYW8A1X9HjWLvJDOzTtzcpUqJja3w-DCE_xFEWUg91c0__h1Hh5BXCAygz6qDrX8kOtCYIpBus6Xs-p1E9p1sQIBAaUmKtKhEE5BNrRALxOvTKkliUkKjveqwesaSWmhRc3pohqQGUq8nEVgz-TtQg4apQBuAm7AtEiP0w2JzjMLp0Cbgb4Maaz3qp6ytGjO5RDRi0B53eEVvfj8osCm1nOyd2wB6idTqWz5x5-ayog')"
+            ></div>
+            <span class="text-label-sm font-label-sm font-bold">AES-256</span>
+          </div>
+          <div
+            class="p-lg bg-surface rounded-2xl border border-outline-variant/30 flex flex-col items-center text-center"
+          >
+            <div
+              class="w-24 h-24 bg-contain bg-no-repeat mb-md"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAyunst2iPIPv2-Rgoz4nNGBxKl9zHFDDb19XDhFk3o5jKvsKtU5JGKbvhY3hOkHYSRHE23-28UlHjfCBB-frDamp2iJidQeUOfeXtXpEPSZS-_LoKxOX3VGXge5_KAboYbeRoR2FY88eGpt6OUJBg5ldGUGT0QnXFjVI1fjqejLDecCSC__IU4dAKkZ9R_17oTHluOexTGA62PvptdnMKjs_xxZIKebrWszakSs-SXt_e2GHIf3eyE_O-hUmCcZBoCmwwvlLx6sfE')"
+            ></div>
+            <span class="text-label-sm font-label-sm font-bold">ISO 27001</span>
+          </div>
+          <div
+            class="p-lg bg-surface rounded-2xl border border-outline-variant/30 flex flex-col items-center text-center"
+          >
+            <div
+              class="w-24 h-24 bg-contain bg-no-repeat mb-md"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCp1IB_g9t2PeLxwAsXBYPTZIchJKAncOPjyy6Y1VS1q3YMtM5RkM2290hUoIWQQCqwaOBNuIkadj7CGDpepO2f6YjkMFTd-iYiEvZFfN0Iepd2JogyItBVjF1gd9tekdrlxQrjQQ-rEZ18d7OLe-hpIZO2FphmPmFQVt3y7ETxmte2EvJqnpMiE2eNYGPuLrUpVnLOJdnCkWtd1cw3RuQV0iUGOQ7rvJoaTQ-tmB6A9Xo8yQOJvEokBhHK_c3sp35jT9coSt_iRYk')"
+            ></div>
+            <span class="text-label-sm font-label-sm font-bold"
+              >Conforme RGPD</span
+            >
+          </div>
+          <div
+            class="p-lg bg-surface rounded-2xl border border-outline-variant/30 flex flex-col items-center text-center"
+          >
+            <div
+              class="w-24 h-24 bg-contain bg-no-repeat mb-md"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAIPJBi0VZACOsL4XMXY4qtNWLPawkajF-XbVAZDuU2WVeN-LA32n5F4CIF83NTfHGgl1daBmCQVsbNuraRUwTjrLAsidyR1rFkDOGetSYuVc0EcWf69E_9L0_Qb9ACCEorA-1ELmWLya-X4B7hnuN700Rn0_L3e4xIyx1z1bMVqjTYBmiEYqQGEkG3-3Cqt_4jewAPH2LTZ_tKwHokJL6XmilKNmMOrjvKLnN9_eZQwlNsSsYTS6Ii3iY6SVSdj1s_H836X5SSVpY')"
+            ></div>
+            <span class="text-label-sm font-label-sm font-bold">2FA/MFA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="contact" class="py-2xl scroll-mt-20">
+    <div class="px-margin-desktop max-w-container-max mx-auto">
+      <div
+        class="bg-primary rounded-[2rem] p-xl lg:p-2xl text-center text-white relative overflow-hidden reveal"
+      >
+        <div class="relative z-10 space-y-xl">
+          <h2 class="text-headline-lg font-headline-lg">
+            Prêt à moderniser votre gestion client ?
+          </h2>
+          <p
+            class="text-body-lg font-body-lg text-primary-fixed max-w-xl mx-auto opacity-90"
+          >
+            Rejoignez plus de 200 institutions financières qui font confiance à
+            GestionBanque pour leur transformation digitale.
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-md">
+            <button
+              class="bg-white text-primary px-2xl py-md rounded-xl font-title-md text-title-md hover:bg-surface-container-high transition-colors"
+              routerLink="/inscription"
+            >
+              Commencer l'essai gratuit
+            </button>
+            <button
+              class="bg-primary-container/20 border border-white/30 text-white px-2xl py-md rounded-xl font-title-md text-title-md hover:bg-white/10 transition-colors"
+            >
+              Demander une démo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

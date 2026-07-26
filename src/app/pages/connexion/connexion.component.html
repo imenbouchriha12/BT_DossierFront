@@ -1,0 +1,100 @@
+<main class="flex w-full min-h-screen">
+  <!-- Left Panel: Branding & Professional Gradient -->
+  <section class="hidden lg:flex flex-col relative w-1/2 mesh-gradient-bg border-r border-outline-variant px-xl py-lg overflow-hidden">
+    <div class="relative z-10 flex flex-col h-full">
+      <div class="flex items-center gap-sm mb-auto">
+        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+        </div>
+        <span class="font-manrope text-headline-md text-primary font-bold tracking-tight">GestionBanque</span>
+      </div>
+      <div class="animate-content max-w-md">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface mb-md leading-tight">
+          Accédez à votre espace sécurisé
+        </h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant mb-xl">
+          Pilotez votre activité financière avec une précision chirurgicale. Une gestion client intelligente conçue pour les experts exigeants.
+        </p>
+        <div class="grid grid-cols-2 gap-md">
+          <div class="flex items-center gap-sm p-md bg-surface-container-lowest/80 backdrop-blur-md rounded-xl border border-outline-variant shadow-sm">
+            <span class="material-symbols-outlined text-primary">security</span>
+            <span class="font-label-md text-label-md text-on-surface">Sécurité bancaire</span>
+          </div>
+          <div class="flex items-center gap-sm p-md bg-surface-container-lowest/80 backdrop-blur-md rounded-xl border border-outline-variant shadow-sm">
+            <span class="material-symbols-outlined text-primary">query_stats</span>
+            <span class="font-label-md text-label-md text-on-surface">Analyses temps réel</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-auto">
+        <p class="font-label-sm text-label-sm text-on-surface-variant/70">
+          &copy; 2025 GestionBanque. Tous droits réservés.
+        </p>
+      </div>
+    </div>
+  </section>
+  <!-- Right Panel: Login Form -->
+  <section class="w-full lg:w-1/2 bg-white flex flex-col justify-center items-center px-lg relative">
+    <div class="lg:hidden absolute top-lg left-lg flex items-center gap-sm">
+      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-[18px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+      </div>
+      <span class="font-manrope text-headline-md text-primary font-bold tracking-tight">Lumina Finance</span>
+    </div>
+    <div class="w-full max-w-[420px] animate-content">
+      <header class="mb-xl text-center lg:text-left">
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Bienvenue</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">Veuillez saisir vos identifiants pour continuer.</p>
+      </header>
+      <form (ngSubmit)="onSubmit()" class="space-y-lg" #loginForm="ngForm">
+        <div class="space-y-xs">
+          <label class="font-label-md text-label-md text-on-surface-variant block ml-xs" for="login">Matricule / Login</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+              <span class="material-symbols-outlined text-outline text-[20px]">badge</span>
+            </div>
+            <input [(ngModel)]="matricule" name="matricule" class="w-full h-12 pl-11 pr-md bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline-variant/60 form-input-focus transition-all" id="login" placeholder="Ex: FR-8829-X" type="text" required/>
+          </div>
+        </div>
+        <div class="space-y-xs">
+          <div class="flex justify-between items-center px-xs">
+            <label class="font-label-md text-label-md text-on-surface-variant" for="password">Mot de passe</label>
+          </div>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+              <span class="material-symbols-outlined text-outline text-[20px]">lock</span>
+            </div>
+            <input [(ngModel)]="password" name="password" class="w-full h-12 pl-11 pr-11 bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline-variant/60 form-input-focus transition-all" id="password" placeholder="••••••••" [type]="showPassword ? 'text' : 'password'" required/>
+            <button type="button" (click)="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-md flex items-center">
+              <span class="material-symbols-outlined text-outline text-[20px] select-none">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+        </div>
+        <div *ngIf="error" class="p-md bg-red-50 border border-red-200 rounded-xl text-red-700 font-body-md text-body-md">
+          {{ error }}
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="flex items-center group cursor-pointer">
+            <input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer" type="checkbox"/>
+            <span class="ml-sm font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Se souvenir de moi</span>
+          </label>
+          <a class="font-label-md text-label-md text-primary hover:underline transition-all font-semibold" routerLink="/forgot-password">Mot de passe oublié ?</a>
+        </div>
+        <button [disabled]="loading" class="w-full h-12 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white font-manrope font-semibold rounded-xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200" type="submit">
+          <span *ngIf="loading">Connexion en cours...</span>
+          <span *ngIf="!loading">Se connecter</span>
+        </button>
+      </form>
+      <footer class="mt-xl text-center border-t border-outline-variant/30 pt-lg">
+        <p class="font-body-md text-body-md text-on-surface-variant">
+          Pas encore de compte ?
+          <a class="text-primary font-semibold hover:underline ml-xs" routerLink="/inscription">S'inscrire</a>
+        </p>
+        <div class="mt-lg flex justify-center gap-xl opacity-70">
+          <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support technique</a>
+          <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Confidentialité</a>
+        </div>
+      </footer>
+    </div>
+  </section>
+</main>

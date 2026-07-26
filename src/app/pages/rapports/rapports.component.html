@@ -1,0 +1,505 @@
+<div class="rapports-page">
+  <div class="rapports-container">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header class="rapports-header">
+      <div class="flex items-center gap-2 text-sm mb-1">
+        <span class="text-on-surface-variant">Tableau de bord</span>
+        <span class="material-symbols-outlined text-[16px] text-on-surface-variant/50">chevron_right</span>
+        <span class="text-primary font-medium">Rapports</span>
+      </div>
+      <h1 class="rapports-title">Rapports & Import</h1>
+      <p class="rapports-subtitle">Générez des rapports détaillés ou importez des données en masse depuis vos fichiers Excel/CSV.</p>
+    </header>
+
+    <!-- ═══════════════ MESSAGES ═══════════════ -->
+    @if (successMessage) {
+    <div class="msg msg-success">
+      <span class="material-symbols-outlined msg-icon text-emerald-500">check_circle</span>
+      <span class="text-sm font-medium text-emerald-700">{{ successMessage }}</span>
+    </div>
+    }
+    @if (errorMessage) {
+    <div class="msg msg-error">
+      <span class="material-symbols-outlined msg-icon text-red-500">error</span>
+      <span class="text-sm font-medium text-red-700">{{ errorMessage }}</span>
+    </div>
+    }
+
+    <!-- ═══════════════ TABS ═══════════════ -->
+    <div class="tab-bar">
+      <button (click)="activeTab = 'export'" class="tab-item" [class.tab-active]="activeTab === 'export'">
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        Exporter des rapports
+      </button>
+      <button (click)="activeTab = 'import'" class="tab-item" [class.tab-active]="activeTab === 'import'">
+        <span class="material-symbols-outlined text-[18px]">upload</span>
+        Importer des données
+      </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ═══                    EXPORT TAB                   ═══ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    @if (activeTab === 'export') {
+
+    <!-- Quick Stats Bar -->
+    @if (stats) {
+    <div class="stats-bar">
+      <div class="stat-pill">
+        <span class="stat-pill-dot bg-blue-500"></span>
+        <span class="stat-pill-value">{{ stats.totalClients }}</span>
+        <span class="stat-pill-label">Clients</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-dot bg-emerald-500"></span>
+        <span class="stat-pill-value">{{ stats.clientsActifs }}</span>
+        <span class="stat-pill-label">Actifs</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-dot bg-amber-500"></span>
+        <span class="stat-pill-value">{{ stats.clientsEnAttente }}</span>
+        <span class="stat-pill-label">En attente</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-dot bg-red-500"></span>
+        <span class="stat-pill-value">{{ stats.clientsBloques }}</span>
+        <span class="stat-pill-label">Bloqués</span>
+      </div>
+      <div class="stat-pill-divider"></div>
+      <div class="stat-pill">
+        <span class="stat-pill-dot bg-violet-500"></span>
+        <span class="stat-pill-value">{{ stats.totalDocuments }}</span>
+        <span class="stat-pill-label">Documents</span>
+      </div>
+    </div>
+    }
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+      @for (cat of categories; track cat.id) {
+      <button (click)="activeCategory = cat.id; selectedReportId = null"
+        class="category-tab" [class.category-tab-active]="activeCategory === cat.id">
+        <span class="material-symbols-outlined text-[18px]">{{ cat.icon }}</span>
+        {{ cat.label }}
+      </button>
+      }
+    </div>
+
+    <!-- Report Grid -->
+    <div class="report-grid">
+      @for (option of filteredReports; track option.id) {
+      <button (click)="selectReport(option)" class="report-card" [class.report-card-active]="selectedReportId === option.id">
+        <div class="report-card-top">
+          <div class="report-card-icon-wrap" [ngClass]="option.iconBg">
+            <span class="material-symbols-outlined text-[24px]" [ngClass]="option.iconColor">{{ option.icon }}</span>
+          </div>
+          @if (option.badge) {
+          <span class="report-badge"
+            [ngClass]="option.badge === 'Urgent' ? 'bg-orange-50 text-orange-600' : option.badge === 'Recommandé' ? 'bg-primary/10 text-primary' : 'bg-blue-50 text-blue-600'">
+            {{ option.badge }}
+          </span>
+          }
+        </div>
+        <h3 class="report-card-title">{{ option.title }}</h3>
+        <p class="report-card-desc">{{ option.description }}</p>
+        <div class="report-card-formats">
+          @for (fmt of option.formats; track fmt) {
+          <span class="format-chip">
+            <span class="material-symbols-outlined text-[12px]">{{ fmt === 'pdf' ? 'picture_as_pdf' : 'table_chart' }}</span>
+            {{ fmt === 'pdf' ? 'PDF' : 'Excel' }}
+          </span>
+          }
+        </div>
+      </button>
+      }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Configuration Panel (when a report is selected)       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    @if (selectedReport) {
+    <div class="config-panel">
+      <div class="config-header">
+        <div class="flex items-center gap-3">
+          <div class="config-header-icon" [ngClass]="selectedReport.iconBg">
+            <span class="material-symbols-outlined text-[22px]" [ngClass]="selectedReport.iconColor">{{ selectedReport.icon }}</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-on-surface">{{ selectedReport.title }}</h2>
+            <p class="text-sm text-on-surface-variant">{{ selectedReport.description }}</p>
+          </div>
+        </div>
+        <button (click)="selectedReportId = null" class="config-close" title="Fermer">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="config-body">
+
+        <!-- Format Selection -->
+        @if (selectedReport.formats.length > 1) {
+        <div class="config-section">
+          <label class="config-label">Format d'export</label>
+          <div class="format-toggle">
+            @for (fmt of selectedReport.formats; track fmt) {
+            <button (click)="selectFormat(fmt)"
+              class="format-toggle-btn"
+              [class.format-toggle-active]="exportFormat === fmt">
+              <span class="material-symbols-outlined text-[16px]">{{ fmt === 'pdf' ? 'picture_as_pdf' : 'table_chart' }}</span>
+              {{ fmt === 'pdf' ? 'PDF' : 'Excel' }}
+            </button>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Filters -->
+        @if (selectedReport.hasFilters) {
+        <div class="config-section">
+          <div class="config-label-row">
+            <label class="config-label">Filtres</label>
+            @if (hasActiveFilters) {
+            <span class="filter-count-badge">{{ activeFilterCount }} actif(s)</span>
+            }
+          </div>
+
+          <div class="filter-grid">
+            <!-- Ville -->
+            <div class="filter-field">
+              <label class="filter-field-label">
+                <span class="material-symbols-outlined text-[14px]">location_city</span>
+                Ville
+              </label>
+              <select [(ngModel)]="filterVille" class="filter-select">
+                <option value="">Toutes les villes</option>
+                <option *ngFor="let v of villes" [value]="v">{{ v }}</option>
+              </select>
+            </div>
+
+            <!-- Statut -->
+            <div class="filter-field">
+              <label class="filter-field-label">
+                <span class="material-symbols-outlined text-[14px]">flag</span>
+                Statut
+              </label>
+              <select [(ngModel)]="filterStatut" class="filter-select">
+                <option value="">Tous les statuts</option>
+                <option value="Actif">Actif</option>
+                <option value="EnAttente">En attente</option>
+                <option value="Bloqué">Bloqué</option>
+              </select>
+            </div>
+
+            <!-- Date début -->
+            <div class="filter-field">
+              <label class="filter-field-label">
+                <span class="material-symbols-outlined text-[14px]">event</span>
+                Date de début
+              </label>
+              <input [(ngModel)]="filterDateDebut" type="date" class="filter-select" />
+            </div>
+
+            <!-- Date fin -->
+            <div class="filter-field">
+              <label class="filter-field-label">
+                <span class="material-symbols-outlined text-[14px]">event_available</span>
+                Date de fin
+              </label>
+              <input [(ngModel)]="filterDateFin" type="date" class="filter-select" />
+            </div>
+          </div>
+
+          <!-- Date presets -->
+          <div class="date-presets">
+            <span class="text-xs text-on-surface-variant font-medium mr-2">Période :</span>
+            <button (click)="applyDatePreset('today')" class="preset-chip" [class.preset-chip-active]="datePreset === 'today'">Aujourd'hui</button>
+            <button (click)="applyDatePreset('week')" class="preset-chip" [class.preset-chip-active]="datePreset === 'week'">7 jours</button>
+            <button (click)="applyDatePreset('month')" class="preset-chip" [class.preset-chip-active]="datePreset === 'month'">30 jours</button>
+            <button (click)="applyDatePreset('quarter')" class="preset-chip" [class.preset-chip-active]="datePreset === 'quarter'">3 mois</button>
+            <button (click)="applyDatePreset('year')" class="preset-chip" [class.preset-chip-active]="datePreset === 'year'">1 an</button>
+            @if (hasActiveFilters) {
+            <button (click)="clearFilters()" class="preset-chip preset-chip-reset">
+              <span class="material-symbols-outlined text-[12px]">restart_alt</span>
+              Réinitialiser
+            </button>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- No filters info -->
+        @if (!selectedReport.hasFilters) {
+        <div class="config-info">
+          <span class="material-symbols-outlined text-[18px] text-primary">info</span>
+          <span class="text-sm text-on-surface-variant">Ce rapport inclut l'ensemble des données, sans filtre applicable.</span>
+        </div>
+        }
+
+      </div>
+
+      <!-- Generate Footer -->
+      <div class="config-footer">
+        <div class="config-footer-info">
+          <span class="config-footer-format">
+            <span class="material-symbols-outlined text-[14px]">{{ exportFormat === 'pdf' ? 'picture_as_pdf' : 'table_chart' }}</span>
+            {{ exportFormat === 'pdf' ? 'PDF' : 'Excel' }}
+          </span>
+          @if (hasActiveFilters) {
+          <span class="config-footer-filters">{{ activeFilterCount }} filtre(s) actif(s)</span>
+          }
+        </div>
+        <button (click)="generateReport()" [disabled]="loading" class="generate-btn">
+          @if (loading) {
+          <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+          Génération en cours...
+          } @else {
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          Générer le rapport
+          }
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Recent Downloads -->
+    @if (recentDownloads().length > 0) {
+    <div class="recent-panel">
+      <div class="recent-header">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-on-surface-variant">schedule</span>
+          <span class="text-sm font-semibold text-on-surface">Exports récents</span>
+        </div>
+        <button (click)="clearRecentDownloads()" class="text-xs text-on-surface-variant hover:text-red-500 transition-colors font-medium">
+          Tout effacer
+        </button>
+      </div>
+      <div class="recent-list">
+        @for (d of recentDownloads(); track d.date) {
+        <div class="recent-item">
+          <div class="recent-item-icon" [ngClass]="d.format === 'pdf' ? 'bg-red-50' : 'bg-emerald-50'">
+            <span class="material-symbols-outlined text-[16px]" [ngClass]="d.format === 'pdf' ? 'text-red-500' : 'text-emerald-600'">
+              {{ d.format === 'pdf' ? 'picture_as_pdf' : 'table_chart' }}
+            </span>
+          </div>
+          <div class="recent-item-body">
+            <span class="recent-item-name">{{ d.type }}</span>
+            <span class="recent-item-meta">{{ d.format | uppercase }} · {{ d.date | date:'dd MMM yyyy, HH:mm' }}</span>
+          </div>
+          <span class="material-symbols-outlined text-[16px] text-on-surface-variant/30">download_done</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    }
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ═══                    IMPORT TAB                   ═══ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    @if (activeTab === 'import') {
+
+    <div class="import-layout">
+
+      <!-- Left: Steps -->
+      <div class="import-main">
+
+        <!-- Step Progress -->
+        <div class="step-progress">
+          <div class="step-node" [class.step-done]="importStep > 1" [class.step-current]="importStep === 1">
+            <span *ngIf="importStep <= 1" class="text-xs font-bold">1</span>
+            <span *ngIf="importStep > 1" class="material-symbols-outlined text-[14px]">check</span>
+          </div>
+          <div class="step-line" [class.step-line-active]="importStep > 1"></div>
+          <div class="step-node" [class.step-done]="importStep > 2" [class.step-current]="importStep === 2">
+            <span *ngIf="importStep <= 2" class="text-xs font-bold">2</span>
+            <span *ngIf="importStep > 2" class="material-symbols-outlined text-[14px]">check</span>
+          </div>
+          <div class="step-line" [class.step-line-active]="importStep > 2"></div>
+          <div class="step-node" [class.step-current]="importStep === 3">
+            3
+          </div>
+        </div>
+
+        <!-- Step 1: Guide -->
+        <div class="import-card" [class.import-card-done]="importStep > 1">
+          <div class="import-card-header">
+            <div class="step-badge" [class.step-badge-done]="importStep > 1">
+              @if (importStep > 1) {
+              <span class="material-symbols-outlined text-[14px]">check</span>
+              } @else { 1 }
+            </div>
+            <div>
+              <h3 class="import-card-title">Format du fichier</h3>
+              <p class="import-card-sub">Préparez vos données selon le format requis</p>
+            </div>
+          </div>
+          <div class="import-card-body">
+            <table class="spec-table">
+              <thead>
+                <tr>
+                  <th>Colonne</th>
+                  <th>Requis</th>
+                  <th>Format</th>
+                  <th>Exemple</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-semibold text-on-surface">Nom</td>
+                  <td><span class="req-badge req-required">Obligatoire</span></td>
+                  <td class="text-on-surface-variant">Texte</td>
+                  <td class="text-on-surface-variant font-mono text-xs">DUPONT</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold text-on-surface">Prénom</td>
+                  <td><span class="req-badge req-required">Obligatoire</span></td>
+                  <td class="text-on-surface-variant">Texte</td>
+                  <td class="text-on-surface-variant font-mono text-xs">Marie</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold text-on-surface">Téléphone</td>
+                  <td><span class="req-badge req-required">Obligatoire</span></td>
+                  <td class="text-on-surface-variant">Texte</td>
+                  <td class="text-on-surface-variant font-mono text-xs">+216 71 123 456</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold text-on-surface">Email</td>
+                  <td><span class="req-badge req-optional">Facultatif</span></td>
+                  <td class="text-on-surface-variant">Email</td>
+                  <td class="text-on-surface-variant font-mono text-xs">marie&#64;email.com</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold text-on-surface">Ville</td>
+                  <td><span class="req-badge req-required">Obligatoire</span></td>
+                  <td class="text-on-surface-variant">Texte</td>
+                  <td class="text-on-surface-variant font-mono text-xs">Tunis</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold text-on-surface">Statut</td>
+                  <td><span class="req-badge req-optional">Facultatif</span></td>
+                  <td class="text-on-surface-variant">Actif|EnAttente|Bloqué</td>
+                  <td class="text-on-surface-variant font-mono text-xs">Actif</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Step 2: Upload -->
+        <div class="import-card" [class.import-card-done]="importStep > 2">
+          <div class="import-card-header">
+            <div class="step-badge" [class.step-badge-done]="importStep > 2" [class.step-badge-current]="importStep === 2">
+              @if (importStep > 2) {
+              <span class="material-symbols-outlined text-[14px]">check</span>
+              } @else { 2 }
+            </div>
+            <div>
+              <h3 class="import-card-title">Téléversement</h3>
+              <p class="import-card-sub">Déposez votre fichier ici</p>
+            </div>
+          </div>
+          <div class="import-card-body">
+            @if (!selectedFile) {
+            <div class="dropzone" [class.dropzone-active]="dragOver()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)">
+              <input type="file" accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+              <div class="dropzone-icon" [ngClass]="dragOver() ? 'bg-primary/20 scale-110' : 'bg-primary/10'">
+                <span class="material-symbols-outlined text-primary text-[32px]">cloud_upload</span>
+              </div>
+              <div class="text-center mt-4">
+                <p class="text-sm font-semibold text-on-surface">
+                  <span class="text-primary">Cliquez pour sélectionner</span> ou glissez-déposez
+                </p>
+                <p class="text-xs text-on-surface-variant mt-1">Excel (.xlsx, .xls) ou CSV — Max 10 Mo</p>
+              </div>
+            </div>
+            } @else {
+            <div class="file-preview">
+              <div class="file-preview-icon">
+                <span class="material-symbols-outlined text-primary text-[24px]">description</span>
+              </div>
+              <div class="file-preview-info">
+                <p class="text-sm font-semibold text-on-surface truncate">{{ selectedFile.name }}</p>
+                <p class="text-xs text-on-surface-variant">{{ (selectedFile.size / 1024).toFixed(1) }} Ko · {{ selectedFile.name.split('.').pop()?.toUpperCase() }}</p>
+              </div>
+              <button (click)="removeFile()" class="file-preview-remove" title="Retirer le fichier">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Step 3: Confirm -->
+        @if (selectedFile) {
+        <div class="import-card">
+          <div class="import-card-header">
+            <div class="step-badge step-badge-current">3</div>
+            <div>
+              <h3 class="import-card-title">Confirmation</h3>
+              <p class="import-card-sub">Vérifiez et lancez l'import</p>
+            </div>
+          </div>
+          <div class="import-card-body">
+            <div class="confirm-banner">
+              <div class="confirm-banner-icon">
+                <span class="material-symbols-outlined text-amber-600 text-[20px]">warning</span>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Avant de continuer</p>
+                <p class="text-xs text-on-surface-variant mt-0.5">
+                  Vérifiez que les données sont correctement formatées. Les doublons seront détectés automatiquement.
+                </p>
+              </div>
+              <button (click)="importFile()" [disabled]="loading" class="generate-btn shrink-0">
+                @if (loading) {
+                <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                Import...
+                } @else {
+                <span class="material-symbols-outlined text-[16px]">upload</span>
+                Lancer l'import
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+
+      </div>
+
+      <!-- Right: Sidebar info -->
+      <div class="import-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <span class="material-symbols-outlined text-[18px] text-primary">lightbulb</span>
+            <span class="text-sm font-semibold text-on-surface">Conseils d'import</span>
+          </div>
+          <ul class="sidebar-list">
+            <li>Utilisez la première ligne pour les en-têtes de colonnes.</li>
+            <li>Les champs obligatoires ne doivent pas être vides.</li>
+            <li>Les numéros de téléphone doivent inclure l'indicatif du pays.</li>
+            <li>Les statuts valides : <code>Actif</code>, <code>EnAttente</code>, <code>Bloqué</code>.</li>
+            <li>Les doublons (même téléphone) seront fusionnés.</li>
+          </ul>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <span class="material-symbols-outlined text-[18px] text-emerald-600">help</span>
+            <span class="text-sm font-semibold text-on-surface">Besoin d'aide ?</span>
+          </div>
+          <p class="text-xs text-on-surface-variant leading-relaxed">
+            Contactez l'assistance technique en cas de problème avec l'import ou téléchargez un modèle de fichier depuis le portail.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    }
+
+  </div>
+</div>

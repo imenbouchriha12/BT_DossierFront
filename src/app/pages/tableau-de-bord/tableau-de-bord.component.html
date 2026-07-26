@@ -1,0 +1,288 @@
+<!-- Loading State -->
+@if (loading()) {
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+  <div class="flex flex-col items-center gap-4">
+    <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+    <p class="text-gray-600">Chargement du tableau de bord...</p>
+  </div>
+</div>
+}
+
+<!-- Main Dashboard -->
+@else if (stats() && kpis()) {
+
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord Analytique</h1>
+        <p class="text-gray-600 text-sm mt-1">Vision 360° en temps réel</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button 
+          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center gap-2"
+          (click)="exportToPdf()">
+          <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+          Exporter PDF
+        </button>
+        <button 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+          (click)="loadDashboard()">
+          <span class="material-symbols-outlined text-[18px]">refresh</span>
+          Actualiser
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- KPI 1: Clients Actifs -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-blue-600 text-[22px]">groups</span>
+          </div>
+          @if (kpis()!.newClientsPercentageChange !== 0) {
+          <div class="px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1"
+            [ngClass]="kpis()!.newClientsPercentageChange > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+            <span class="material-symbols-outlined text-[12px]">
+              {{ kpis()!.newClientsPercentageChange > 0 ? 'trending_up' : 'trending_down' }}
+            </span>
+            {{ Math.abs(kpis()!.newClientsPercentageChange) }}%
+          </div>
+          }
+        </div>
+        
+        <div>
+          <p class="text-3xl font-bold text-gray-900">
+            {{ kpis()!.totalActiveClients.toLocaleString() }}
+          </p>
+          <p class="text-gray-600 text-sm mt-1">Clients actifs</p>
+          <p class="text-blue-600 text-xs mt-1">+{{ kpis()!.newClientsThisMonth }} ce mois</p>
+        </div>
+      </div>
+
+      <!-- KPI 2: Documents en Attente -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-yellow-600 text-[22px]">schedule</span>
+          </div>
+          @if (kpis()!.pendingDocuments > 0) {
+          <div class="px-2 py-1 rounded-md bg-yellow-100 text-yellow-700 text-xs font-semibold">
+            URGENT
+          </div>
+          }
+        </div>
+        
+        <div>
+          <p class="text-3xl font-bold text-gray-900">
+            {{ kpis()!.pendingDocuments.toLocaleString() }}
+          </p>
+          <p class="text-gray-600 text-sm mt-1">Documents en attente</p>
+          <p class="text-green-600 text-xs mt-1">{{ kpis()!.validatedDocumentsThisMonth }} validés ce mois</p>
+        </div>
+      </div>
+
+      <!-- KPI 3: Revenu Moyen -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-600 text-[22px]">account_balance_wallet</span>
+          </div>
+        </div>
+        
+        <div>
+          <p class="text-3xl font-bold text-gray-900">
+            {{ formatCurrency(kpis()!.averageMonthlyRevenue) }}
+          </p>
+          <p class="text-gray-600 text-sm mt-1">Revenu moyen/client (DT)</p>
+          <p class="text-gray-500 text-xs mt-1">Total: {{ formatCurrency(kpis()!.totalMonthlyRevenue) }} DT</p>
+        </div>
+      </div>
+
+      <!-- KPI 4: Clients Inactifs -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-red-600 text-[22px]">person_off</span>
+          </div>
+          @if (kpis()!.blockedClients > 0) {
+          <div class="px-2 py-1 rounded-md bg-red-100 text-red-700 text-xs font-semibold">
+            {{ kpis()!.blockedClients }} bloqués
+          </div>
+          }
+        </div>
+        
+        <div>
+          <p class="text-3xl font-bold text-gray-900">
+            {{ kpis()!.inactiveClients.toLocaleString() }}
+          </p>
+          <p class="text-gray-600 text-sm mt-1">Clients inactifs (>30j)</p>
+          <p class="text-gray-500 text-xs mt-1">{{ kpis()!.totalActiveUsers }} utilisateurs actifs</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique Évolution (Full Width) -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+          <span class="material-symbols-outlined text-blue-600 text-[20px]">trending_up</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Évolution des Clients</h2>
+          <p class="text-sm text-gray-600">Analyse sur {{ stats()!.clientEvolution.labels.length }} mois</p>
+        </div>
+      </div>
+      
+      <div class="h-80">
+        <canvas #evolutionChart></canvas>
+      </div>
+    </div>
+
+    <!-- Grille 2 Colonnes: Geo + Revenus -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      <!-- Répartition Géographique -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-cyan-600 text-[20px]">map</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">Distribution Géographique</h2>
+            <p class="text-sm text-gray-600">Top 10 villes</p>
+          </div>
+        </div>
+        
+        <div class="h-80">
+          <canvas #geoChart></canvas>
+        </div>
+      </div>
+
+      <!-- Top Revenus -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-600 text-[20px]">star</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">Top Revenus Mensuels</h2>
+            <p class="text-sm text-gray-600">Meilleurs clients</p>
+          </div>
+        </div>
+        
+        <div class="h-80">
+          <canvas #revenueChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grille 2 Colonnes: Documents + Performance -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      <!-- Documents -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+              <span class="material-symbols-outlined text-yellow-600 text-[20px]">description</span>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Documents par Type</h2>
+              <p class="text-sm text-gray-600">En attente de validation</p>
+            </div>
+          </div>
+          <div class="px-2 py-1 rounded-md bg-yellow-100 text-yellow-700 text-xs font-semibold">
+            {{ stats()!.documentsPending.urgentCount }} urgents
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-center">
+          <div class="w-64 h-64">
+            <canvas #docsChart></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Agents -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-purple-600 text-[20px]">emoji_events</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">Performance des Agents</h2>
+            <p class="text-sm text-gray-600">Activité mensuelle</p>
+          </div>
+        </div>
+        
+        <div class="h-80">
+          <canvas #performanceChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Récents (Liste) -->
+    @if (stats()!.documentsPending.recentPending.length > 0) {
+    <div class="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+              <span class="material-symbols-outlined text-gray-600 text-[20px]">history</span>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Documents Récents en Attente</h2>
+              <p class="text-sm text-gray-600">Nécessitent votre attention</p>
+            </div>
+          </div>
+          <button class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors" routerLink="/gestion-documents">
+            Voir tout
+          </button>
+        </div>
+      </div>
+      
+      <div class="divide-y divide-gray-100">
+        @for (doc of stats()!.documentsPending.recentPending; track doc.documentId) {
+        <div class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+            [ngClass]="doc.isUrgent ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'">
+            <span class="material-symbols-outlined text-[20px]">
+              {{ doc.isUrgent ? 'priority_high' : 'description' }}
+            </span>
+          </div>
+          
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-gray-900 truncate">{{ doc.clientName }}</p>
+            <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+              <span>{{ doc.clientCode }}</span>
+              <span>•</span>
+              <span>{{ doc.documentType }}</span>
+              <span>•</span>
+              <span [ngClass]="doc.isUrgent ? 'text-red-600 font-semibold' : ''">
+                {{ doc.daysPending }} jour(s)
+              </span>
+            </div>
+          </div>
+          
+          @if (doc.isUrgent) {
+          <div class="flex-shrink-0 px-2 py-1 rounded-md bg-red-100 text-red-700 text-xs font-semibold">
+            URGENT
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+  </div>
+</div>
+
+}
