@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
-  staticUrl: 'http://localhost:5000/uploads/',
+  apiUrl: 'http://localhost:5184/api',
+  staticUrl: 'http://localhost:5184/uploads/',
 };
