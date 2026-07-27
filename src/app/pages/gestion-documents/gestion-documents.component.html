@@ -335,18 +335,26 @@
           <div class="doc-row-info">
             <div class="doc-row-top">
               <span class="doc-row-type">{{ doc.typeDocument }}</span>
-              <span class="doc-status-badge" [ngClass]="{
-                'doc-status-pending': doc.statutValidation === 'En attente',
-                'doc-status-validated': doc.statutValidation === 'Validé',
-                'doc-status-rejected': doc.statutValidation === 'Rejeté'
-              }">
-                @switch (doc.statutValidation) {
-                  @case ('Validé') { <span class="material-symbols-outlined text-[10px]">check</span> }
-                  @case ('Rejeté') { <span class="material-symbols-outlined text-[10px]">close</span> }
-                  @default { <span class="material-symbols-outlined text-[10px]">schedule</span> }
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="doc-status-badge" [ngClass]="{
+                  'doc-status-pending': doc.statutValidation === 'En attente',
+                  'doc-status-validated': doc.statutValidation === 'Validé',
+                  'doc-status-rejected': doc.statutValidation === 'Rejeté'
+                }">
+                  @switch (doc.statutValidation) {
+                    @case ('Validé') { <span class="material-symbols-outlined text-[10px]">check</span> }
+                    @case ('Rejeté') { <span class="material-symbols-outlined text-[10px]">close</span> }
+                    @default { <span class="material-symbols-outlined text-[10px]">schedule</span> }
+                  }
+                  {{ doc.statutValidation }}
+                </span>
+                @if (doc.resultatVerification) {
+                <span class="doc-ocr-badge" [ngClass]="getOcrBadgeClass(doc.resultatVerification)">
+                  <span class="material-symbols-outlined text-[11px]">{{ getOcrBadgeIcon(doc.resultatVerification) }}</span>
+                  {{ getOcrBadgeLabel(doc.resultatVerification) }}
+                </span>
                 }
-                {{ doc.statutValidation }}
-              </span>
+              </div>
             </div>
             <div class="doc-row-meta">
               <span class="doc-meta-item">
@@ -366,6 +374,9 @@
               <span class="material-symbols-outlined text-[16px]">visibility</span>
             </button>
             }
+            <button class="doc-action doc-action-ocr" (click)="openOcrDetail(doc)" title="Voir vérification OCR">
+              <span class="material-symbols-outlined text-[16px]">document_scanner</span>
+            </button>
             <button class="doc-action doc-action-download" (click)="downloadDocument(doc.id)" title="Télécharger">
               <span class="material-symbols-outlined text-[16px]">download</span>
             </button>
@@ -421,6 +432,235 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- ═══               PREVIEW MODAL                        ═══ -->
 <!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══         OCR VERIFICATION PANEL - PROFESSIONAL      ═══ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (showOcrDetail) {
+<div class="ocr-overlay" (click)="closeOcrDetail()">
+  <div class="ocr-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ocr-panel-header">
+      <div class="ocr-panel-header-left">
+        <div class="ocr-panel-icon">
+          <span class="material-symbols-outlined">document_scanner</span>
+        </div>
+        <div>
+          <h3 class="ocr-panel-title">Vérification automatique</h3>
+          <p class="ocr-panel-subtitle">{{ ocrDoc?.typeDocument }} · {{ ocrDoc?.nomFichier }}</p>
+        </div>
+      </div>
+      <div class="ocr-panel-header-right">
+        @if (ocrDoc && ocrDoc.resultatVerification !== 'Correspond') {
+        <button class="ocr-btn-scan" (click)="lancerOcr(ocrDoc!.id)" [disabled]="ocrLoading">
+          <span class="material-symbols-outlined">scan</span>
+          <span>{{ ocrLoading ? 'Analyse...' : "Lancer l'analyse" }}</span>
+          <span class="material-symbols-outlined">scan</span>
+          <span>{{ ocrLoading ? 'Analyse...' : "Lancer l'analyse" }}</span>
+        </button>
+        @if (authService.hasRole('Admin') || authService.hasRole('Superviseur')) {
+        <button class="ocr-btn-task" (click)="createValidationTask(ocrDoc!)">
+          <span class="material-symbols-outlined">assignment_add</span>
+          <span>Créer tâche</span>
+        </button>
+        }
+        }
+        <button class="ocr-btn-close" (click)="closeOcrDetail()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="ocr-panel-body">
+
+      @if (ocrLoading) {
+
+      <!-- Loading state -->
+      <div class="ocr-loading">
+        <div class="ocr-loading-ring"></div>
+        <p class="ocr-loading-text">Analyse du document en cours...</p>
+        <p class="ocr-loading-hint">Extraction et comparaison des données par OCR</p>
+      </div>
+
+      } @else if (ocrError) {
+
+      <!-- Error state -->
+      <div class="ocr-error">
+        <span class="material-symbols-outlined">error_outline</span>
+        <p>{{ ocrError }}</p>
+      </div>
+
+      } @else if (ocrResult) {
+
+      <!-- ═══ SCORE GAUGE + STATUS ═══ -->
+      <div class="ocr-status-section">
+        <div class="ocr-gauge-wrap">
+          <svg class="ocr-gauge" viewBox="0 0 120 120">
+            <circle class="ocr-gauge-bg" cx="60" cy="60" r="52" />
+            <circle class="ocr-gauge-fill" cx="60" cy="60" r="52"
+              [style.stroke-dashoffset]="327 - (ocrResult.scoreConfiance || 0) * 327 / 100"
+              [ngClass]="{
+                'stroke-emerald-500': ocrResult.resultatVerification === 'Correspond',
+                'stroke-red-500': ocrResult.resultatVerification === 'Anomalie',
+                'stroke-amber-400': ocrResult.resultatVerification === 'ExtractionUniquement',
+                'stroke-gray-300': ocrResult.resultatVerification === 'NonTraite'
+              }" />
+          </svg>
+          <div class="ocr-gauge-value">
+            <span class="ocr-gauge-number" [ngClass]="{
+              'text-emerald-600': ocrResult.resultatVerification === 'Correspond',
+              'text-red-600': ocrResult.resultatVerification === 'Anomalie',
+              'text-amber-600': ocrResult.resultatVerification === 'ExtractionUniquement',
+              'text-gray-400': ocrResult.resultatVerification === 'NonTraite'
+            }">{{ ocrResult.scoreConfiance || 0 }}<span class="ocr-gauge-pct">%</span></span>
+          </div>
+        </div>
+        <div class="ocr-status-info">
+          <div class="ocr-status-tag" [ngClass]="{
+            'ocr-status-match': ocrResult.resultatVerification === 'Correspond',
+            'ocr-status-alert': ocrResult.resultatVerification === 'Anomalie',
+            'ocr-status-pending': ocrResult.resultatVerification === 'NonTraite' || ocrResult.resultatVerification === 'ExtractionUniquement'
+          }">
+            <span class="material-symbols-outlined">
+              {{ ocrResult.resultatVerification === 'Correspond' ? 'verified' :
+                 ocrResult.resultatVerification === 'Anomalie' ? 'gpp_maybe' :
+                 ocrResult.resultatVerification === 'ExtractionUniquement' ? 'document_scanner' : 'hourglass_empty' }}
+            </span>
+            <span>{{ ocrResult.resultatVerification === 'Correspond' ? 'Correspondance confirmée' :
+                     ocrResult.resultatVerification === 'Anomalie' ? 'Anomalie détectée' :
+                     ocrResult.resultatVerification === 'ExtractionUniquement' ? 'Données extraites sans comparaison' : 'Non traité' }}</span>
+          </div>
+          <div class="ocr-status-meta">
+            <div class="ocr-meta-item">
+              <span class="material-symbols-outlined">checklist</span>
+              <span>{{ getObjectKeysLength(ocrResult.champsComparees) }} champ(s) comparé(s)</span>
+            </div>
+            @if (ocrResult.dateVerificationOCR) {
+            <div class="ocr-meta-item">
+              <span class="material-symbols-outlined">schedule</span>
+              <span>{{ ocrResult.dateVerificationOCR | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ COMPARAISON DÉTAILLÉE ═══ -->
+      @if (hasKeys(ocrResult.champsComparees)) {
+      <div class="ocr-section">
+        <div class="ocr-section-title">
+          <span class="material-symbols-outlined">compare_arrows</span>
+          <span>Comparaison des données</span>
+        </div>
+        <div class="ocr-compare-grid">
+          @for (entry of ocrResult.champsComparees | keyvalue; track entry.key) {
+          <div class="ocr-compare-card" [class.ocr-card-match]="asAny(entry.value).correspond"
+                                     [class.ocr-card-mismatch]="!asAny(entry.value).correspond">
+            <div class="ocr-card-header">
+              <span class="ocr-card-field">{{ entry.key }}</span>
+              <span class="ocr-card-badge" [class.badge-match]="asAny(entry.value).correspond"
+                                           [class.badge-mismatch]="!asAny(entry.value).correspond">
+                <span class="material-symbols-outlined">{{ asAny(entry.value).correspond ? 'check' : 'close' }}</span>
+                {{ asAny(entry.value).correspond ? 'OK' : 'Différent' }}
+              </span>
+            </div>
+            <div class="ocr-card-body">
+              <div class="ocr-card-col">
+                <span class="ocr-card-label">Attendu (base client)</span>
+                <span class="ocr-card-value ocr-value-client">{{ asAny(entry.value).valeurAttendue }}</span>
+              </div>
+              <div class="ocr-card-arrow">
+                <span class="material-symbols-outlined">arrow_forward</span>
+              </div>
+              <div class="ocr-card-col">
+                <span class="ocr-card-label">Extrait (document)</span>
+                <span class="ocr-card-value" [class.ocr-value-match]="asAny(entry.value).correspond"
+                                           [class.ocr-value-mismatch]="!asAny(entry.value).correspond">
+                  {{ asAny(entry.value).valeurExtraite || '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      } @else if (hasKeys(ocrResult.champsExtraits)) {
+      <!-- Fallback : données extraites brutes -->
+      <div class="ocr-section">
+        <div class="ocr-section-title">
+          <span class="material-symbols-outlined">data_array</span>
+          <span>Données extraites du document</span>
+        </div>
+        <div class="ocr-extracted-grid">
+          @for (entry of ocrResult.champsExtraits | keyvalue; track entry.key) {
+          <div class="ocr-extracted-item">
+            <span class="ocr-extracted-key">{{ entry.key }}</span>
+            <span class="ocr-extracted-value">{{ asAny(entry.value) }}</span>
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- ═══ TEXTE BRUT (accordéon) ═══ -->
+      @if (ocrResult.texteExtrait) {
+      <details class="ocr-raw-accordion">
+        <summary class="ocr-raw-header">
+          <div class="ocr-raw-header-left">
+            <span class="material-symbols-outlined">article</span>
+            <span>Texte brut extrait</span>
+            <span class="ocr-raw-count">{{ ocrResult.texteExtrait.length }} car.</span>
+          </div>
+          <span class="material-symbols-outlined ocr-raw-chevron">expand_more</span>
+        </summary>
+        <div class="ocr-raw-content">
+          <pre>{{ ocrResult.texteExtrait }}</pre>
+        </div>
+      </details>
+      }
+
+      <!-- ═══ VALIDATION MANUELLE (Admin/Superviseur) ═══ -->
+      @if (ocrResult.resultatVerification === 'Anomalie' && (authService.hasRole('Admin') || authService.hasRole('Superviseur'))) {
+      <div class="ocr-section ocr-section-manual">
+        <div class="ocr-section-title ocr-section-title-manual">
+          <span class="material-symbols-outlined">fact_check</span>
+          <span>Validation manuelle</span>
+        </div>
+        <p class="ocr-manual-desc">
+          Les données extraites ne correspondent pas aux informations du client.
+          Vous pouvez passer outre et valider manuellement après vérification visuelle du document.
+        </p>
+        <div class="ocr-manual-actions">
+          <button class="ocr-btn-validate" (click)="validateDocument(ocrDoc!.id); closeOcrDetail()">
+            <span class="material-symbols-outlined">verified</span>
+            Valider le document malgré l'anomalie
+          </button>
+        </div>
+      </div>
+      }
+
+      } @else {
+
+      <!-- No OCR yet -->
+      <div class="ocr-empty">
+        <div class="ocr-empty-icon">
+          <span class="material-symbols-outlined">document_scanner</span>
+        </div>
+        <h4>Aucune vérification effectuée</h4>
+        <p>Ce document n'a pas encore été analysé automatiquement.</p>
+        <button class="ocr-btn-scan ocr-btn-scan-lg" (click)="lancerOcr(ocrDoc!.id)">
+          <span class="material-symbols-outlined">scan</span>
+          Lancer la vérification OCR
+        </button>
+      </div>
+
+      }
+    </div>
+  </div>
+</div>
+}
+
 @if (showPreview) {
 <div class="preview-overlay" (click)="closePreview()">
   <div class="preview-modal" (click)="$event.stopPropagation()">

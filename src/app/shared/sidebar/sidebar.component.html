@@ -31,7 +31,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/tableau-de-bord"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -41,7 +41,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/liste-clients"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -51,7 +51,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/gestion-documents"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -61,18 +61,28 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/agenda"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
       <span class="material-symbols-outlined group-hover:scale-110 transition-transform">event_note</span>
       <span class="text-label-md font-label-md">Agenda</span>
     </a>
+    <a
+      class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
+      routerLink="/taskboard"
+      routerLinkActive="nav-active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="closeSidebar()"
+    >
+      <span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard_customize</span>
+      <span class="text-label-md font-label-md">Tâches</span>
+    </a>
     @if (auth.hasRole('Admin')) {
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/gestion-utilisateurs"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -84,7 +94,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/rapports"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -96,7 +106,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/historique-modifications"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >
@@ -117,7 +127,7 @@
     <a
       class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
       routerLink="/parametres"
-      routerLinkActive="bg-primary/10 text-primary shadow-sm scale-[1.02]"
+      routerLinkActive="nav-active"
       [routerLinkActiveOptions]="{ exact: true }"
       (click)="closeSidebar()"
     >

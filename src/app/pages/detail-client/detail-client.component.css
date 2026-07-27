@@ -36,7 +36,7 @@
 
 .action-icon-primary {
   border-color: #c7d2e8;
-  background: #f0f3fa;
+  background: var(--subtle-bg);
   color: #1a3a8f;
 }
 
@@ -62,7 +62,7 @@
 
 .action-icon-purple {
   border-color: #d5cde8;
-  background: #f3f0fa;
+  background: var(--info-bg);
   color: #6b4fad;
 }
 
@@ -75,13 +75,13 @@
 
 .action-icon-red {
   border-color: #e8c8cb;
-  background: #fdf0f1;
+  background: var(--error-bg);
   color: #c9303e;
 }
 
 .action-icon-red:hover {
   border-color: #d9a4a8;
-  background: #fbe4e6;
+  background: var(--error-bg);
 }
 
 /* ── Dark mode ───────────────────────────────────────────────────────── */
@@ -127,7 +127,7 @@
 .dark .action-icon-red {
   border-color: rgba(232, 96, 110, 0.3);
   background: rgba(232, 96, 110, 0.1);
-  color: #f0808c;
+  color: var(--error-on-bg);
 }
 
 .dark .action-icon-red:hover {

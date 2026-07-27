@@ -103,6 +103,44 @@ export class ReminderService {
     return this.http.put(`${this.apiUrl}/${id}/complete`, {});
   }
 
+  getTeamFiltered(filter: ReminderFilterDto): Observable<ReminderDto[]> {
+    let params = new HttpParams();
+    if (filter.type) params = params.set('type', filter.type);
+    if (filter.priority) params = params.set('priority', filter.priority);
+    if (filter.status) params = params.set('status', filter.status);
+    if (filter.clientId) params = params.set('clientId', filter.clientId.toString());
+    if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
+    if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
+    return this.http.get<ReminderDto[]>(`${this.apiUrl}/team`, { params });
+  }
+
+  getTeamStats(): Observable<ReminderStatsDto> {
+    return this.http.get<ReminderStatsDto>(`${this.apiUrl}/team/stats`);
+  }
+
+  getAssignedToMe(filter: ReminderFilterDto): Observable<ReminderDto[]> {
+    let params = new HttpParams();
+    if (filter.type) params = params.set('type', filter.type);
+    if (filter.priority) params = params.set('priority', filter.priority);
+    if (filter.status) params = params.set('status', filter.status);
+    if (filter.clientId) params = params.set('clientId', filter.clientId.toString());
+    if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom);
+    if (filter.dateTo) params = params.set('dateTo', filter.dateTo);
+    return this.http.get<ReminderDto[]>(`${this.apiUrl}/assigned-to-me`, { params });
+  }
+
+  sign(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/sign`, {});
+  }
+
+  updateStatus(id: number, status: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  createFromDocument(clientId: number, title: string): Observable<ReminderDto> {
+    return this.http.post<ReminderDto>(`${this.apiUrl}/from-document`, { clientId, title });
+  }
+
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }

@@ -1,0 +1,6 @@
+.nav-active {
+  background: var(--sidebar-active-bg) !important;
+  color: var(--sidebar-active-text) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transform: scale(1.02);
+}

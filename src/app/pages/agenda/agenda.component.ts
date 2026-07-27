@@ -132,7 +132,10 @@ export class AgendaComponent implements OnInit {
   }
 
   markComplete(r: ReminderDto): void {
-    this.reminderService.complete(r.id).subscribe({ next: () => this.loadData() });
+    this.reminderService.complete(r.id).subscribe({
+      next: () => this.loadData(),
+      error: (err) => console.error('Erreur completion rappel:', err)
+    });
   }
 
   deleteReminder(r: ReminderDto): void {

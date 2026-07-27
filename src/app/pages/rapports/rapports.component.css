@@ -3,27 +3,25 @@
    ═══════════════════════════════════════════════════════════ */
 
 :host {
-  --ov-10: color-mix(in srgb, var(--md-sys-color-outline-variant) 10%, transparent);
-  --ov-20: color-mix(in srgb, var(--md-sys-color-outline-variant) 20%, transparent);
-  --ov-30: color-mix(in srgb, var(--md-sys-color-outline-variant) 30%, transparent);
-  --ov-50: color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
-  --p-5: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
-  --p-10: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  --p-20: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  --p-30: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
-  --p-90: color-mix(in srgb, var(--md-sys-color-primary) 90%, transparent);
-  --sc-low: var(--md-sys-color-surface-container-low);
-  --sc-mid: var(--md-sys-color-surface-container);
-  --sc-high: var(--md-sys-color-surface-container-high);
-  --on-surface: var(--md-sys-color-on-surface);
-  --on-surface-var: var(--md-sys-color-on-surface-variant);
+  --ov-10: color-mix(in srgb, var(--outline-variant) 10%, transparent);
+  --ov-20: color-mix(in srgb, var(--outline-variant) 20%, transparent);
+  --ov-30: color-mix(in srgb, var(--outline-variant) 30%, transparent);
+  --ov-50: color-mix(in srgb, var(--outline-variant) 50%, transparent);
+  --p-5: color-mix(in srgb, var(--primary) 5%, transparent);
+  --p-10: color-mix(in srgb, var(--primary) 10%, transparent);
+  --p-20: color-mix(in srgb, var(--primary) 20%, transparent);
+  --p-30: color-mix(in srgb, var(--primary) 30%, transparent);
+  --p-90: color-mix(in srgb, var(--primary) 90%, transparent);
+  --sc-low: var(--surface-container-low);
+  --sc-mid: var(--surface-container);
+  --sc-high: var(--surface-container-high);
 }
 
 /* ── Layout ─────────────────────────────────────────────── */
 
 .rapports-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, var(--sc-low) 0%, transparent 400px);
+  background: var(--sc-low);
 }
 
 .rapports-container {
@@ -73,7 +71,7 @@
 }
 
 .msg-error {
-  background: #fef2f2;
+  background: var(--error-bg);
   border: 1px solid #fecaca;
 }
 
@@ -109,8 +107,8 @@
 }
 
 .tab-active {
-  background: white;
-  color: var(--md-sys-color-primary) !important;
+  background: var(--surface);
+  color: var(--primary) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
@@ -121,7 +119,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 1rem;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-20);
   border-radius: 0.75rem;
   margin-bottom: 1.5rem;
@@ -190,7 +188,7 @@
 
 .category-tab-active {
   background: var(--p-10);
-  color: var(--md-sys-color-primary);
+  color: var(--primary);
   border-color: var(--p-20);
 }
 
@@ -212,7 +210,7 @@
 }
 
 .report-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-30);
   border-radius: 1rem;
   padding: 1.25rem;
@@ -231,7 +229,7 @@
 }
 
 .report-card-active {
-  border-color: var(--md-sys-color-primary) !important;
+  border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px var(--p-20), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
 }
 
@@ -297,7 +295,7 @@
 /* ── Config Panel ───────────────────────────────────────── */
 
 .config-panel {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-30);
   border-radius: 1rem;
   overflow: hidden;
@@ -380,7 +378,7 @@
   padding: 0.125rem 0.5rem;
   border-radius: 1rem;
   background: var(--p-10);
-  color: var(--md-sys-color-primary);
+  color: var(--primary);
 }
 
 /* Format Toggle */
@@ -398,7 +396,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   border: 1px solid var(--ov-30);
-  background: white;
+  background: var(--surface);
   color: var(--on-surface-var);
   cursor: pointer;
   transition: all 0.15s;
@@ -409,9 +407,9 @@
 }
 
 .format-toggle-active {
-  background: var(--md-sys-color-primary) !important;
-  color: white !important;
-  border-color: var(--md-sys-color-primary) !important;
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+  border-color: var(--primary) !important;
 }
 
 /* Filter Grid */
@@ -448,7 +446,7 @@
 }
 
 .filter-select:focus {
-  border-color: var(--md-sys-color-primary);
+  border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--p-20);
 }
 
@@ -481,19 +479,19 @@
 }
 
 .preset-chip-active {
-  background: var(--md-sys-color-primary) !important;
-  color: white !important;
-  border-color: var(--md-sys-color-primary) !important;
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+  border-color: var(--primary) !important;
 }
 
 .preset-chip-reset {
-  color: var(--md-sys-color-error, #dc2626);
-  border-color: var(--md-sys-color-error, #dc2626);
+  color: var(--error, #dc2626);
+  border-color: var(--error, #dc2626);
 }
 
 .preset-chip-reset:hover {
-  background: var(--md-sys-color-error, #dc2626);
-  color: white;
+  background: var(--error, #dc2626);
+  color: var(--on-primary);
 }
 
 /* Config Info */
@@ -531,7 +529,7 @@
   font-weight: 700;
   color: var(--on-surface);
   padding: 0.25rem 0.625rem;
-  background: white;
+  background: var(--surface);
   border-radius: 0.375rem;
   border: 1px solid var(--ov-20);
 }
@@ -550,9 +548,9 @@
   border-radius: 0.625rem;
   font-size: 0.8125rem;
   font-weight: 700;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  border: none;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 80%, transparent);
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -571,7 +569,7 @@
 /* ── Recent Downloads ───────────────────────────────────── */
 
 .recent-panel {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-30);
   border-radius: 1rem;
   overflow: hidden;
@@ -677,23 +675,23 @@
   font-size: 0.8125rem;
   font-weight: 700;
   border: 2px solid var(--sc-high);
-  background: white;
+  background: var(--surface);
   color: var(--on-surface-var);
   flex-shrink: 0;
   transition: all 0.25s;
 }
 
 .step-current {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary);
-  color: white;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
   box-shadow: 0 0 0 3px var(--p-20);
 }
 
 .step-done {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary);
-  color: white;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .step-line {
@@ -705,12 +703,12 @@
 }
 
 .step-line-active {
-  background: var(--md-sys-color-primary);
+  background: var(--primary);
 }
 
 /* Import Card */
 .import-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-30);
   border-radius: 1rem;
   overflow: hidden;
@@ -744,13 +742,13 @@
 }
 
 .step-badge-done {
-  background: var(--md-sys-color-primary) !important;
-  color: white !important;
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
 }
 
 .step-badge-current {
   background: var(--p-10);
-  color: var(--md-sys-color-primary);
+  color: var(--primary);
 }
 
 .import-card-title {
@@ -808,13 +806,13 @@
 }
 
 .req-required {
-  background: #fef2f2;
+  background: var(--error-bg);
   color: #dc2626;
 }
 
 .req-optional {
-  background: #fffbeb;
-  color: #d97706;
+  background: var(--warning-bg);
+  color: var(--warning-text);
 }
 
 /* Dropzone */
@@ -834,7 +832,7 @@
 }
 
 .dropzone-active {
-  border-color: var(--md-sys-color-primary) !important;
+  border-color: var(--primary) !important;
   background: var(--p-10) !important;
 }
 
@@ -891,7 +889,7 @@
 }
 
 .file-preview-remove:hover {
-  background: #fef2f2;
+  background: var(--error-bg);
   color: #dc2626;
 }
 
@@ -901,8 +899,8 @@
   align-items: center;
   gap: 0.875rem;
   padding: 1rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
   border-radius: 0.75rem;
 }
 
@@ -910,7 +908,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #fef3c7;
+  background: var(--warning-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -926,7 +924,7 @@
 }
 
 .sidebar-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--ov-30);
   border-radius: 0.875rem;
   overflow: hidden;
@@ -972,5 +970,5 @@
   padding: 0.0625rem 0.375rem;
   border-radius: 0.25rem;
   background: var(--sc-low);
-  color: var(--md-sys-color-primary);
+  color: var(--primary);
 }

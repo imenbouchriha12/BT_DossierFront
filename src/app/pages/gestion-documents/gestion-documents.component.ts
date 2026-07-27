@@ -7,6 +7,8 @@ import { DocumentService } from '../../services/document.service';
 import { ClientService } from '../../services/client.service';
 import { DocumentDto, ClientDto, PagedResult } from '../../models/client.models';
 import { AuthService } from '../../services/auth.service';
+import { ReminderService } from '../../services/reminder.service';
+
 
 @Component({
   selector: 'app-gestion-documents',
@@ -45,11 +47,18 @@ export class GestionDocumentsComponent implements OnInit {
   total = 0;
   totalPages = 0;
 
+  showOcrDetail = false;
+  ocrDoc: DocumentDto | null = null;
+  ocrResult: any = null;
+  ocrLoading = false;
+  ocrError = '';
+
   constructor(
     public documentService: DocumentService,
     public clientService: ClientService,
     public authService: AuthService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private reminderService: ReminderService
   ) {}
 
   ngOnInit() {
@@ -214,6 +223,114 @@ export class GestionDocumentsComponent implements OnInit {
         this.clearAlerts();
       }
     });
+  }
+
+  openOcrDetail(doc: DocumentDto) {
+    this.showOcrDetail = true;
+    this.ocrDoc = doc;
+    this.ocrResult = null;
+    this.ocrLoading = true;
+    this.ocrError = '';
+    this.documentService.getOcrResult(doc.id).subscribe({
+      next: (result) => {
+        this.ocrResult = result;
+        if (result.donneesExtraites) {
+          try {
+            const parsed = JSON.parse(result.donneesExtraites);
+            this.ocrResult.champsExtraits = parsed;
+          } catch { }
+        }
+        this.ocrLoading = false;
+      },
+      error: () => {
+        this.ocrLoading = false;
+        this.ocrError = 'Impossible de charger les résultats OCR.';
+      }
+    });
+  }
+
+  closeOcrDetail() {
+    this.showOcrDetail = false;
+    this.ocrDoc = null;
+    this.ocrResult = null;
+    this.ocrError = '';
+  }
+
+  lancerOcr(id: number) {
+    console.log('[OCR] Lancement analyse pour document', id);
+    this.ocrLoading = true;
+    this.ocrError = '';
+    this.documentService.verifyOcr(id).subscribe({
+      next: (result) => {
+        console.log('[OCR] Résultat reçu:', result);
+        this.ocrResult = result;
+        this.ocrLoading = false;
+        this.success = 'Vérification OCR terminée.';
+        this.loadDocuments();
+        this.clearAlerts();
+      },
+      error: (err) => {
+        console.error('[OCR] Erreur:', err);
+        this.ocrLoading = false;
+        this.ocrError = err.error?.message || `Erreur ${err.status}: ${err.statusText || 'Vérification OCR'}`;
+        this.clearAlerts();
+      }
+    });
+  }
+
+  createValidationTask(doc: any): void {
+    if (!doc || !doc.clientId) return;
+    const title = `Validation document: ${doc.typeDocument || doc.nomFichier || 'Document #' + doc.id}`;
+    this.reminderService.createFromDocument(doc.clientId, title).subscribe({
+      next: () => {
+        this.success = 'Tâche de validation créée. Rendez-vous dans le tableau des tâches.';
+        this.clearAlerts();
+      },
+      error: (err) => {
+        console.error('Erreur création tâche:', err);
+        this.ocrError = 'Erreur lors de la création de la tâche.';
+        this.clearAlerts();
+      }
+    });
+  }
+
+  getOcrBadgeClass(resultat: string | undefined): string {
+    switch (resultat) {
+      case 'Correspond': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Anomalie': return 'bg-red-50 text-red-700 border-red-200';
+      case 'ExtractionUniquement': return 'bg-amber-50 text-amber-700 border-amber-200';
+      default: return 'bg-gray-50 text-gray-500 border-gray-200';
+    }
+  }
+
+  getOcrBadgeIcon(resultat: string | undefined): string {
+    switch (resultat) {
+      case 'Correspond': return 'check_circle';
+      case 'Anomalie': return 'warning';
+      case 'ExtractionUniquement': return 'document_scanner';
+      default: return 'schedule';
+    }
+  }
+
+  getOcrBadgeLabel(resultat: string | undefined): string {
+    switch (resultat) {
+      case 'Correspond': return 'Vérifié';
+      case 'Anomalie': return 'Anomalie';
+      case 'ExtractionUniquement': return 'Extrait';
+      default: return 'Non traité';
+    }
+  }
+
+  hasKeys(obj: any): boolean {
+    return obj != null && typeof obj === 'object' && Object.keys(obj).length > 0;
+  }
+
+  getObjectKeysLength(obj: any): number {
+    return obj != null && typeof obj === 'object' ? Object.keys(obj).length : 0;
+  }
+
+  asAny(value: unknown): any {
+    return value;
   }
 
   private clearAlerts() {

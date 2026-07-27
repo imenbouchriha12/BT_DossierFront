@@ -26,6 +26,7 @@ export const routes: Routes = [
       { path: 'client/:id', loadComponent: () => import('./pages/detail-client/detail-client.component').then(m => m.DetailClientComponent) },
       { path: 'gestion-documents', loadComponent: () => import('./pages/gestion-documents/gestion-documents.component').then(m => m.GestionDocumentsComponent) },
       { path: 'agenda', loadComponent: () => import('./pages/agenda/agenda.component').then(m => m.AgendaComponent) },
+      { path: 'taskboard', loadComponent: () => import('./pages/taskboard/taskboard.component').then(m => m.TaskboardComponent) },
       { path: 'rapports', loadComponent: () => import('./pages/rapports/rapports.component').then(m => m.RapportsComponent) },
       { path: 'parametres', loadComponent: () => import('./pages/parametres/parametres.component').then(m => m.ParametresComponent) },
       { path: 'changement-mot-de-passe', loadComponent: () => import('./pages/changement-mot-de-passe/changement-mot-de-passe.component').then(m => m.ChangementMotDePasseComponent) },

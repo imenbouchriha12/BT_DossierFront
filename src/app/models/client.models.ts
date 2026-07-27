@@ -156,6 +156,26 @@ export interface DocumentDto {
   statutValidation: string;
   codeClient?: string;
   nomClient?: string;
+  texteExtrait?: string;
+  donneesExtraites?: string;
+  scoreConfiance?: number;
+  dateVerificationOCR?: string;
+  resultatVerification?: string;
+}
+
+export interface OcrResultDto {
+  texteExtrait: string;
+  donneesExtraitesJson?: string;
+  scoreConfiance: number;
+  resultatVerification: string;
+  champsExtraits: { [key: string]: string };
+  champsComparees: { [key: string]: ComparisonResult };
+}
+
+export interface ComparisonResult {
+  valeurAttendue: string;
+  valeurExtraite: string;
+  correspond: boolean;
 }
 
 export interface CreateDocumentDto {

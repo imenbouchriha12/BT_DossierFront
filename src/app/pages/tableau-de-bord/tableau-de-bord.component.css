@@ -31,17 +31,17 @@ canvas {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--neutral-bg);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--on-surface-variant);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--on-surface-variant);
 }
 
 /* ============================================

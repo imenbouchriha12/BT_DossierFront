@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { DocumentDto, PagedResult } from '../models/client.models';
+import { DocumentDto, OcrResultDto, PagedResult } from '../models/client.models';
 
 @Injectable({ providedIn: 'root' })
 export class DocumentService {
@@ -94,5 +94,15 @@ export class DocumentService {
 
   updateValidation(id: number, statutValidation: string): Observable<DocumentDto> {
     return this.http.put<DocumentDto>(`${this.apiUrl}/${id}/validation`, { statutValidation });
+  }
+
+  /** Déclenche la vérification OCR pour un document */
+  verifyOcr(id: number): Observable<OcrResultDto> {
+    return this.http.post<OcrResultDto>(`${this.apiUrl}/${id}/ocr`, {});
+  }
+
+  /** Récupère les résultats OCR d'un document */
+  getOcrResult(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}/ocr`);
   }
 }
