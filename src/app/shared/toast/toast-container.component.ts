@@ -1,12 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
-import { NgClass, NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ToastItem, ToastService } from './toast.service';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
-  imports: [NgFor, NgIf, NgClass],
+  imports: [NgFor, NgIf],
   templateUrl: './toast-container.component.html',
   styleUrls: ['./toast-container.component.css'],
 })

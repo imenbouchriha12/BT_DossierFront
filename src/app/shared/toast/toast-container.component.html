@@ -2,39 +2,51 @@
   <div
     *ngFor="let t of toasts"
     class="toast-item"
-    [ngClass]="{
-      'toast-info': t.type === 'info',
-      'toast-success': t.type === 'success',
-      'toast-confirm': t.type === 'confirm',
-      'toast-error': t.type === 'error'
-    }"
+    [class.toast-info]="t.type === 'info'"
+    [class.toast-success]="t.type === 'success'"
+    [class.toast-confirm]="t.type === 'confirm'"
+    [class.toast-error]="t.type === 'error'"
   >
+    <div class="toast-glow" aria-hidden="true"></div>
+
     <div class="toast-icon">
       <span class="material-symbols-outlined">
         {{
           t.type === 'success'
-            ? 'check_circle'
+            ? 'check'
             : t.type === 'confirm'
-            ? 'warning'
+            ? 'help'
             : t.type === 'error'
-            ? 'error'
+            ? 'close'
             : 'info'
         }}
       </span>
     </div>
 
-    <div class="toast-body">
+    <div class="toast-content">
       <p class="toast-titre">{{ t.titre }}</p>
       <p class="toast-message">{{ t.message }}</p>
 
       <div *ngIf="t.type === 'confirm'" class="toast-actions">
-        <button class="toast-btn-confirm" (click)="onOui(t.id)">Oui, supprimer</button>
-        <button class="toast-btn-annuler" (click)="onNon(t.id)">Non</button>
+        <button class="toast-btn toast-btn-confirm" (click)="onOui(t.id)">Oui, supprimer</button>
+        <button class="toast-btn toast-btn-annuler" (click)="onNon(t.id)">Annuler</button>
       </div>
     </div>
 
-    <button *ngIf="t.type !== 'confirm'" class="toast-close material-symbols-outlined" (click)="dismiss(t.id)">
-      close
-    </button>
+    <button
+      *ngIf="t.type !== 'confirm'"
+      class="toast-close material-symbols-outlined"
+      (click)="dismiss(t.id)"
+      aria-label="Fermer"
+    >close</button>
+
+    <span
+      *ngIf="t.type !== 'confirm' && t.duration > 0"
+      class="toast-progress"
+      [style.animationDuration]="t.duration + 'ms'"
+      [class.toast-progress-info]="t.type === 'info'"
+      [class.toast-progress-success]="t.type === 'success'"
+      [class.toast-progress-error]="t.type === 'error'"
+    ></span>
   </div>
 </div>
