@@ -70,6 +70,10 @@ export class ClientService {
     return this.http.post(`${this.apiUrl}/import`, formData);
   }
 
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/import-template`, { responseType: 'blob' });
+  }
+
   getVilles(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/villes`);
   }

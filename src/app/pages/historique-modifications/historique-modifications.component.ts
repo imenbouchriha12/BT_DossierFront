@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HistoriqueService, HistoriqueDto } from '../../services/historique.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   standalone: true,
@@ -27,7 +28,18 @@ export class HistoriqueModificationsComponent implements OnInit {
   filterDateDebut = '';
   filterDateFin = '';
 
-  constructor(private historiqueService: HistoriqueService) {}
+  constructor(
+    private historiqueService: HistoriqueService,
+    public authService: AuthService
+  ) {}
+
+  get isAdmin(): boolean {
+    return this.authService.hasRole('Admin');
+  }
+
+  get userName(): string {
+    return this.authService.currentUser()?.username ?? '';
+  }
 
   ngOnInit(): void {
     this.loadFilters();

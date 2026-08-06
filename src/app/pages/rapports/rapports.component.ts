@@ -147,12 +147,14 @@ export class RapportsComponent implements OnInit {
   importStep = 1;
 
   recentDownloads = signal<{ type: string; format: string; date: string; filename: string }[]>([]);
+  importHistory = signal<{ filename: string; date: string; imported: number; success: boolean; message: string }[]>([]);
 
   constructor(
     private reportService: ReportService,
     private clientService: ClientService
   ) {
     this.loadRecentDownloads();
+    this.loadImportHistory();
   }
 
   ngOnInit(): void {
@@ -325,8 +327,8 @@ export class RapportsComponent implements OnInit {
 
   private validateAndSetFile(file: File): void {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['xlsx', 'xls', 'csv'].includes(ext ?? '')) {
-      this.errorMessage = 'Format non supporté. Utilisez un fichier Excel (.xlsx, .xls) ou CSV.';
+    if (!['xlsx', 'xls'].includes(ext ?? '')) {
+      this.errorMessage = 'Format non supporté. Utilisez un fichier Excel (.xlsx, .xls).';
       setTimeout(() => this.errorMessage = '', 4000);
       return;
     }
@@ -337,6 +339,25 @@ export class RapportsComponent implements OnInit {
     }
     this.selectedFile = file;
     this.importStep = 2;
+  }
+
+  downloadTemplate(): void {
+    this.clientService.downloadImportTemplate().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'modele_import_clients.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.successMessage = 'Modèle Excel téléchargé. Remplissez-le puis importez-le.';
+        setTimeout(() => this.successMessage = '', 5000);
+      },
+      error: () => {
+        this.errorMessage = 'Erreur lors du téléchargement du modèle. Réessayez.';
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
   }
 
   removeFile(): void {
@@ -352,18 +373,23 @@ export class RapportsComponent implements OnInit {
 
     const formData = new FormData();
     formData.append('file', this.selectedFile);
+    const fileName = this.selectedFile.name;
 
     this.clientService.importExcel(formData).subscribe({
       next: (res: any) => {
         this.loading = false;
-        this.successMessage = `Import réussi : ${res?.imported ?? 0} client(s) importé(s) avec succès.`;
+        const imported = res?.imported ?? 0;
+        this.successMessage = `Import réussi : ${imported} client(s) importé(s) avec succès.`;
+        this.addToImportHistory(fileName, imported, true, this.successMessage);
         this.selectedFile = null;
         this.importStep = 1;
         setTimeout(() => this.successMessage = '', 6000);
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Erreur lors de l\'import. Vérifiez le format de votre fichier.';
+        const message = err.error?.message || 'Erreur lors de l\'import. Vérifiez le format de votre fichier.';
+        this.errorMessage = message;
+        this.addToImportHistory(fileName, 0, false, message);
         setTimeout(() => this.errorMessage = '', 6000);
       }
     });
@@ -392,5 +418,26 @@ export class RapportsComponent implements OnInit {
   clearRecentDownloads(): void {
     this.recentDownloads.set([]);
     localStorage.removeItem('recentDownloads');
+  }
+
+  // ─── Historique des imports ──────────────────────────────
+
+  private addToImportHistory(filename: string, imported: number, success: boolean, message: string): void {
+    const entry = { filename, imported, success, message, date: new Date().toISOString() };
+    const all = [entry, ...this.importHistory().slice(0, 9)];
+    this.importHistory.set(all);
+    localStorage.setItem('importHistory', JSON.stringify(all));
+  }
+
+  private loadImportHistory(): void {
+    try {
+      const raw = localStorage.getItem('importHistory');
+      if (raw) this.importHistory.set(JSON.parse(raw));
+    } catch {}
+  }
+
+  clearImportHistory(): void {
+    this.importHistory.set([]);
+    localStorage.removeItem('importHistory');
   }
 }

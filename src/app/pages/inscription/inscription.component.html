@@ -7,10 +7,8 @@
     <div class="relative z-10 w-full max-w-lg px-container-margin text-on-primary">
       <div class="mb-xl">
         <div class="flex items-center gap-sm mb-lg">
-          <div class="w-12 h-12 bg-on-primary rounded-xl flex items-center justify-center shadow-lg">
-            <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">insights</span>
-          </div>
-          <span class="headline-font text-headline-lg font-extrabold tracking-tight">GestionBanque</span>
+          <img src="BT.png" alt="Logo" class="h-10 w-auto object-contain" />
+          <span class="headline-font text-headline-lg font-extrabold tracking-tight">BT DocCenter</span>
         </div>
         <h1 class="font-display-lg text-display-lg leading-tight mb-md headline-font">Rejoignez l'excellence opérationnelle</h1>
         <p class="font-body-lg text-body-lg opacity-90 max-w-md">
@@ -53,10 +51,8 @@
   <section class="w-full lg:w-1/2 flex items-center justify-center p-gutter md:p-xl bg-surface">
     <div class="w-full max-w-md">
       <div class="lg:hidden flex items-center gap-sm mb-xl">
-        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md">
-          <span class="material-symbols-outlined text-white text-[24px]" style="font-variation-settings: 'FILL' 1;">insights</span>
-        </div>
-        <span class="headline-font text-headline-md font-bold text-primary">FintechPro</span>
+        <img src="BT.png" alt="Logo" class="h-9 w-auto object-contain" />
+        <span class="headline-font text-headline-md font-bold text-primary">BT DocCenter</span>
       </div>
       <header class="mb-xl">
         <h2 class="font-headline-md text-headline-md text-on-surface mb-xs headline-font">Créer votre compte</h2>
@@ -67,15 +63,32 @@
           <label class="font-label-md text-label-md text-on-surface" for="username">Nom complet</label>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
-            <input [(ngModel)]="username" name="username" class="w-full pl-[44px] pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md form-input-focus transition-all duration-200" id="username" placeholder="Jean Dupont" required type="text"/>
+            <input [(ngModel)]="username" name="username" (blur)="usernameTouched = true" class="w-full pl-[44px] pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md form-input-focus transition-all duration-200" [ngClass]="fieldBorder(usernameState)" id="username" placeholder="Jean Dupont" required type="text"/>
           </div>
+          @if (usernameTouched && !username) {
+          <p class="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+            <span class="material-symbols-outlined text-[14px]">error</span>
+            Le nom complet est requis.
+          </p>
+          } @else if (usernameTouched && username) {
+          <p class="mt-1 flex items-center gap-1 text-xs font-medium text-emerald-600">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span>
+            Nom valide.
+          </p>
+          }
         </div>
         <div class="space-y-xs">
           <label class="font-label-md text-label-md text-on-surface" for="email">Email professionnel</label>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">mail</span>
-            <input [(ngModel)]="email" name="email" class="w-full pl-[44px] pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md form-input-focus transition-all duration-200" id="email" placeholder="nom@entreprise.com" required type="email"/>
+            <input [(ngModel)]="email" name="email" (blur)="emailTouched = true" class="w-full pl-[44px] pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md form-input-focus transition-all duration-200" [ngClass]="fieldBorder(emailState)" id="email" placeholder="nom@entreprise.com" required type="email"/>
           </div>
+          @if (emailTouched && emailMessage) {
+          <p class="mt-1 flex items-center gap-1 text-xs font-medium" [ngClass]="emailState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+            <span class="material-symbols-outlined text-[14px]">{{ emailState === 'ok' ? 'check_circle' : 'error' }}</span>
+            {{ emailMessage }}
+          </p>
+          }
         </div>
         <div *ngIf="error" class="p-md bg-red-50 border border-red-200 rounded-xl text-red-700 font-body-md text-body-md">
           {{ error }}

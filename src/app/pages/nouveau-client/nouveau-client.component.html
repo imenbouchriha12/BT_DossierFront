@@ -50,29 +50,89 @@
           <h3 class="text-title-md font-title-md text-on-surface mb-xs">Informations Personnelles</h3>
           <p class="text-body-md font-body-md text-on-surface-variant">Veuillez saisir les informations légales du client.</p>
         </div>
+        <div class="flex flex-col gap-xs col-span-full">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Type de Client</label>
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.typeClient">
+            <option *ngFor="let type of clientTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        @if (needsMatriculeFiscal) {
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Matricule Fiscal <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('matriculeFiscal')" placeholder="XXXXXX/X/X/XXX" type="text" [(ngModel)]="formData.matriculeFiscal" (blur)="markTouched('matriculeFiscal')" />
+          @if (isTouched('matriculeFiscal') && messageFor('matriculeFiscal')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('matriculeFiscal')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('matriculeFiscal') }}</span>
+            {{ messageFor('matriculeFiscal') }}
+          </p>
+          }
+        </div>
+        }
+        @if (needsRegistreCommerce) {
+        <div class="flex flex-col gap-xs">
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Registre de Commerce <span class="text-error">*</span></label>
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('registreCommerce')" placeholder="BXXXXXXX" type="text" [(ngModel)]="formData.registreCommerce" (blur)="markTouched('registreCommerce')" />
+          @if (isTouched('registreCommerce') && messageFor('registreCommerce')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('registreCommerce')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('registreCommerce') }}</span>
+            {{ messageFor('registreCommerce') }}
+          </p>
+          }
+        </div>
+        }
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Nom <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Dupont" type="text" [(ngModel)]="formData.nom" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('nom')" placeholder="Dupont" type="text" [(ngModel)]="formData.nom" (blur)="markTouched('nom')" />
+          @if (isTouched('nom') && messageFor('nom')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('nom')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('nom') }}</span>
+            {{ messageFor('nom') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Prénom <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Jean" type="text" [(ngModel)]="formData.prenom" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('prenom')" placeholder="Jean" type="text" [(ngModel)]="formData.prenom" (blur)="markTouched('prenom')" />
+          @if (isTouched('prenom') && messageFor('prenom')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('prenom')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('prenom') }}</span>
+            {{ messageFor('prenom') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Date de Naissance <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" type="date" [(ngModel)]="formData.dateNaissance" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('dateNaissance')" type="date" [(ngModel)]="formData.dateNaissance" (blur)="markTouched('dateNaissance')" />
+          @if (isTouched('dateNaissance') && messageFor('dateNaissance')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('dateNaissance')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('dateNaissance') }}</span>
+            {{ messageFor('dateNaissance') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Sexe <span class="text-error">*</span></label>
-          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [(ngModel)]="formData.sexe">
+          <select class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md appearance-none" [ngClass]="borderFor('sexe')" [(ngModel)]="formData.sexe" (blur)="markTouched('sexe')">
             <option value="">Sélectionner</option>
             <option value="M">Masculin</option>
             <option value="F">Féminin</option>
           </select>
+          @if (isTouched('sexe') && messageFor('sexe')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('sexe')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('sexe') }}</span>
+            {{ messageFor('sexe') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs col-span-full">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Nationalité <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Française" type="text" [(ngModel)]="formData.nationalite" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('nationalite')" placeholder="Française" type="text" [(ngModel)]="formData.nationalite" (blur)="markTouched('nationalite')" />
+          @if (isTouched('nationalite') && messageFor('nationalite')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('nationalite')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('nationalite') }}</span>
+            {{ messageFor('nationalite') }}
+          </p>
+          }
         </div>
       </div>
       }
@@ -85,19 +145,43 @@
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Téléphone <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="+33 6 12 34 56 78" type="tel" [(ngModel)]="formData.telephone" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('telephone')" placeholder="+33 6 12 34 56 78" type="tel" [(ngModel)]="formData.telephone" (blur)="markTouched('telephone')" />
+          @if (isTouched('telephone') && messageFor('telephone')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('telephone')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('telephone') }}</span>
+            {{ messageFor('telephone') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Email <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="jean.dupont@email.com" type="email" [(ngModel)]="formData.email" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('email')" placeholder="jean.dupont@email.com" type="email" [(ngModel)]="formData.email" (blur)="markTouched('email')" />
+          @if (isTouched('email') && messageFor('email')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('email')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('email') }}</span>
+            {{ messageFor('email') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs col-span-full">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Adresse <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="15 Avenue des Champs-Élysées" type="text" [(ngModel)]="formData.adresse" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('adresse')" placeholder="15 Avenue des Champs-Élysées" type="text" [(ngModel)]="formData.adresse" (blur)="markTouched('adresse')" />
+          @if (isTouched('adresse') && messageFor('adresse')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('adresse')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('adresse') }}</span>
+            {{ messageFor('adresse') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Ville <span class="text-error">*</span></label>
-          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Paris" type="text" [(ngModel)]="formData.ville" />
+          <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" [ngClass]="borderFor('ville')" placeholder="Paris" type="text" [(ngModel)]="formData.ville" (blur)="markTouched('ville')" />
+          @if (isTouched('ville') && messageFor('ville')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="messageClassFor('ville')">
+            <span class="material-symbols-outlined text-[14px]">{{ messageIconFor('ville') }}</span>
+            {{ messageFor('ville') }}
+          </p>
+          }
         </div>
         <div class="flex flex-col gap-xs">
           <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Statut</label>
@@ -129,7 +213,7 @@
           <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="Santé" type="text" [(ngModel)]="formData.detail!.secteurActivite" />
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Revenu Mensuel (€)</label>
+          <label class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Revenu Mensuel (TND)</label>
           <input class="w-full h-12 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-body-md font-body-md bg-white px-md" placeholder="4500" type="number" step="0.01" [(ngModel)]="formData.detail!.revenuMensuel" />
         </div>
         <div class="flex flex-col gap-xs">
@@ -153,15 +237,15 @@
       }
     </div>
 
-    <div class="p-lg md:p-xl bg-surface-container-low border-t border-outline-variant/30 flex justify-between items-center">
-      <button class="flex items-center gap-sm px-xl py-sm text-on-surface-variant font-label-md text-label-md rounded-lg border border-outline-variant hover:bg-white transition-all"
+    <div class="p-lg md:p-xl bg-surface-container-low border-t border-outline-variant/30 flex flex-wrap items-center justify-between gap-2">
+      <button class="flex items-center gap-sm px-4 sm:px-xl py-sm text-on-surface-variant font-label-md text-label-md rounded-lg border border-outline-variant hover:bg-white transition-all"
         [class.invisible]="currentStep === 1" (click)="prevStep()">
         <span class="material-symbols-outlined">arrow_back</span>
         Précédent
       </button>
 
       @if (currentStep < 3) {
-      <button class="flex items-center gap-sm px-xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
+      <button class="flex items-center gap-sm px-4 sm:px-xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
         (click)="nextStep()" [disabled]="!isStepValid" [class.opacity-50]="!isStepValid">
         Suivant
         <span class="material-symbols-outlined">arrow_forward</span>
@@ -169,7 +253,7 @@
       }
 
       @if (currentStep === 3) {
-      <button class="flex items-center gap-sm px-2xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
+      <button class="flex items-center gap-sm px-4 sm:px-2xl py-sm bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:bg-primary-container active:scale-95 transition-all"
         (click)="onSubmit()" [disabled]="saving" [class.opacity-50]="saving">
         @if (saving) {
         <span class="material-symbols-outlined animate-spin">sync</span>

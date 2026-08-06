@@ -1,0 +1,382 @@
+<div class="max-w-7xl mx-auto px-md py-lg space-y-lg">
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-center justify-between gap-md">
+    <div>
+      <p class="text-label-sm text-on-surface-variant">Pilotage & Conformité</p>
+      <h1 class="text-headline-md font-headline-md text-on-surface">Surveillance Fraude & Anomalies</h1>
+      <p class="text-body-sm text-on-surface-variant">Détection automatique des mouvements inhabituels, pics de débits et multi-comptes.</p>
+    </div>
+    @if (isAdminOrSuperviseur) {
+    <button (click)="analyserTous()" [disabled]="analyserEnCours"
+      class="flex items-center gap-sm bg-primary text-white px-lg py-md rounded-xl text-label-md font-bold shadow-sm hover:bg-on-primary-fixed-variant transition-all disabled:opacity-50">
+      @if (analyserEnCours) {
+      <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+      } @else {
+      <span class="material-symbols-outlined text-[18px]">radar</span>
+      }
+      Analyser tous les clients
+    </button>
+    }
+  </div>
+
+  @if (error) {
+  <div class="flex items-center justify-between gap-sm bg-error/10 border border-error/20 text-error px-lg py-md rounded-xl text-body-sm">
+    <span>{{ error }}</span>
+    <button class="material-symbols-outlined text-[18px]" (click)="error = ''">close</button>
+  </div>
+  }
+  @if (success) {
+  <div class="flex items-center justify-between gap-sm bg-green-50 border border-green-200 text-green-700 px-lg py-md rounded-xl text-body-sm">
+    <span>{{ success }}</span>
+    <button class="material-symbols-outlined text-[18px]" (click)="success = ''">close</button>
+  </div>
+  }
+
+  <!-- Statistiques -->
+  @if (stats) {
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-md">
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+      <p class="text-label-xs text-on-surface-variant uppercase tracking-wide">Total alertes</p>
+      <p class="text-headline-md font-headline-md text-on-surface mt-sm">{{ stats.totalAlertes }}</p>
+    </div>
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+      <p class="text-label-xs text-on-surface-variant uppercase tracking-wide">Alertes actives</p>
+      <p class="text-headline-md font-headline-md text-error mt-sm">{{ stats.alertesActives }}</p>
+    </div>
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+      <p class="text-label-xs text-on-surface-variant uppercase tracking-wide">Critiques</p>
+      <p class="text-headline-md font-headline-md text-error mt-sm">{{ stats.critique }}</p>
+    </div>
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+      <p class="text-label-xs text-on-surface-variant uppercase tracking-wide">Hautes</p>
+      <p class="text-headline-md font-headline-md text-warning mt-sm">{{ stats.haute }}</p>
+    </div>
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+      <p class="text-label-xs text-on-surface-variant uppercase tracking-wide">Traitée(s)</p>
+      <p class="text-headline-md font-headline-md text-green-600 mt-sm">{{ stats.traitees }}</p>
+    </div>
+  </div>
+  }
+
+  <!-- Onglets -->
+  <div class="flex gap-lg border-b border-outline-variant/30">
+    <button (click)="activeSection = 'alertes'"
+      class="pb-sm px-xs text-title-md font-bold transition-colors relative"
+      [class.text-primary]="activeSection === 'alertes'"
+      [class.text-on-surface-variant]="activeSection !== 'alertes'">
+      Alertes de fraude
+      @if (activeSection === 'alertes') { <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></span> }
+    </button>
+    <button (click)="activeSection = 'regles'"
+      class="pb-sm px-xs text-title-md font-bold transition-colors relative"
+      [class.text-primary]="activeSection === 'regles'"
+      [class.text-on-surface-variant]="activeSection !== 'regles'">
+      Règles antifraude
+      @if (activeSection === 'regles') { <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></span> }
+    </button>
+  </div>
+
+  <!-- ==================== ALERTES ==================== -->
+  @if (activeSection === 'alertes') {
+  <div class="bg-white border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+    <!-- Filtres -->
+    <div class="flex flex-wrap items-center gap-md p-lg border-b border-outline-variant/20">
+      <div class="flex items-center gap-sm">
+        <label class="text-label-sm text-on-surface-variant">Statut</label>
+        <select [(ngModel)]="filterStatut" (change)="appliquerFiltres()"
+          class="px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-lg text-body-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Tous</option>
+          <option value="Nouvelle">Nouvelle</option>
+          <option value="EnCours">En cours</option>
+          <option value="Traitee">Traitée</option>
+          <option value="Ignoree">Ignorée</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-sm">
+        <label class="text-label-sm text-on-surface-variant">Niveau</label>
+        <select [(ngModel)]="filterNiveau" (change)="appliquerFiltres()"
+          class="px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-lg text-body-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Tous</option>
+          <option value="Critique">Critique</option>
+          <option value="Haute">Haute</option>
+          <option value="Moyenne">Moyenne</option>
+          <option value="Basse">Basse</option>
+        </select>
+      </div>
+      <button (click)="resetFiltres()"
+        class="px-md py-sm rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low text-label-sm font-medium transition-all">
+        Réinitialiser
+      </button>
+      <span class="ml-auto text-label-sm text-on-surface-variant">{{ totalAlertes }} alerte(s)</span>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-surface-container-low">
+          <tr class="text-label-xs text-on-surface-variant uppercase tracking-wider">
+            <th class="px-lg py-sm font-semibold">Client</th>
+            <th class="px-lg py-sm font-semibold">Type d'anomalie</th>
+            <th class="px-lg py-sm font-semibold">Niveau</th>
+            <th class="px-lg py-sm font-semibold">Score</th>
+            <th class="px-lg py-sm font-semibold">Détection</th>
+            <th class="px-lg py-sm font-semibold">Statut</th>
+            <th class="px-lg py-sm font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loadingAlertes) {
+          <tr><td colspan="7" class="px-lg py-xl text-center text-on-surface-variant text-body-sm">Chargement...</td></tr>
+          } @else if (alertes.length === 0) {
+          <tr><td colspan="7" class="px-lg py-xl text-center text-on-surface-variant text-body-sm">Aucune alerte de fraude.</td></tr>
+          } @else {
+          @for (a of alertes; track a.id) {
+          <tr class="border-t border-outline-variant/10 hover:bg-surface-container-low/40 transition-colors align-top">
+            <td class="px-lg py-md">
+              <a [routerLink]="['/client', a.idClient]" class="font-semibold text-primary hover:underline">{{ a.nomClient }}</a>
+              <p class="text-label-xs text-on-surface-variant">{{ a.codeClient }}</p>
+            </td>
+            <td class="px-lg py-md">
+              <p class="text-body-sm font-medium">{{ typeLibelle(a.type) }}</p>
+              <p class="text-label-xs text-on-surface-variant max-w-md">{{ a.description }}</p>
+              @if (a.numCompte) { <p class="text-label-xs text-primary mt-xs">Compte {{ a.numCompte }}@if (a.montant) { — {{ a.montant | number:'1.0-0' }} TND }</p> }
+            </td>
+            <td class="px-lg py-md">
+              <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold border" [ngClass]="niveauClass(a.niveau)">{{ a.niveau }}</span>
+            </td>
+            <td class="px-lg py-md">
+              <div class="flex items-center gap-sm">
+                <div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" [ngClass]="a.score >= 80 ? 'bg-error' : a.score >= 60 ? 'bg-warning' : a.score >= 40 ? 'bg-primary' : 'bg-green-500'" [style.width.%]="a.score"></div>
+                </div>
+                <span class="text-label-sm font-bold">{{ a.score }}</span>
+              </div>
+            </td>
+            <td class="px-lg py-md text-body-sm">{{ a.dateDetection | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-lg py-md">
+              <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold" [ngClass]="statutClass(a.statut)">{{ statutLabel(a.statut) }}</span>
+            </td>
+            <td class="px-lg py-md text-right whitespace-nowrap">
+              @if (a.statut !== 'Traitee' && a.statut !== 'Ignoree') {
+              <button (click)="ouvrirTraitement(a)"
+                class="inline-flex items-center gap-1 text-primary hover:bg-primary/10 rounded-lg px-md py-sm text-label-sm font-medium transition-all">
+                <span class="material-symbols-outlined text-[16px]">rule</span> Traiter
+              </button>
+              } @else {
+              <span class="text-label-xs text-on-surface-variant">{{ a.commentaire || '—' }}</span>
+              }
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (pageCount > 1) {
+    <div class="flex items-center justify-center gap-xs p-lg border-t border-outline-variant/20">
+      <button (click)="changerPage(page - 1)" [disabled]="page === 1"
+        class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low disabled:opacity-30 material-symbols-outlined text-[18px]">chevron_left</button>
+      @for (p of pages(); track p) {
+      <button (click)="changerPage(p)"
+        class="w-9 h-9 rounded-lg text-label-sm font-bold transition-all"
+        [class.bg-primary]="p === page"
+        [class.text-white]="p === page"
+        [class.text-on-surface-variant]="p !== page"
+        [class.hover:bg-surface-container-low]="p !== page">{{ p }}</button>
+      }
+      <button (click)="changerPage(page + 1)" [disabled]="page === pageCount"
+        class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low disabled:opacity-30 material-symbols-outlined text-[18px]">chevron_right</button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ==================== RÈGLES ==================== -->
+  @if (activeSection === 'regles') {
+  <div class="bg-white border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between p-lg border-b border-outline-variant/20">
+      <div>
+        <h3 class="text-title-md font-bold text-on-surface">Règles antifraude</h3>
+        <p class="text-body-sm text-on-surface-variant">Le moteur applique ces règles configurables à chaque analyse.</p>
+      </div>
+      @if (isAdminOrSuperviseur) {
+      <button (click)="ouvrirNouvelleRegle()"
+        class="flex items-center gap-sm bg-primary text-white px-lg py-md rounded-xl text-label-md font-bold shadow-sm hover:bg-on-primary-fixed-variant transition-all">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Nouvelle règle
+      </button>
+      }
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-surface-container-low">
+          <tr class="text-label-xs text-on-surface-variant uppercase tracking-wider">
+            <th class="px-lg py-sm font-semibold">Règle</th>
+            <th class="px-lg py-sm font-semibold">Type</th>
+            <th class="px-lg py-sm font-semibold">Seuil</th>
+            <th class="px-lg py-sm font-semibold">Période</th>
+            <th class="px-lg py-sm font-semibold">Poids</th>
+            <th class="px-lg py-sm font-semibold">État</th>
+            <th class="px-lg py-sm font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loadingRegles) {
+          <tr><td colspan="7" class="px-lg py-xl text-center text-on-surface-variant text-body-sm">Chargement...</td></tr>
+          } @else {
+          @for (r of regles; track r.id) {
+          <tr class="border-t border-outline-variant/10 hover:bg-surface-container-low/40 transition-colors">
+            <td class="px-lg py-md">
+              <p class="text-body-sm font-semibold">{{ r.nom }}</p>
+              <p class="text-label-xs text-on-surface-variant">{{ r.code }}</p>
+            </td>
+            <td class="px-lg py-md"><span class="text-body-sm">{{ typeLibelle(r.type) }}</span></td>
+            <td class="px-lg py-md text-body-sm font-medium">{{ r.seuil | number:'1.0-0' }}@if (r.type !== 'MultiComptes' && r.type !== 'Frequence') { TND }</td>
+            <td class="px-lg py-md text-body-sm">{{ r.periodeJours > 0 ? r.periodeJours + ' jours' : '—' }}</td>
+            <td class="px-lg py-md text-body-sm">{{ r.poids }}</td>
+            <td class="px-lg py-md">
+              <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold" [ngClass]="r.actif ? 'bg-green-100 text-green-700' : 'bg-surface-container text-on-surface-variant'">{{ r.actif ? 'Active' : 'Désactivée' }}</span>
+            </td>
+            <td class="px-lg py-md text-right whitespace-nowrap">
+              @if (isAdminOrSuperviseur) {
+              <button (click)="ouvrirEditionRegle(r)" title="Modifier"
+                class="inline-flex items-center text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg p-sm transition-all material-symbols-outlined text-[18px]">edit</button>
+              <button (click)="toggleRegle(r)" [title]="r.actif ? 'Désactiver' : 'Activer'"
+                class="inline-flex items-center text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg p-sm transition-all material-symbols-outlined text-[18px]">{{ r.actif ? 'toggle_off' : 'toggle_on' }}</button>
+              <button (click)="supprimerRegle(r)" title="Supprimer"
+                class="inline-flex items-center text-on-surface-variant hover:text-error hover:bg-error/10 rounded-lg p-sm transition-all material-symbols-outlined text-[18px]">delete</button>
+              }
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- ============ Modal traitement d'alerte ============ -->
+@if (alerteEnTraitement) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="fermerTraitement()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg p-xl space-y-lg z-10">
+    <div class="flex items-center gap-md">
+      <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-[28px]">rule</span>
+      </div>
+      <div>
+        <h3 class="text-title-lg font-bold text-on-surface">Traiter l'alerte</h3>
+        <p class="text-body-sm text-on-surface-variant">{{ alerteEnTraitement.nomClient }} — {{ typeLibelle(alerteEnTraitement.type) }}</p>
+      </div>
+    </div>
+    <div class="p-md bg-surface-container-low rounded-xl space-y-sm">
+      <p class="text-body-sm text-on-surface">{{ alerteEnTraitement.description }}</p>
+      <p class="text-label-xs text-on-surface-variant">Score {{ alerteEnTraitement.score }}/100 — Niveau {{ alerteEnTraitement.niveau }}</p>
+    </div>
+    <div>
+      <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Décision</label>
+      <select [(ngModel)]="traitementStatut"
+        class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="Traitee">Traiter (faux positif exclu)</option>
+        <option value="EnCours">Mettre en cours d'examen</option>
+        <option value="Ignoree">Ignorer</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Commentaire</label>
+      <textarea [(ngModel)]="traitementCommentaire" rows="3" placeholder="Précisez la décision..."
+        class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"></textarea>
+    </div>
+    <div class="flex gap-3 justify-end">
+      <button (click)="fermerTraitement()"
+        class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium">Annuler</button>
+      <button (click)="traiterAlerte()" [disabled]="traitementEnCours"
+        class="px-lg py-md rounded-xl bg-primary text-white hover:bg-on-primary-fixed-variant transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm">
+        @if (traitementEnCours) { <span class="material-symbols-outlined text-[18px] animate-spin">sync</span> }
+        Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ============ Modal règle ============ -->
+@if (showRegleModal) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="fermerRegleModal()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg p-xl space-y-lg z-10 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-md">
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-[28px]">tune</span>
+        </div>
+        <div>
+          <h3 class="text-title-lg font-bold text-on-surface">{{ regleEnEdition ? 'Modifier la règle' : 'Nouvelle règle' }}</h3>
+          <p class="text-body-sm text-on-surface-variant">Configurez le comportement du moteur antifraude.</p>
+        </div>
+      </div>
+      <button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface" (click)="fermerRegleModal()">close</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-md">
+      <div class="col-span-2">
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Nom <span class="text-error">*</span></label>
+        <input [(ngModel)]="regleForm.nom" placeholder="ex : Montant anormal vs historique"
+          class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+      </div>
+      <div class="col-span-2">
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Code <span class="text-error">*</span></label>
+        <input [(ngModel)]="regleForm.code" placeholder="ex : MONTANT_ANORMAL"
+          class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+      </div>
+      <div class="col-span-2">
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Description</label>
+        <textarea [(ngModel)]="regleForm.description" rows="2" placeholder="Décrivez la règle..."
+          class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"></textarea>
+      </div>
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Type</label>
+        <select [(ngModel)]="regleForm.type"
+          class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="MontantMaximal">Montant élevé</option>
+          <option value="MontantAnormal">Montant anormal vs historique</option>
+          <option value="PicDebit">Pic de débits</option>
+          <option value="MultiComptes">Multi-comptes</option>
+          <option value="Frequence">Fréquence anormale</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Seuil</label>
+        <input type="number" [(ngModel)]="regleForm.seuil" class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+      </div>
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Période (jours)</label>
+        <input type="number" [(ngModel)]="regleForm.periodeJours" class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+      </div>
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Poids (0-100)</label>
+        <input type="number" [(ngModel)]="regleForm.poids" class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+      </div>
+    </div>
+
+    <label class="flex items-center gap-sm cursor-pointer">
+      <input type="checkbox" [(ngModel)]="regleForm.actif" class="w-4 h-4 accent-primary">
+      <span class="text-body-md text-on-surface">Règle active</span>
+    </label>
+
+    <div class="flex gap-3 justify-end">
+      <button (click)="fermerRegleModal()"
+        class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium">Annuler</button>
+      <button (click)="sauvegarderRegle()" [disabled]="sauvegardeRegle"
+        class="px-lg py-md rounded-xl bg-primary text-white hover:bg-on-primary-fixed-variant transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm">
+        @if (sauvegardeRegle) { <span class="material-symbols-outlined text-[18px] animate-spin">sync</span> }
+        {{ regleEnEdition ? 'Enregistrer' : 'Créer la règle' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

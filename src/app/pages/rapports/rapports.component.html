@@ -154,6 +154,77 @@
         </div>
         }
 
+        <!-- Aperçu des données -->
+        @if (stats) {
+        <div class="config-section">
+          <div class="config-label-row">
+            <label class="config-label">
+              <span class="material-symbols-outlined text-[14px] align-text-bottom">monitoring</span>
+              Aperçu des données
+            </label>
+            <span class="text-[11px] text-on-surface-variant">Volumes actuels en base</span>
+          </div>
+          @if (selectedReport.category === 'clients') {
+          <div class="preview-grid">
+            <div class="preview-kpi">
+              <div class="preview-kpi-value">{{ stats.totalClients }}</div>
+              <div class="preview-kpi-label">Clients</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-emerald-600">{{ stats.clientsActifs }}</div>
+              <div class="preview-kpi-label">Actifs</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-amber-600">{{ stats.clientsEnAttente }}</div>
+              <div class="preview-kpi-label">En attente</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-red-600">{{ stats.clientsBloques }}</div>
+              <div class="preview-kpi-label">Bloqués</div>
+            </div>
+          </div>
+          } @else if (selectedReport.category === 'documents') {
+          <div class="preview-grid">
+            <div class="preview-kpi">
+              <div class="preview-kpi-value">{{ stats.totalDocuments }}</div>
+              <div class="preview-kpi-label">Documents</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-emerald-600">{{ stats.documentsValides }}</div>
+              <div class="preview-kpi-label">Validés</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-amber-600">{{ stats.documentsEnAttente }}</div>
+              <div class="preview-kpi-label">En attente</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-red-600">{{ stats.documentsRejetes }}</div>
+              <div class="preview-kpi-label">Rejetés</div>
+            </div>
+          </div>
+          } @else {
+          <div class="preview-grid">
+            <div class="preview-kpi">
+              <div class="preview-kpi-value">{{ stats.totalClients }}</div>
+              <div class="preview-kpi-label">Clients</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-primary">{{ stats.nouveauxClientsMois }}</div>
+              <div class="preview-kpi-label">Nouveaux (mois)</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value">{{ stats.totalDocuments }}</div>
+              <div class="preview-kpi-label">Documents</div>
+            </div>
+            <div class="preview-kpi">
+              <div class="preview-kpi-value text-emerald-600">{{ stats.documentsValides }}</div>
+              <div class="preview-kpi-label">Validés</div>
+            </div>
+          </div>
+          }
+        </div>
+        }
+
         <!-- Filters -->
         @if (selectedReport.hasFilters) {
         <div class="config-section">
@@ -332,10 +403,26 @@
             </div>
             <div>
               <h3 class="import-card-title">Format du fichier</h3>
-              <p class="import-card-sub">Préparez vos données selon le format requis</p>
+              <p class="import-card-sub">Préparez vos données selon le format requis (.xlsx ou .xls uniquement)</p>
             </div>
           </div>
           <div class="import-card-body">
+            <div class="template-bar">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="template-bar-icon">
+                  <span class="material-symbols-outlined text-primary text-[22px]">grid_on</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-on-surface">Modèle d'import Excel</p>
+                  <p class="text-xs text-on-surface-variant">En-têtes et exemple prêts à l'emploi — respectez l'ordre des colonnes.</p>
+                </div>
+              </div>
+              <button (click)="downloadTemplate()" class="template-download-btn">
+                <span class="material-symbols-outlined text-[16px]">download</span>
+                Télécharger le modèle
+              </button>
+            </div>
+            <div class="overflow-x-auto">
             <table class="spec-table">
               <thead>
                 <tr>
@@ -346,6 +433,12 @@
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td class="font-semibold text-on-surface">CodeClient</td>
+                  <td><span class="req-badge req-optional">Facultatif</span></td>
+                  <td class="text-on-surface-variant">Texte / Numérique</td>
+                  <td class="text-on-surface-variant font-mono text-xs">1455000001</td>
+                </tr>
                 <tr>
                   <td class="font-semibold text-on-surface">Nom</td>
                   <td><span class="req-badge req-required">Obligatoire</span></td>
@@ -384,6 +477,7 @@
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
@@ -406,7 +500,7 @@
               (dragover)="onDragOver($event)"
               (dragleave)="onDragLeave($event)"
               (drop)="onDrop($event)">
-              <input type="file" accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+              <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
               <div class="dropzone-icon" [ngClass]="dragOver() ? 'bg-primary/20 scale-110' : 'bg-primary/10'">
                 <span class="material-symbols-outlined text-primary text-[32px]">cloud_upload</span>
               </div>
@@ -414,7 +508,7 @@
                 <p class="text-sm font-semibold text-on-surface">
                   <span class="text-primary">Cliquez pour sélectionner</span> ou glissez-déposez
                 </p>
-                <p class="text-xs text-on-surface-variant mt-1">Excel (.xlsx, .xls) ou CSV — Max 10 Mo</p>
+                <p class="text-xs text-on-surface-variant mt-1">Excel (.xlsx, .xls) uniquement — Max 10 Mo</p>
               </div>
             </div>
             } @else {
@@ -479,11 +573,12 @@
             <span class="text-sm font-semibold text-on-surface">Conseils d'import</span>
           </div>
           <ul class="sidebar-list">
-            <li>Utilisez la première ligne pour les en-têtes de colonnes.</li>
+            <li>Utilisez la première ligne de données pour les en-têtes de colonnes.</li>
+            <li>Respectez l'ordre des colonnes : <code>CodeClient, Nom, Prénom, Téléphone, Email, Ville, Statut</code>.</li>
             <li>Les champs obligatoires ne doivent pas être vides.</li>
             <li>Les numéros de téléphone doivent inclure l'indicatif du pays.</li>
             <li>Les statuts valides : <code>Actif</code>, <code>EnAttente</code>, <code>Bloqué</code>.</li>
-            <li>Les doublons (même téléphone) seront fusionnés.</li>
+            <li>Un code client dupliqué génère automatiquement un nouveau code.</li>
           </ul>
         </div>
         <div class="sidebar-card">
@@ -492,12 +587,45 @@
             <span class="text-sm font-semibold text-on-surface">Besoin d'aide ?</span>
           </div>
           <p class="text-xs text-on-surface-variant leading-relaxed">
-            Contactez l'assistance technique en cas de problème avec l'import ou téléchargez un modèle de fichier depuis le portail.
+            Contactez l'assistance technique en cas de problème avec l'import, ou téléchargez le modèle Excel ci-contre pour démarrer rapidement.
           </p>
         </div>
       </div>
 
     </div>
+
+    <!-- Historique des imports -->
+    @if (importHistory().length > 0) {
+    <div class="recent-panel">
+      <div class="recent-header">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-on-surface-variant">import_export</span>
+          <span class="text-sm font-semibold text-on-surface">Historique des imports</span>
+        </div>
+        <button (click)="clearImportHistory()" class="text-xs text-on-surface-variant hover:text-red-500 transition-colors font-medium">
+          Tout effacer
+        </button>
+      </div>
+      <div class="recent-list">
+        @for (h of importHistory(); track h.date) {
+        <div class="recent-item">
+          <div class="recent-item-icon" [ngClass]="h.success ? 'bg-emerald-50' : 'bg-red-50'">
+            <span class="material-symbols-outlined text-[16px]" [ngClass]="h.success ? 'text-emerald-600' : 'text-red-500'">
+              {{ h.success ? 'check' : 'error' }}
+            </span>
+          </div>
+          <div class="recent-item-body">
+            <span class="recent-item-name">{{ h.filename }}</span>
+            <span class="recent-item-meta">{{ h.date | date:'dd MMM yyyy, HH:mm' }} · {{ h.success ? h.imported + ' client(s) importé(s)' : 'Échec' }}</span>
+          </div>
+          <span class="text-[11px] font-medium shrink-0" [ngClass]="h.success ? 'text-emerald-600' : 'text-red-500'">
+            {{ h.success ? 'Succès' : 'Échec' }}
+          </span>
+        </div>
+        }
+      </div>
+    </div>
+    }
 
     }
 

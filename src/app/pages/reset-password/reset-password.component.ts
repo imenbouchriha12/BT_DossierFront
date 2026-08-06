@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { fieldBorder, checkPassword } from '../../shared/validation.utils';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, NgIf, FormsModule],
+  imports: [RouterLink, NgIf, NgClass, FormsModule],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.css'],
 })
@@ -20,6 +21,8 @@ export class ResetPasswordComponent implements OnInit {
   success = '';
   loading = false;
   invalidLink = false;
+  newPasswordTouched = false;
+  confirmPasswordTouched = false;
 
   constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router) {}
 
@@ -34,17 +37,49 @@ export class ResetPasswordComponent implements OnInit {
     });
   }
 
+  get newPasswordState(): string {
+    if (!this.newPasswordTouched) return 'idle';
+    if (!this.newPassword) return 'error';
+    return checkPassword(this.newPassword).score >= 4 ? 'ok' : 'warn';
+  }
+
+  get newPasswordMessage(): string {
+    if (!this.newPasswordTouched) return '';
+    if (!this.newPassword) return 'Le nouveau mot de passe est requis.';
+    return checkPassword(this.newPassword).error || 'Mot de passe fort.';
+  }
+
+  get confirmPasswordState(): string {
+    if (!this.confirmPasswordTouched) return 'idle';
+    if (!this.confirmPassword) return 'error';
+    return this.newPassword === this.confirmPassword ? 'ok' : 'error';
+  }
+
+  get confirmPasswordMessage(): string {
+    if (!this.confirmPasswordTouched) return '';
+    if (!this.confirmPassword) return 'Veuillez confirmer le mot de passe.';
+    return this.newPassword === this.confirmPassword
+      ? 'Les mots de passe correspondent.'
+      : 'Les mots de passe ne correspondent pas.';
+  }
+
+  fieldBorder = fieldBorder;
+
   onSubmit(): void {
     this.error = '';
     this.success = '';
+    this.newPasswordTouched = true;
+    this.confirmPasswordTouched = true;
+
+    const pwd = checkPassword(this.newPassword);
 
     if (this.newPassword !== this.confirmPassword) {
       this.error = 'Les mots de passe ne correspondent pas.';
       return;
     }
 
-    if (this.newPassword.length < 8) {
-      this.error = 'Le mot de passe doit contenir au moins 8 caractères.';
+    if (pwd.error) {
+      this.error = pwd.error;
       return;
     }
 

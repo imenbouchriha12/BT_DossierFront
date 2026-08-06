@@ -19,20 +19,35 @@
       <label class="text-label-md font-label-md text-on-surface-variant">Ancien mot de passe</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
-        <input [(ngModel)]="oldPassword" name="oldPassword" type="password" required
+        <input [(ngModel)]="oldPassword" name="oldPassword" type="password" required (blur)="oldPasswordTouched = true"
           class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          [ngClass]="fieldBorder(oldPasswordState)"
           placeholder="Votre mot de passe actuel"/>
       </div>
+      @if (oldPasswordTouched && !oldPassword) {
+      <p class="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+        <span class="material-symbols-outlined text-[14px]">error</span>
+        L'ancien mot de passe est requis.
+      </p>
+      }
     </div>
 
     <div class="space-y-1.5">
       <label class="text-label-md font-label-md text-on-surface-variant">Nouveau mot de passe</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock_reset</span>
-        <input [(ngModel)]="newPassword" name="newPassword" type="password" required
+        <input [(ngModel)]="newPassword" name="newPassword" type="password" required (blur)="newPasswordTouched = true"
           class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          [ngClass]="fieldBorder(newPasswordState)"
           placeholder="Nouveau mot de passe"/>
       </div>
+      @if (newPasswordTouched && newPasswordMessage) {
+      <p class="mt-1 flex items-center gap-1 text-xs font-medium"
+        [ngClass]="newPasswordState === 'ok' ? 'text-emerald-600' : newPasswordState === 'warn' ? 'text-amber-600' : 'text-red-600'">
+        <span class="material-symbols-outlined text-[14px]">{{ newPasswordState === 'ok' ? 'check_circle' : newPasswordState === 'warn' ? 'warning' : 'error' }}</span>
+        {{ newPasswordMessage }}
+      </p>
+      }
       <p class="text-label-sm text-on-surface-variant">Min. 8 caractères, une majuscule, une minuscule et un chiffre.</p>
     </div>
 
@@ -40,10 +55,17 @@
       <label class="text-label-md font-label-md text-on-surface-variant">Confirmer le nouveau mot de passe</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock_reset</span>
-        <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required
+        <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required (blur)="confirmPasswordTouched = true"
           class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          [ngClass]="fieldBorder(confirmPasswordState)"
           placeholder="Répétez le nouveau mot de passe"/>
       </div>
+      @if (confirmPasswordTouched && confirmPasswordMessage) {
+      <p class="mt-1 flex items-center gap-1 text-xs font-medium" [ngClass]="confirmPasswordState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+        <span class="material-symbols-outlined text-[14px]">{{ confirmPasswordState === 'ok' ? 'check_circle' : 'error' }}</span>
+        {{ confirmPasswordMessage }}
+      </p>
+      }
     </div>
 
     <button [disabled]="loading" type="submit"

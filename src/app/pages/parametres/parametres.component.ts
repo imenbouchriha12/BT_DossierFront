@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, UserDto } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { fieldBorder, isValidEmail, checkPassword } from '../../shared/validation.utils';
 
 @Component({
   standalone: true,
-  imports: [NgIf, FormsModule],
+  imports: [NgIf, NgClass, FormsModule],
   templateUrl: './parametres.component.html',
   styleUrls: ['./parametres.component.css'],
 })
@@ -29,7 +30,15 @@ export class ParametresComponent implements OnInit {
   passwordSuccess = '';
   passwordLoading = false;
 
+  usernameTouched = false;
+  emailTouched = false;
+  oldPasswordTouched = false;
+  newPasswordTouched = false;
+  confirmPasswordTouched = false;
+
   constructor(private auth: AuthService) {}
+
+  fieldBorder = fieldBorder;
 
   ngOnInit(): void {
     this.auth.getProfile().subscribe({
@@ -40,6 +49,54 @@ export class ParametresComponent implements OnInit {
         this.photoUrl = u.photoUrl || null;
       },
     });
+  }
+
+  get usernameState(): string {
+    if (!this.usernameTouched) return 'idle';
+    return this.username ? 'ok' : 'error';
+  }
+
+  get emailState(): string {
+    if (!this.emailTouched) return 'idle';
+    if (!this.email) return 'error';
+    return isValidEmail(this.email) ? 'ok' : 'error';
+  }
+
+  get emailMessage(): string {
+    if (!this.emailTouched) return '';
+    if (!this.email) return 'L\'adresse email est requise.';
+    return isValidEmail(this.email) ? 'Adresse email valide.' : 'Adresse email invalide.';
+  }
+
+  get oldPasswordState(): string {
+    if (!this.oldPasswordTouched) return 'idle';
+    return this.oldPassword ? 'ok' : 'error';
+  }
+
+  get newPasswordState(): string {
+    if (!this.newPasswordTouched) return 'idle';
+    if (!this.newPassword) return 'error';
+    return checkPassword(this.newPassword).score >= 4 ? 'ok' : 'warn';
+  }
+
+  get newPasswordMessage(): string {
+    if (!this.newPasswordTouched) return '';
+    if (!this.newPassword) return 'Le nouveau mot de passe est requis.';
+    return checkPassword(this.newPassword).error || 'Mot de passe fort.';
+  }
+
+  get confirmPasswordState(): string {
+    if (!this.confirmPasswordTouched) return 'idle';
+    if (!this.confirmPassword) return 'error';
+    return this.newPassword === this.confirmPassword ? 'ok' : 'error';
+  }
+
+  get confirmPasswordMessage(): string {
+    if (!this.confirmPasswordTouched) return '';
+    if (!this.confirmPassword) return 'Veuillez confirmer le nouveau mot de passe.';
+    return this.newPassword === this.confirmPassword
+      ? 'Les mots de passe correspondent.'
+      : 'Les mots de passe ne correspondent pas.';
   }
 
   onFileSelected(event: Event): void {
@@ -70,9 +127,11 @@ export class ParametresComponent implements OnInit {
   saveProfile(): void {
     this.profileError = '';
     this.profileSuccess = '';
+    this.usernameTouched = true;
+    this.emailTouched = true;
 
-    if (!this.username || !this.email) {
-      this.profileError = 'Veuillez remplir tous les champs.';
+    if (!this.username || !this.email || !isValidEmail(this.email)) {
+      this.profileError = 'Veuillez vérifier les champs du formulaire.';
       return;
     }
 
@@ -93,6 +152,9 @@ export class ParametresComponent implements OnInit {
   changePassword(): void {
     this.passwordError = '';
     this.passwordSuccess = '';
+    this.oldPasswordTouched = true;
+    this.newPasswordTouched = true;
+    this.confirmPasswordTouched = true;
 
     if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
       this.passwordError = 'Veuillez remplir tous les champs.';
@@ -104,23 +166,9 @@ export class ParametresComponent implements OnInit {
       return;
     }
 
-    if (this.newPassword.length < 8) {
-      this.passwordError = 'Le mot de passe doit contenir au moins 8 caractères.';
-      return;
-    }
-
-    if (!/[A-Z]/.test(this.newPassword)) {
-      this.passwordError = 'Le mot de passe doit contenir au moins une majuscule.';
-      return;
-    }
-
-    if (!/[a-z]/.test(this.newPassword)) {
-      this.passwordError = 'Le mot de passe doit contenir au moins une minuscule.';
-      return;
-    }
-
-    if (!/[0-9]/.test(this.newPassword)) {
-      this.passwordError = 'Le mot de passe doit contenir au moins un chiffre.';
+    const pwd = checkPassword(this.newPassword);
+    if (pwd.error) {
+      this.passwordError = pwd.error;
       return;
     }
 

@@ -5,9 +5,9 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DocumentService } from '../../services/document.service';
 import { ClientService } from '../../services/client.service';
-import { DocumentDto, ClientDto, PagedResult } from '../../models/client.models';
+import { WorkflowService } from '../../services/workflow.service';
+import { DocumentDto, ClientDto, PagedResult, WorkflowValidationDto } from '../../models/client.models';
 import { AuthService } from '../../services/auth.service';
-import { ReminderService } from '../../services/reminder.service';
 
 
 @Component({
@@ -41,24 +41,43 @@ export class GestionDocumentsComponent implements OnInit {
   previewLoading = false;
   previewError = '';
 
+  // Workflow de validation multi-niveaux
+  workflowsByDoc = new Map<number, WorkflowValidationDto>();
+  showWorkflow = false;
+  activeWorkflow: WorkflowValidationDto | null = null;
+  workflowHistory: WorkflowValidationDto[] = [];
+  workflowComment = '';
+  workflowAction: 'valider' | 'rejeter' | 'relancer' | null = null;
+  workflowLoading = false;
+  workflowError = '';
+  commentTouched = false;
+
+  markCommentTouched(): void {
+    this.commentTouched = true;
+  }
+
+  commentBorder(): string {
+    if (!this.commentTouched || this.workflowComment.trim()) return '';
+    return '!border-red-400';
+  }
+
+  commentMessage(): string {
+    if (!this.commentTouched || this.workflowComment.trim()) return '';
+    return 'Le motif de rejet est obligatoire.';
+  }
+
   filterStatut = '';
   currentPage = 1;
   pageSize = 10;
   total = 0;
   totalPages = 0;
 
-  showOcrDetail = false;
-  ocrDoc: DocumentDto | null = null;
-  ocrResult: any = null;
-  ocrLoading = false;
-  ocrError = '';
-
   constructor(
     public documentService: DocumentService,
     public clientService: ClientService,
+    public workflowService: WorkflowService,
     public authService: AuthService,
-    private sanitizer: DomSanitizer,
-    private reminderService: ReminderService
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -99,10 +118,29 @@ export class GestionDocumentsComponent implements OnInit {
         this.total = result.total;
         this.totalPages = result.totalPages;
         this.loading = false;
+        this.loadWorkflows();
       },
       error: () => {
         this.error = 'Erreur lors du chargement des documents.';
         this.loading = false;
+      }
+    });
+  }
+
+  loadWorkflows() {
+    const ids = this.documents.map(d => d.id);
+    if (ids.length === 0) {
+      this.workflowsByDoc = new Map();
+      return;
+    }
+    this.workflowService.getByDocuments(ids).subscribe({
+      next: (workflows) => {
+        const map = new Map<number, WorkflowValidationDto>();
+        workflows.forEach(w => map.set(w.idDocument, w));
+        this.workflowsByDoc = map;
+      },
+      error: () => {
+        this.workflowsByDoc = new Map();
       }
     });
   }
@@ -190,24 +228,158 @@ export class GestionDocumentsComponent implements OnInit {
     });
   }
 
-  validateDocument(id: number) {
-    this.documentService.updateValidation(id, 'Validé').subscribe({
-      next: () => this.loadDocuments(),
+  // ═══════════════ WORKFLOW DE VALIDATION MULTI-NIVEAUX ═══════════════
+
+  private readonly roleRank: Record<string, number> = { 'Agent': 1, 'Superviseur': 2, 'Admin': 3 };
+
+  getWorkflowForDoc(docId: number): WorkflowValidationDto | null {
+    return this.workflowsByDoc.get(docId) ?? null;
+  }
+
+  workflowProgress(workflow: WorkflowValidationDto): string {
+    if (!workflow.etapes || workflow.etapes.length === 0) return '0/0';
+    const done = workflow.etapes.filter(e => e.statut === 'Valide').length;
+    return `${done}/${workflow.etapes.length}`;
+  }
+
+  canActOnStep(workflow: WorkflowValidationDto): boolean {
+    if (!workflow || workflow.statutGlobal !== 'EnCours' || !workflow.etapeCourante) return false;
+    const stepRank = this.roleRank[workflow.etapeCourante] ?? 0;
+    const userRank = Math.max(0, ...this.authService.userRoles().map(r => this.roleRank[r] ?? 0));
+    return userRank >= stepRank;
+  }
+
+  canRelancer(workflow: WorkflowValidationDto): boolean {
+    return !!workflow && workflow.statutGlobal === 'Rejete';
+  }
+
+  openWorkflow(doc: DocumentDto, action: 'valider' | 'rejeter' | 'relancer' | null = null) {
+    const workflow = this.getWorkflowForDoc(doc.id);
+    if (!workflow) {
+      this.error = 'Aucun workflow de validation pour ce document.';
+      this.clearAlerts();
+      return;
+    }
+    this.activeWorkflow = workflow;
+    this.workflowAction = action;
+    this.workflowComment = '';
+    this.workflowError = '';
+    this.commentTouched = false;
+    this.showWorkflow = true;
+
+    this.workflowService.getHistory(doc.id).subscribe({
+      next: (history) => {
+        this.workflowHistory = history;
+        this.workflowLoading = false;
+      },
       error: () => {
-        this.error = 'Erreur lors de la validation.';
-        this.clearAlerts();
+        this.workflowHistory = [];
+        this.workflowLoading = false;
       }
     });
   }
 
-  rejectDocument(id: number) {
-    this.documentService.updateValidation(id, 'Rejeté').subscribe({
-      next: () => this.loadDocuments(),
-      error: () => {
-        this.error = 'Erreur lors du rejet.';
+  closeWorkflow() {
+    this.showWorkflow = false;
+    this.activeWorkflow = null;
+    this.workflowHistory = [];
+    this.workflowComment = '';
+    this.workflowAction = null;
+    this.workflowError = '';
+  }
+
+  validateWorkflow() {
+    if (!this.activeWorkflow) return;
+    this.workflowLoading = true;
+    this.workflowService.valider(this.activeWorkflow.id, this.workflowComment || undefined).subscribe({
+      next: (updated) => {
+        this.workflowLoading = false;
+        this.workflowByDocUpdate(updated);
+        this.success = 'Étape de validation approuvée avec succès.';
+        this.closeWorkflow();
+        this.loadDocuments();
         this.clearAlerts();
+      },
+      error: (err) => {
+        this.workflowLoading = false;
+        this.workflowError = err.error?.message || 'Erreur lors de la validation.';
       }
     });
+  }
+
+  rejectWorkflow() {
+    if (!this.activeWorkflow) return;
+    if (!this.workflowComment || !this.workflowComment.trim()) {
+      this.commentTouched = true;
+      this.workflowError = 'Le motif de rejet est obligatoire.';
+      return;
+    }
+    this.workflowLoading = true;
+    this.workflowService.rejeter(this.activeWorkflow.id, this.workflowComment.trim()).subscribe({
+      next: (updated) => {
+        this.workflowLoading = false;
+        this.workflowByDocUpdate(updated);
+        this.success = 'Document rejeté.';
+        this.closeWorkflow();
+        this.loadDocuments();
+        this.clearAlerts();
+      },
+      error: (err) => {
+        this.workflowLoading = false;
+        this.workflowError = err.error?.message || 'Erreur lors du rejet.';
+      }
+    });
+  }
+
+  resubmitWorkflow() {
+    if (!this.activeWorkflow) return;
+    if (!confirm('Relancer le workflow de validation de ce document ?')) return;
+    this.workflowLoading = true;
+    this.workflowService.relancer(this.activeWorkflow.id, this.workflowComment || undefined).subscribe({
+      next: () => {
+        this.workflowLoading = false;
+        this.success = 'Document relancé pour validation.';
+        this.closeWorkflow();
+        this.loadDocuments();
+        this.clearAlerts();
+      },
+      error: (err) => {
+        this.workflowLoading = false;
+        this.workflowError = err.error?.message || 'Erreur lors de la relance.';
+      }
+    });
+  }
+
+  private workflowByDocUpdate(workflow: WorkflowValidationDto) {
+    const map = new Map(this.workflowsByDoc);
+    map.set(workflow.idDocument, workflow);
+    this.workflowsByDoc = map;
+  }
+
+  getWorkflowStepClass(statut: string): string {
+    switch (statut) {
+      case 'Valide': return 'wf-step-done';
+      case 'Rejete': return 'wf-step-rejected';
+      case 'NonApplicable': return 'wf-step-skipped';
+      default: return 'wf-step-pending';
+    }
+  }
+
+  getWorkflowStepLabel(statut: string): string {
+    switch (statut) {
+      case 'Valide': return 'Validé';
+      case 'Rejete': return 'Rejeté';
+      case 'NonApplicable': return 'Non applicable';
+      default: return 'En attente';
+    }
+  }
+
+  getWorkflowGlobalLabel(statut: string): string {
+    switch (statut) {
+      case 'Valide': return 'Validé';
+      case 'Rejete': return 'Rejeté';
+      default: return 'En cours';
+    }
   }
 
   deleteDocument(id: number) {
@@ -223,114 +395,6 @@ export class GestionDocumentsComponent implements OnInit {
         this.clearAlerts();
       }
     });
-  }
-
-  openOcrDetail(doc: DocumentDto) {
-    this.showOcrDetail = true;
-    this.ocrDoc = doc;
-    this.ocrResult = null;
-    this.ocrLoading = true;
-    this.ocrError = '';
-    this.documentService.getOcrResult(doc.id).subscribe({
-      next: (result) => {
-        this.ocrResult = result;
-        if (result.donneesExtraites) {
-          try {
-            const parsed = JSON.parse(result.donneesExtraites);
-            this.ocrResult.champsExtraits = parsed;
-          } catch { }
-        }
-        this.ocrLoading = false;
-      },
-      error: () => {
-        this.ocrLoading = false;
-        this.ocrError = 'Impossible de charger les résultats OCR.';
-      }
-    });
-  }
-
-  closeOcrDetail() {
-    this.showOcrDetail = false;
-    this.ocrDoc = null;
-    this.ocrResult = null;
-    this.ocrError = '';
-  }
-
-  lancerOcr(id: number) {
-    console.log('[OCR] Lancement analyse pour document', id);
-    this.ocrLoading = true;
-    this.ocrError = '';
-    this.documentService.verifyOcr(id).subscribe({
-      next: (result) => {
-        console.log('[OCR] Résultat reçu:', result);
-        this.ocrResult = result;
-        this.ocrLoading = false;
-        this.success = 'Vérification OCR terminée.';
-        this.loadDocuments();
-        this.clearAlerts();
-      },
-      error: (err) => {
-        console.error('[OCR] Erreur:', err);
-        this.ocrLoading = false;
-        this.ocrError = err.error?.message || `Erreur ${err.status}: ${err.statusText || 'Vérification OCR'}`;
-        this.clearAlerts();
-      }
-    });
-  }
-
-  createValidationTask(doc: any): void {
-    if (!doc || !doc.clientId) return;
-    const title = `Validation document: ${doc.typeDocument || doc.nomFichier || 'Document #' + doc.id}`;
-    this.reminderService.createFromDocument(doc.clientId, title).subscribe({
-      next: () => {
-        this.success = 'Tâche de validation créée. Rendez-vous dans le tableau des tâches.';
-        this.clearAlerts();
-      },
-      error: (err) => {
-        console.error('Erreur création tâche:', err);
-        this.ocrError = 'Erreur lors de la création de la tâche.';
-        this.clearAlerts();
-      }
-    });
-  }
-
-  getOcrBadgeClass(resultat: string | undefined): string {
-    switch (resultat) {
-      case 'Correspond': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Anomalie': return 'bg-red-50 text-red-700 border-red-200';
-      case 'ExtractionUniquement': return 'bg-amber-50 text-amber-700 border-amber-200';
-      default: return 'bg-gray-50 text-gray-500 border-gray-200';
-    }
-  }
-
-  getOcrBadgeIcon(resultat: string | undefined): string {
-    switch (resultat) {
-      case 'Correspond': return 'check_circle';
-      case 'Anomalie': return 'warning';
-      case 'ExtractionUniquement': return 'document_scanner';
-      default: return 'schedule';
-    }
-  }
-
-  getOcrBadgeLabel(resultat: string | undefined): string {
-    switch (resultat) {
-      case 'Correspond': return 'Vérifié';
-      case 'Anomalie': return 'Anomalie';
-      case 'ExtractionUniquement': return 'Extrait';
-      default: return 'Non traité';
-    }
-  }
-
-  hasKeys(obj: any): boolean {
-    return obj != null && typeof obj === 'object' && Object.keys(obj).length > 0;
-  }
-
-  getObjectKeysLength(obj: any): number {
-    return obj != null && typeof obj === 'object' ? Object.keys(obj).length : 0;
-  }
-
-  asAny(value: unknown): any {
-    return value;
   }
 
   private clearAlerts() {

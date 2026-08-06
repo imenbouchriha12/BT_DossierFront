@@ -1,0 +1,145 @@
+<div class="min-h-screen bg-surface/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Comptes & Opérations</h1>
+        <p class="text-body-md text-on-surface-variant mt-1">Consultation des comptes bancaires importés depuis le système central</p>
+      </div>
+      @if (hasActiveFilters) {
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all text-label-sm font-medium">
+        <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+        Réinitialiser les filtres
+      </button>
+      }
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm mb-6 overflow-hidden">
+      <div class="px-5 py-3 bg-surface-container-low border-b border-outline-variant/20 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-primary">filter_list</span>
+        <span class="text-label-sm font-semibold text-on-surface uppercase tracking-wider">Filtres de recherche</span>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">N° de compte</label>
+            <input type="text" [(ngModel)]="filterNumCompte" (keyup.enter)="search()" placeholder="01000123456789"
+              class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Agence</label>
+            <input type="text" [(ngModel)]="filterAgence" (keyup.enter)="search()" placeholder="101"
+              class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Devise</label>
+            <div class="relative">
+              <select [(ngModel)]="filterDevise" (change)="search()"
+                class="w-full h-10 pl-3 pr-8 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all">
+                <option value="">Toutes</option>
+                <option value="TND">TND</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Code client</label>
+            <input type="text" [(ngModel)]="filterCodeClient" (keyup.enter)="search()" placeholder="1455678924"
+              class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button (click)="search()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-label-sm font-semibold hover:bg-primary/90 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">search</span>
+            Rechercher
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+      <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant/20 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">account_balance_wallet</span>
+          <h3 class="text-title-md font-bold">Comptes</h3>
+        </div>
+        <span class="text-label-sm text-on-surface-variant">{{ total }} compte(s)</span>
+      </div>
+
+      @if (loading) {
+      <div class="p-xl text-center text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+      </div>
+      } @else if (comptes.length === 0) {
+      <div class="text-center py-xl">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">search_off</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucun compte ne correspond à votre recherche.</p>
+      </div>
+      } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low/50 text-left text-label-xs text-on-surface-variant uppercase tracking-wider">
+              <th class="px-lg py-sm">Client</th>
+              <th class="px-lg py-sm">N° de compte</th>
+              <th class="px-lg py-sm">Ouverture</th>
+              <th class="px-lg py-sm">Agence</th>
+              <th class="px-lg py-sm">Devise</th>
+              <th class="px-lg py-sm text-right">Solde</th>
+              <th class="px-lg py-sm text-right">Contrevaleur (TND)</th>
+              <th class="px-lg py-sm text-center">État</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            @for (c of comptes; track c.id) {
+            <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer" [routerLink]="['/client', c.idClient]">
+              <td class="px-lg py-sm">
+                <p class="font-semibold text-on-surface">{{ c.nomClient || '—' }}</p>
+                <p class="text-label-xs text-on-surface-variant">{{ c.codeClient || '—' }}</p>
+              </td>
+              <td class="px-lg py-sm font-mono text-on-surface">{{ c.numCompte }}</td>
+              <td class="px-lg py-sm text-on-surface-variant whitespace-nowrap tabular-nums">{{ c.dateOuverture ? (c.dateOuverture | date:'dd/MM/yyyy') : '—' }}</td>
+              <td class="px-lg py-sm text-on-surface-variant">{{ c.agence }}</td>
+              <td class="px-lg py-sm">
+                <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold" [ngClass]="getDeviseClass(c.devise)">{{ c.devise }}</span>
+              </td>
+              <td class="px-lg py-sm text-right font-bold" [ngClass]="getSoldeClass(c)">{{ c.solde | number:'1.2-2' }}</td>
+              <td class="px-lg py-sm text-right text-on-surface-variant">{{ c.soldeContreValeur | number:'1.2-2' }}</td>
+              <td class="px-lg py-sm text-center">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold"
+                  [ngClass]="c.solde < 0 ? 'bg-red-50 text-red-600' : c.solde === 0 ? 'bg-surface-container text-on-surface-variant' : 'bg-green-50 text-green-700'">
+                  {{ getStatutSolde(c) }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages > 1) {
+      <div class="px-lg py-md flex items-center justify-between border-t border-outline-variant/20">
+        <p class="text-label-sm text-on-surface-variant">Page {{ page }} / {{ totalPages }}</p>
+        <div class="flex items-center gap-2">
+          <button (click)="search(page - 1)" [disabled]="page <= 1"
+            class="w-9 h-9 rounded-lg border border-outline-variant/50 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all disabled:opacity-40">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          <button (click)="search(page + 1)" [disabled]="page >= totalPages"
+            class="w-9 h-9 rounded-lg border border-outline-variant/50 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all disabled:opacity-40">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+      }
+      }
+    </div>
+  </div>
+</div>

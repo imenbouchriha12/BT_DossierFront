@@ -24,6 +24,9 @@ export interface ClientDto {
   statut: string;
   estArchive: boolean;
   motifBlocage?: string;
+  typeClient?: string;
+  matriculeFiscal?: string;
+  registreCommerce?: string;
   detail?: DetailClientDto;
 }
 
@@ -38,6 +41,9 @@ export interface CreateClientDto {
   adresse: string;
   ville: string;
   statut: string;
+  typeClient?: string;
+  matriculeFiscal?: string;
+  registreCommerce?: string;
   detail?: CreateDetailClientDto;
 }
 
@@ -61,6 +67,9 @@ export interface UpdateClientDto {
   adresse: string;
   ville: string;
   statut: string;
+  typeClient?: string;
+  matriculeFiscal?: string;
+  registreCommerce?: string;
   detail?: UpdateDetailClientDto;
 }
 
@@ -79,6 +88,7 @@ export interface ClientSearchDto {
   prenom?: string;
   ville?: string;
   statut?: string;
+  typeClient?: string;
   dateDebut?: string;
   dateFin?: string;
   page?: number;
@@ -107,6 +117,7 @@ export interface ClientStatsDto {
   documentsRejetes: number;
   repartitionVille: VilleStat[];
   repartitionStatut: StatutStat[];
+  repartitionType: TypeStat[];
   creationsParMois: CreationMois[];
   clientsRecents: ClientRecentsItem[];
   documentsRecents: DocumentRecentsItem[];
@@ -141,6 +152,11 @@ export interface StatutStat {
   count: number;
 }
 
+export interface TypeStat {
+  type: string;
+  count: number;
+}
+
 export interface CreationMois {
   mois: string;
   count: number;
@@ -156,29 +172,87 @@ export interface DocumentDto {
   statutValidation: string;
   codeClient?: string;
   nomClient?: string;
-  texteExtrait?: string;
-  donneesExtraites?: string;
-  scoreConfiance?: number;
-  dateVerificationOCR?: string;
-  resultatVerification?: string;
-}
-
-export interface OcrResultDto {
-  texteExtrait: string;
-  donneesExtraitesJson?: string;
-  scoreConfiance: number;
-  resultatVerification: string;
-  champsExtraits: { [key: string]: string };
-  champsComparees: { [key: string]: ComparisonResult };
-}
-
-export interface ComparisonResult {
-  valeurAttendue: string;
-  valeurExtraite: string;
-  correspond: boolean;
 }
 
 export interface CreateDocumentDto {
   idClient: number;
   typeDocument: string;
+}
+
+export interface EtapeValidationDto {
+  id: number;
+  idWorkflow: number;
+  ordre: number;
+  roleRequis: string;
+  libelle: string;
+  statut: string; // EnAttente | Valide | Rejete | NonApplicable
+  userId?: number;
+  nomUser?: string;
+  decisionDate?: string;
+  commentaire?: string;
+}
+
+export interface WorkflowValidationDto {
+  id: number;
+  idDocument: number;
+  statutGlobal: string; // EnCours | Valide | Rejete
+  etapeCourante?: string;
+  motifRejet?: string;
+  createdByUserId?: number;
+  dateCreation: string;
+  dateMaj: string;
+  etapes: EtapeValidationDto[];
+  typeDocument?: string;
+  nomFichier?: string;
+  statutValidation?: string;
+  idClient?: number;
+  codeClient?: string;
+  nomClient?: string;
+  uploadedByNom?: string;
+}
+
+export interface WorkflowStatsDto {
+  totalEnAttente: number;
+  parRole: { [role: string]: number };
+}
+
+export interface EvenementClientDto {
+  id: number;
+  idClient: number;
+  type: string; // Client | Document | Statut | Compte | Rappel | Note | Contact | Workflow
+  message: string;
+  donneesJson?: string;
+  utilisateurId?: number;
+  utilisateurNom?: string;
+  dateEvenement: string;
+  idLien?: number;
+  typeLien?: string;
+}
+
+export interface NoteClientDto {
+  id: number;
+  idClient: number;
+  titre?: string;
+  contenu: string;
+  categorie: string;
+  creeParUserId: number;
+  creeParNom?: string;
+  dateCreation: string;
+  modifieParUserId?: number;
+  modifieParNom?: string;
+  dateMaj?: string;
+  estEpinglee: boolean;
+}
+
+export interface ContactClientDto {
+  id: number;
+  idClient: number;
+  typeContact: string; // Conjoint | Garant | Reference | Heritier | Autre
+  nom: string;
+  prenom?: string;
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  relation?: string;
+  dateCreation: string;
 }

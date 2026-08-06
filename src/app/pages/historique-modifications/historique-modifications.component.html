@@ -5,13 +5,32 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Historique des modifications</h1>
-        <p class="text-body-md text-on-surface-variant mt-1">Journal d'audit complet du système</p>
+        <p class="text-body-md text-on-surface-variant mt-1">
+          @if (isAdmin) {
+          Journal d'audit complet du système
+          } @else {
+          Journal de vos propres modifications
+          }
+        </p>
       </div>
       <button (click)="resetFilters()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all text-label-sm font-medium">
         <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
         Réinitialiser les filtres
       </button>
     </div>
+
+    <!-- Scoped view notice -->
+    @if (!isAdmin) {
+    <div class="mb-6 flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
+      <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">manage_search</span>
+      <div>
+        <p class="text-label-sm font-semibold text-on-surface">Vue restreinte</p>
+        <p class="text-label-sm text-on-surface-variant">
+          Vous consultez uniquement les modifications effectuées par votre compte ({{ userName || 'vous' }}).
+        </p>
+      </div>
+    </div>
+    }
 
     <!-- Stats bar -->
     <div *ngIf="!loading && items.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -68,7 +87,7 @@
         <span class="text-label-sm font-semibold text-on-surface uppercase tracking-wider">Filtres</span>
       </div>
       <div class="p-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div [ngClass]="isAdmin ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'">
           <div>
             <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Table</label>
             <div class="relative">
@@ -89,6 +108,7 @@
               <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px] pointer-events-none">expand_more</span>
             </div>
           </div>
+          @if (isAdmin) {
           <div>
             <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Utilisateur</label>
             <div class="relative">
@@ -96,6 +116,7 @@
               <input [(ngModel)]="filterUser" (keyup.enter)="search()" placeholder="Rechercher..." class="w-full h-10 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/50">
             </div>
           </div>
+          }
           <div>
             <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Date début</label>
             <div class="relative">
@@ -124,7 +145,7 @@
     </div>
 
     <!-- Empty state -->
-    <div *ngIf="!loading && items.length === 0" class="bg-white rounded-2xl border border-outline-variant/30 shadow-sm p-16 text-center">
+      <div *ngIf="!loading && items.length === 0" class="bg-white rounded-2xl border border-outline-variant/30 shadow-sm p-8 sm:p-16 text-center">
       <div class="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-5">
         <span class="material-symbols-outlined text-[40px] text-on-surface-variant">history_toggle_off</span>
       </div>
@@ -160,7 +181,7 @@
                         {{ item.tableModifiee }}
                       </span>
                     </div>
-                    <div class="flex items-center gap-2 mt-0.5">
+                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
                       <div class="flex items-center gap-1.5">
                         <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary flex-shrink-0">
                           {{ getInitials(item.utilisateurNom) }}
@@ -225,7 +246,7 @@
         <span class="font-semibold text-on-surface">{{ total }}</span>
         modifications
       </span>
-      <div class="flex items-center gap-1.5">
+      <div class="flex flex-wrap items-center gap-1.5">
         <button (click)="search(page - 1)" [disabled]="page <= 1"
           class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-low text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-outline-variant/20">
           <span class="material-symbols-outlined text-[18px]">chevron_left</span>

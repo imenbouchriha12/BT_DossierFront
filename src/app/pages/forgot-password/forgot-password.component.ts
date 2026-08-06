@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { fieldBorder, isValidEmail } from '../../shared/validation.utils';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, NgIf, FormsModule],
+  imports: [RouterLink, NgIf, NgClass, FormsModule],
   templateUrl: './forgot-password.component.html',
   styleUrls: ['./forgot-password.component.css'],
 })
@@ -16,15 +17,31 @@ export class ForgotPasswordComponent {
   error = '';
   success = '';
   loading = false;
+  emailTouched = false;
 
   constructor(private http: HttpClient) {}
+
+  get emailState(): string {
+    if (!this.emailTouched) return 'idle';
+    if (!this.email) return 'error';
+    return isValidEmail(this.email) ? 'ok' : 'error';
+  }
+
+  get emailMessage(): string {
+    if (!this.emailTouched) return '';
+    if (!this.email) return 'L\'adresse email est requise.';
+    return isValidEmail(this.email) ? 'Adresse email valide.' : 'Adresse email invalide.';
+  }
+
+  fieldBorder = fieldBorder;
 
   onSubmit(): void {
     this.error = '';
     this.success = '';
+    this.emailTouched = true;
 
-    if (!this.email) {
-      this.error = 'Veuillez saisir votre adresse email.';
+    if (!this.email || !isValidEmail(this.email)) {
+      this.error = 'Veuillez saisir une adresse email valide.';
       return;
     }
 

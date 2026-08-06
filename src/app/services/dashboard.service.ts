@@ -8,6 +8,7 @@ export interface DashboardStats {
   kpis: KpiSummary;
   clientEvolution: ClientEvolution;
   geographicDistribution: GeographicDistribution[];
+  typeDistribution: ClientTypeDistribution[];
   topRevenueClients: TopRevenueClient[];
   documentsPending: DocumentsPending;
   agentPerformance: AgentPerformance[];
@@ -43,6 +44,12 @@ export interface GeographicDistribution {
   totalRevenue: number;
   latitude?: number;
   longitude?: number;
+}
+
+export interface ClientTypeDistribution {
+  type: string;
+  count: number;
+  percentage: number;
 }
 
 export interface TopRevenueClient {
@@ -86,8 +93,10 @@ export interface AgentPerformance {
   clientsCreatedThisMonth: number;
   totalClientsManaged: number;
   documentsProcessedThisMonth: number;
-  performanceScore: number;
+  documentsProcessedTotal: number;
   modificationsCount: number;
+  lastActivity: string | null;
+  performanceScore: number;
 }
 
 export interface DashboardAlert {
@@ -132,6 +141,91 @@ export interface WidgetConfig {
   size: string;
 }
 
+// ══════════════════════════════════════════════════════════════
+//  Dashboard bancaire financier (SISS : Comptes / MVT / Cours)
+// ══════════════════════════════════════════════════════════════
+export interface FinanceDashboard {
+  kpis: FinanceKpis;
+  repartitionParDevise: RepartitionDevise[];
+  etatsComptes: EtatCompte[];
+  evolutionMouvements: EvolutionMouvement[];
+  topAgences: TopAgence[];
+  derniersMouvements: MouvementRecente[];
+  comptesDecouverts: CompteDecouvert[];
+  coursJour: CoursJour[];
+}
+
+export interface FinanceKpis {
+  totalActifsTND: number;
+  nbComptes: number;
+  nbClientsDetenteurs: number;
+  nbComptesDecouverts: number;
+  tauxDecouvert: number;
+  nbMouvements: number;
+  volumeCreditsTND: number;
+  volumeDebitsTND: number;
+  fluxNet: number;
+  periodeReference: string | null;
+}
+
+export interface RepartitionDevise {
+  devise: string;
+  nombreComptes: number;
+  soldeContreValeur: number;
+  part: number;
+}
+
+export interface EtatCompte {
+  etat: string;
+  nombre: number;
+  soldeContreValeur: number;
+}
+
+export interface EvolutionMouvement {
+  mois: string;
+  credits: number;
+  debits: number;
+  fluxNet: number;
+}
+
+export interface TopAgence {
+  agence: string;
+  nombreComptes: number;
+  soldeContreValeur: number;
+  nbMouvements: number;
+}
+
+export interface MouvementRecente {
+  id: number;
+  numCompte: string;
+  agence: string;
+  dateMvt: string;
+  montant: number;
+  devMVT: string;
+  sens: string;
+  montantTND: number;
+  codeClient?: string;
+  nomClient?: string;
+}
+
+export interface CompteDecouvert {
+  numCompte: string;
+  agence: string;
+  devise: string;
+  solde: number;
+  soldeContreValeur: number;
+  codeClient?: string;
+  nomClient?: string;
+}
+
+export interface CoursJour {
+  devise: string;
+  nom: string;
+  symbole: string;
+  valeur: number;
+  date: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -144,6 +238,13 @@ export class DashboardService {
    */
   getDashboardStats(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/stats`);
+  }
+
+  /**
+   * Récupère les agrégats financiers du tableau de bord bancaire
+   */
+  getFinanceDashboard(): Observable<FinanceDashboard> {
+    return this.http.get<FinanceDashboard>(`${this.apiUrl}/finance`);
   }
 
   /**

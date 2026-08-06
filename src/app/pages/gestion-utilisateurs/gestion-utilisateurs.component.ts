@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, UserDto } from '../../services/auth.service';
+import { fieldBorder } from '../../shared/validation.utils';
 
 interface RoleOption {
   id: number;
@@ -31,6 +32,47 @@ export class GestionUtilisateursComponent implements OnInit {
   emailSubject = '';
   emailBody = '';
   sendingEmail = false;
+  emailTouched: Record<string, boolean> = {};
+
+  markEmailTouched(field: string): void {
+    this.emailTouched[field] = true;
+  }
+
+  private emailState(field: string): 'idle' | 'error' | 'ok' {
+    if (!this.emailTouched[field]) return 'idle';
+    const value = field === 'subject' ? this.emailSubject : this.emailBody;
+    if (!value || !value.trim()) return 'error';
+    return 'ok';
+  }
+
+  emailBorder(field: string): string {
+    return fieldBorder(this.emailState(field));
+  }
+
+  emailMessage(field: string): string {
+    if (!this.emailTouched[field]) return '';
+    const value = field === 'subject' ? this.emailSubject : this.emailBody;
+    if (!value || !value.trim()) return field === 'subject' ? 'Le sujet est requis.' : 'Le message est requis.';
+    return 'Champ valide.';
+  }
+
+  emailMessageClass(field: string): string {
+    const state = this.emailState(field);
+    if (state === 'error') return 'text-red-600';
+    if (state === 'ok') return 'text-emerald-600';
+    return '';
+  }
+
+  emailMessageIcon(field: string): string {
+    const state = this.emailState(field);
+    if (state === 'error') return 'error';
+    if (state === 'ok') return 'check_circle';
+    return '';
+  }
+
+  isEmailValid(): boolean {
+    return !!this.emailSubject?.trim() && !!this.emailBody?.trim();
+  }
 
   changingRole: { [userId: number]: boolean } = {};
 
@@ -227,16 +269,19 @@ export class GestionUtilisateursComponent implements OnInit {
     this.emailModalUser = user;
     this.emailSubject = '';
     this.emailBody = '';
+    this.emailTouched = {};
   }
 
   closeEmailModal(): void {
     this.emailModalUser = null;
     this.emailSubject = '';
     this.emailBody = '';
+    this.emailTouched = {};
   }
 
   sendEmail(): void {
-    if (!this.emailModalUser || !this.emailSubject || !this.emailBody) return;
+    this.emailTouched = { subject: true, body: true };
+    if (!this.emailModalUser || !this.isEmailValid()) return;
 
     this.sendingEmail = true;
     this.auth.sendEmail(this.emailModalUser.id, this.emailSubject, this.emailBody).subscribe({

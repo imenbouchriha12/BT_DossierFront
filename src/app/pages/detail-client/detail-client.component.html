@@ -1,4 +1,4 @@
-<nav class="flex items-center gap-xs text-label-sm text-on-surface-variant mb-lg">
+<nav class="flex flex-wrap items-center gap-xs text-label-sm text-on-surface-variant mb-lg">
   <a class="hover:text-primary" routerLink="/tableau-de-bord">Dashboard</a>
   <span class="material-symbols-outlined text-[14px]">chevron_right</span>
   <a class="hover:text-primary" routerLink="/liste-clients">Clients</a>
@@ -35,8 +35,13 @@
     </div>
     <div>
       <h2 class="text-headline-lg font-bold">{{ client.prenom }} {{ client.nom }}</h2>
-      <div class="flex items-center gap-md mt-sm">
+      <div class="flex flex-wrap items-center gap-md mt-sm">
         <span class="bg-surface-container px-sm py-xs rounded-lg text-label-sm text-on-surface-variant">CODE: {{ client.codeClient }}</span>
+        <span class="inline-flex items-center gap-xs px-sm py-xs rounded-full text-label-sm font-medium border"
+          [ngClass]="getTypeClass(client.typeClient || 'Particulier')">
+          <span class="material-symbols-outlined text-[14px]">{{ getTypeIcon(client.typeClient || 'Particulier') }}</span>
+          {{ client.typeClient || 'Particulier' }}
+        </span>
         <span class="font-bold px-sm py-xs rounded-full text-label-sm flex items-center gap-xs"
           [ngClass]="statutClass">
           <span class="w-2 h-2 rounded-full" [class]="statutDotClass"></span>
@@ -112,6 +117,48 @@
       <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
       }
     </button>
+      <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+        [class.text-primary]="activeTab === 'comptes'"
+        [class.text-on-surface-variant]="activeTab !== 'comptes'"
+        (click)="switchTab('comptes')">
+        Situation financière
+        @if (comptes.length > 0) {
+        <span class="ml-1.5 text-label-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{{ comptes.length }}</span>
+        }
+        @if (activeTab === 'comptes') {
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+        }
+      </button>
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'activite'"
+      [class.text-on-surface-variant]="activeTab !== 'activite'"
+      (click)="switchTab('activite')">
+      Activité
+      @if (evenementsTotal > 0) {
+      <span class="ml-1.5 text-label-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{{ evenementsTotal }}</span>
+      }
+      @if (activeTab === 'activite') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'notes'"
+      [class.text-on-surface-variant]="activeTab !== 'notes'"
+      (click)="switchTab('notes')">
+      Notes & Contacts
+      @if (activeTab === 'notes') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
+    <button class="tab-btn px-xs pb-md text-title-md font-bold transition-colors relative whitespace-nowrap"
+      [class.text-primary]="activeTab === 'ia'"
+      [class.text-on-surface-variant]="activeTab !== 'ia'"
+      (click)="switchTab('ia')">
+      Analyse IA
+      @if (activeTab === 'ia') {
+      <div class="absolute bottom-0 left-0 w-full h-[3px] bg-primary rounded-t-full"></div>
+      }
+    </button>
   </div>
 </div>
 
@@ -157,6 +204,18 @@
           <p class="text-label-sm text-on-surface-variant uppercase">Statut</p>
           <p class="text-body-lg text-on-surface">{{ client.statut }}</p>
         </div>
+        @if (client.matriculeFiscal) {
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Matricule Fiscal</p>
+          <p class="text-body-lg text-on-surface">{{ client.matriculeFiscal }}</p>
+        </div>
+        }
+        @if (client.registreCommerce) {
+        <div class="space-y-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase">Registre de Commerce</p>
+          <p class="text-body-lg text-on-surface">{{ client.registreCommerce }}</p>
+        </div>
+        }
       </div>
     </div>
     }
@@ -176,7 +235,7 @@
         </div>
         <div class="bg-primary/5 p-md rounded-xl border border-primary/10">
           <p class="text-label-sm text-primary uppercase mb-xs">Revenu Mensuel</p>
-          <p class="text-title-md font-bold text-primary">{{ client.detail.revenuMensuel > 0 ? (client.detail.revenuMensuel | number:'1.2-2') + ' €' : 'Non renseigné' }}</p>
+          <p class="text-title-md font-bold text-primary">{{ client.detail.revenuMensuel > 0 ? (client.detail.revenuMensuel | number:'1.2-2') + ' TND' : 'Non renseigné' }}</p>
         </div>
       </div>
       <div class="mt-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
@@ -198,7 +257,7 @@
           <span class="material-symbols-outlined text-primary bg-primary/10 p-sm rounded-lg">home</span>
           <div>
             <p class="text-label-sm text-on-surface-variant">Type de Résidence</p>
-            <p class="text-body-md">{{ client.detail.typeResidence === 'R' ? 'Résident' : 'Non Résident' }}</p>
+            <p class="text-body-md">{{ client.detail.typeResidence === 'R' ? 'Résident' : client.detail.typeResidence === 'NR' ? 'Non Résident' : (client.detail.typeResidence || 'Non renseigné') }}</p>
           </div>
         </div>
       </div>
@@ -210,7 +269,7 @@
 
     @if (activeTab === 'docs') {
     <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
-      <div class="flex items-center justify-between mb-lg">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-lg">
         <h3 class="text-title-lg font-bold">Documents</h3>
         <div class="flex items-center gap-md">
           <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm"
@@ -289,7 +348,7 @@
       } @else {
       <div class="divide-y divide-outline-variant/10">
         @for (doc of documents; track doc.id) {
-        <div class="py-3 flex items-center gap-4 group hover:bg-surface-container-low/50 rounded-lg px-2 -mx-2 transition-colors">
+        <div class="py-3 flex flex-wrap items-center gap-x-4 gap-y-2 group hover:bg-surface-container-low/50 rounded-lg px-2 -mx-2 transition-colors">
           <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
             [ngClass]="doc.statutValidation === 'Validé' ? 'bg-green-100' : doc.statutValidation === 'Rejeté' ? 'bg-red-100' : 'bg-amber-100'">
             <span class="material-symbols-outlined text-[20px]"
@@ -341,8 +400,707 @@
       }
     </div>
     }
-  </div>
+    @if (activeTab === 'comptes') {
+    <div class="space-y-lg">
 
+      @if (loadingComptes) {
+      <div class="text-center py-xl text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement de la situation financière...
+      </div>
+      } @else if (comptes.length === 0) {
+      <div class="text-center py-xl bg-white border border-outline-variant/30 rounded-2xl shadow-sm">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">account_balance</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucun compte pour ce client.</p>
+      </div>
+      } @else {
+      <!-- Patrimoine consolidé toutes devises -->
+      <div class="bg-primary rounded-2xl p-lg text-white shadow-lg relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full"></div>
+        <div class="absolute -right-2 -bottom-10 w-32 h-32 bg-white/10 rounded-full"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative">
+          <div>
+            <p class="text-label-sm uppercase tracking-wider text-white/80">Patrimoine total (toutes devises)</p>
+            <p class="text-3xl sm:text-4xl font-bold mt-1">{{ patrimoineTotal | number:'1.2-2' }} <span class="text-lg font-semibold text-white/80">TND</span></p>
+            <p class="text-label-sm text-white/80 mt-1">{{ nbComptes }} compte(s) actif(s)</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (t of totaux; track t.devise) {
+            <div class="bg-white/15 backdrop-blur rounded-xl px-4 py-2 text-center">
+              <p class="text-label-xs uppercase text-white/80">{{ t.devise }}</p>
+              <p class="text-body-md font-bold">{{ t.totalContreValeur | number:'1.2-2' }}</p>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Détail par devise -->
+      @if (totaux.length > 0) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (t of totaux; track t.devise) {
+        <div class="bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm">
+          <div class="flex items-center justify-between mb-sm">
+            <p class="text-label-sm text-on-surface-variant uppercase">{{ t.devise }}</p>
+            <span class="material-symbols-outlined text-primary text-[20px]">account_balance</span>
+          </div>
+          <p class="text-2xl font-bold text-on-surface">{{ t.total | number:'1.2-2' }}</p>
+          <p class="text-label-sm text-on-surface-variant mt-1">≈ {{ t.totalContreValeur | number:'1.2-2' }} TND</p>
+          <p class="text-label-xs text-on-surface-variant/70 mt-1">{{ t.nombreComptes }} compte(s)</p>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Liste des comptes -->
+      <div class="bg-white border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant/20 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[20px]">account_balance_wallet</span>
+            <h3 class="text-title-md font-bold">Comptes du client</h3>
+          </div>
+          <p class="text-label-sm text-on-surface-variant">{{ comptes.length }} compte(s)</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low/50 text-left text-label-xs text-on-surface-variant uppercase tracking-wider">
+                <th class="px-lg py-sm">N° de compte</th>
+                <th class="px-lg py-sm">Ouverture</th>
+                <th class="px-lg py-sm">Agence</th>
+                <th class="px-lg py-sm">Devise</th>
+                <th class="px-lg py-sm text-right">Solde</th>
+                <th class="px-lg py-sm text-right">Contrevaleur (TND)</th>
+                <th class="px-lg py-sm text-center">État</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              @for (c of comptes; track c.id) {
+              <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer" [ngClass]="{'bg-primary/5': c.id === compteSelectionneId}" (click)="selectCompte(c.id)">
+                <td class="px-lg py-sm font-mono font-semibold text-on-surface">{{ c.numCompte }}</td>
+                <td class="px-lg py-sm text-on-surface-variant whitespace-nowrap tabular-nums">{{ c.dateOuverture ? (c.dateOuverture | date:'dd/MM/yyyy') : '—' }}</td>
+                <td class="px-lg py-sm text-on-surface-variant">{{ c.agence }}</td>
+                <td class="px-lg py-sm">
+                  <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold bg-secondary-container text-on-secondary-container">{{ c.devise }}</span>
+                </td>
+                <td class="px-lg py-sm text-right font-bold" [ngClass]="c.solde < 0 ? 'text-error' : 'text-green-600'">{{ c.solde | number:'1.2-2' }}</td>
+                <td class="px-lg py-sm text-right text-on-surface-variant">{{ c.soldeContreValeur | number:'1.2-2' }}</td>
+                <td class="px-lg py-sm text-center">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold"
+                    [ngClass]="c.solde < 0 ? 'bg-red-50 text-red-600' : c.solde === 0 ? 'bg-surface-container text-on-surface-variant' : 'bg-green-50 text-green-700'">
+                    {{ c.solde < 0 ? 'Découvert' : c.solde === 0 ? 'Soldé' : 'Créditeur' }}
+                  </span>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Relevé de compte -->
+      @if (compteSelectionne) {
+      <div class="bg-white border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+            <div class="min-w-0">
+              <h3 class="text-title-md font-bold">Relevé de compte — {{ compteSelectionne.numCompte }}</h3>
+              <p class="text-label-xs text-on-surface-variant">{{ compteSelectionne.devise }} · Agence {{ compteSelectionne.agence }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            <button (click)="exportReleve('pdf')" [disabled]="exportLoading || mouvements.length === 0"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600/90 text-white text-label-sm font-semibold hover:bg-red-600 transition-all disabled:opacity-40">
+              <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> PDF
+            </button>
+            <button (click)="exportReleve('excel')" [disabled]="exportLoading || mouvements.length === 0"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600/90 text-white text-label-sm font-semibold hover:bg-green-600 transition-all disabled:opacity-40">
+              <span class="material-symbols-outlined text-[18px]">table_chart</span> Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="p-lg border-b border-outline-variant/20">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Du</label>
+              <input type="date" [(ngModel)]="mvtFilterDateDebut" (change)="mvtPage = 1; loadMouvements()"
+                class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Au</label>
+              <input type="date" [(ngModel)]="mvtFilterDateFin" (change)="mvtPage = 1; loadMouvements()"
+                class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Sens</label>
+              <div class="relative">
+                <select [(ngModel)]="mvtFilterSens" (change)="mvtPage = 1; loadMouvements()"
+                  class="w-full h-10 pl-3 pr-8 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none appearance-none cursor-pointer transition-all">
+                  <option value="">Tous</option>
+                  <option value="C">Crédit</option>
+                  <option value="D">Débit</option>
+                </select>
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px] pointer-events-none">expand_more</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Montant min</label>
+              <input type="number" step="0.01" [(ngModel)]="mvtFilterMontantMin" (change)="mvtPage = 1; loadMouvements()"
+                placeholder="0.00"
+                class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Montant max</label>
+              <input type="number" step="0.01" [(ngModel)]="mvtFilterMontantMax" (change)="mvtPage = 1; loadMouvements()"
+                placeholder="—"
+                class="w-full h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <button (click)="resetMouvementFilters()"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium">
+              <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+              Réinitialiser
+            </button>
+            @if (mouvements.length > 0) {
+            <div class="flex items-center gap-3 text-label-sm">
+              <span class="inline-flex items-center gap-1 text-green-600 font-semibold">
+                <span class="material-symbols-outlined text-[16px]">arrow_upward</span> Crédit : {{ totalCredit | number:'1.2-2' }}
+              </span>
+              <span class="inline-flex items-center gap-1 text-red-600 font-semibold">
+                <span class="material-symbols-outlined text-[16px]">arrow_downward</span> Débit : {{ totalDebit | number:'1.2-2' }}
+              </span>
+            </div>
+            }
+          </div>
+        </div>
+
+        @if (loadingMouvements) {
+        <div class="p-xl text-center text-on-surface-variant">
+          <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+        </div>
+        } @else if (mouvements.length === 0) {
+        <div class="text-center py-xl">
+          <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">receipt_long</span>
+          <p class="text-body-md text-on-surface-variant mt-2">Aucun mouvement ne correspond aux critères sélectionnés.</p>
+        </div>
+        } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low/50 text-left text-label-xs text-on-surface-variant uppercase tracking-wider">
+                <th class="px-lg py-sm">Date</th>
+                <th class="px-lg py-sm">Libellé</th>
+                <th class="px-lg py-sm">Devise</th>
+                <th class="px-lg py-sm text-right">Débit</th>
+                <th class="px-lg py-sm text-right">Crédit</th>
+                <th class="px-lg py-sm text-center">Sens</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              @for (m of mouvements; track m.id) {
+              <tr class="hover:bg-surface-container-low/50 transition-colors">
+                <td class="px-lg py-sm whitespace-nowrap text-on-surface">{{ m.dateMvt | date:'dd/MM/yyyy' }}</td>
+                <td class="px-lg py-sm text-on-surface font-medium">Mouvement {{ m.sens }} · {{ m.numCompte }}</td>
+                <td class="px-lg py-sm text-on-surface-variant">{{ m.devMVT }}</td>
+                <td class="px-lg py-sm text-right font-semibold text-red-600">{{ m.sens === 'D' ? (m.montant | number:'1.2-2') : '—' }}</td>
+                <td class="px-lg py-sm text-right font-semibold text-green-600">{{ m.sens === 'C' ? (m.montant | number:'1.2-2') : '—' }}</td>
+                <td class="px-lg py-sm text-center">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold"
+                    [ngClass]="m.sens === 'C' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'">
+                    {{ m.sens === 'C' ? 'Crédit' : 'Débit' }}
+                  </span>
+                </td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="bg-surface-container-low/40 border-t border-outline-variant/20">
+                <td colspan="3" class="px-lg py-sm text-label-sm font-bold text-on-surface uppercase">Totaux</td>
+                <td class="px-lg py-sm text-right font-bold text-red-600">{{ totalDebit | number:'1.2-2' }}</td>
+                <td class="px-lg py-sm text-right font-bold text-green-600">{{ totalCredit | number:'1.2-2' }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        }
+
+        @if (mouvements.length > 0 && mvtTotalPages > 1) {
+        <div class="px-lg py-md flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20">
+          <p class="text-label-sm text-on-surface-variant">Page {{ mvtPage }} / {{ mvtTotalPages }} ({{ mouvementsTotal }} au total)</p>
+          <div class="flex items-center gap-2">
+            <button (click)="mvtPage = mvtPage - 1; loadMouvements()" [disabled]="mvtPage <= 1"
+              class="w-9 h-9 rounded-lg border border-outline-variant/50 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all disabled:opacity-40">
+              <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+            </button>
+            <button (click)="mvtPage = mvtPage + 1; loadMouvements()" [disabled]="mvtPage >= mvtTotalPages"
+              class="w-9 h-9 rounded-lg border border-outline-variant/50 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all disabled:opacity-40">
+              <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+      }
+      }
+    </div>
+    }
+
+    @if (activeTab === 'activite') {
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <div class="flex items-center justify-between mb-lg border-b border-outline-variant/20 pb-sm">
+        <h3 class="text-title-md font-bold">Fil d'activité du dossier</h3>
+        @if (loadingEvenements) {
+        <span class="text-label-sm text-on-surface-variant"><span class="material-symbols-outlined animate-spin inline-block align-middle text-[16px]">sync</span> Chargement...</span>
+        }
+      </div>
+
+      @if (loadingEvenements) {
+      <div class="text-center py-xl text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement de l'activité...
+      </div>
+      } @else if (evenements.length === 0) {
+      <div class="text-center py-xl">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">history</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucune activité enregistrée pour ce client.</p>
+      </div>
+      } @else {
+      <div class="relative">
+        <div class="absolute left-[15px] top-2 bottom-2 w-px bg-outline-variant/40"></div>
+        <div class="space-y-md">
+          @for (e of evenements; track e.id) {
+          <div class="relative flex items-start gap-md pl-lg">
+            <span class="absolute left-0 top-1 w-[31px] h-[31px] rounded-full flex items-center justify-center bg-surface-container-low border border-outline-variant/30 text-on-surface-variant z-10">
+              <span class="material-symbols-outlined text-[16px]">{{ eventIcon(e.type) }}</span>
+            </span>
+            <div class="flex-1 bg-surface-container-low/50 rounded-xl p-md">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <p class="text-body-sm font-semibold text-on-surface">{{ e.message }}</p>
+                <span class="text-label-xs text-on-surface-variant whitespace-nowrap">{{ e.dateEvenement | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              @if (e.utilisateurNom) {
+              <p class="text-label-xs text-on-surface-variant mt-xs">par {{ e.utilisateurNom }}</p>
+              }
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      @if (evenementsTotal > evenements.length) {
+      <div class="mt-lg flex items-center justify-center">
+        <button (click)="loadMoreEvenements()"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium">
+          <span class="material-symbols-outlined text-[18px]">expand_more</span>
+          Voir plus ({{ evenements.length }} / {{ evenementsTotal }})
+        </button>
+      </div>
+      }
+      }
+    </div>
+    }
+
+    @if (activeTab === 'notes') {
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <div class="flex items-center justify-between mb-lg border-b border-outline-variant/20 pb-sm">
+        <h3 class="text-title-md font-bold">Notes internes</h3>
+        <button (click)="openNoteForm()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-label-sm font-semibold hover:bg-primary-dark transition-all">
+          <span class="material-symbols-outlined text-[18px]">add</span> Nouvelle note
+        </button>
+      </div>
+
+      @if (showNoteForm) {
+      <div class="mb-lg p-md bg-surface-container-low rounded-xl space-y-md">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <div class="flex flex-col gap-xs">
+            <input [(ngModel)]="noteForm.titre" placeholder="Titre (optionnel)"
+              [ngClass]="noteBorder('titre')"
+              (blur)="markNoteTouched('titre')"
+              class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            @if (noteTouched['titre'] && noteMessage('titre')) {
+            <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="noteMessageClass('titre')">
+              <span class="material-symbols-outlined text-[14px]">{{ noteMessageIcon('titre') }}</span>
+              {{ noteMessage('titre') }}
+            </p>
+            }
+          </div>
+          <select [(ngModel)]="noteForm.categorie"
+            class="w-full h-10 pl-3 pr-8 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none cursor-pointer transition-all">
+            <option value="Général">Général</option>
+            <option value="KYC">KYC</option>
+            <option value="Relance">Relance</option>
+            <option value="Prospection">Prospection</option>
+            <option value="Conformité">Conformité</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <textarea [(ngModel)]="noteForm.contenu" rows="3" placeholder="Contenu de la note..."
+            [ngClass]="noteBorder('contenu')"
+            (blur)="markNoteTouched('contenu')"
+            class="w-full px-3 py-2 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"></textarea>
+          @if (noteTouched['contenu'] && noteMessage('contenu')) {
+          <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="noteMessageClass('contenu')">
+            <span class="material-symbols-outlined text-[14px]">{{ noteMessageIcon('contenu') }}</span>
+            {{ noteMessage('contenu') }}
+          </p>
+          }
+        </div>
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <label class="inline-flex items-center gap-2 text-label-sm text-on-surface-variant cursor-pointer">
+            <input type="checkbox" [(ngModel)]="noteForm.estEpinglee" class="accent-primary" />
+            Épingler cette note
+          </label>
+          <div class="flex items-center gap-2">
+            <button (click)="closeNoteForm()"
+              class="inline-flex items-center h-10 px-4 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium">
+              Annuler
+            </button>
+            <button (click)="saveNote()" [disabled]="!isNoteValid() || savingNote"
+              class="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-primary text-white text-label-sm font-semibold hover:bg-primary-dark transition-all disabled:opacity-40">
+              @if (savingNote) {
+              <span class="material-symbols-outlined animate-spin text-[16px]">sync</span>
+              }
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (loadingNotes) {
+      <div class="text-center py-xl text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+      </div>
+      } @else if (notes.length === 0) {
+      <div class="text-center py-xl">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">sticky_note_2</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucune note interne pour ce client.</p>
+      </div>
+      } @else {
+      <div class="space-y-md">
+        @for (n of notes; track n.id) {
+        <div class="bg-surface-container-low/50 rounded-xl p-md" [ngClass]="{'border border-primary/30': n.estEpinglee}">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2 min-w-0">
+              @if (n.estEpinglee) {
+              <span class="material-symbols-outlined text-primary text-[16px]" title="Épinglée">push_pin</span>
+              }
+              @if (n.titre) {
+              <p class="text-body-sm font-bold text-on-surface truncate">{{ n.titre }}</p>
+              }
+              <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold bg-secondary-container text-on-secondary-container shrink-0">{{ n.categorie }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button (click)="openNoteForm(n)" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all" title="Modifier">
+                <span class="material-symbols-outlined text-[18px]">edit</span>
+              </button>
+              <button (click)="deleteNote(n.id)" class="w-8 h-8 rounded-lg flex items-center justify-center text-error hover:bg-error/10 transition-all" title="Supprimer">
+                <span class="material-symbols-outlined text-[18px]">delete</span>
+              </button>
+            </div>
+          </div>
+          <p class="text-body-sm text-on-surface mt-sm whitespace-pre-wrap">{{ n.contenu }}</p>
+          <p class="text-label-xs text-on-surface-variant mt-sm">
+            {{ n.creeParNom || '—' }} · {{ n.dateCreation | date:'dd/MM/yyyy HH:mm' }}
+            @if (n.modifieParNom) { · modifiée par {{ n.modifieParNom }} }
+          </p>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+      <div class="flex items-center justify-between mb-lg border-b border-outline-variant/20 pb-sm">
+        <h3 class="text-title-md font-bold">Contacts du client</h3>
+        <button (click)="openContactForm()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-label-sm font-semibold hover:bg-primary-dark transition-all">
+          <span class="material-symbols-outlined text-[18px]">add</span> Ajouter
+        </button>
+      </div>
+
+      @if (showContactForm) {
+      <div class="mb-lg p-md bg-surface-container-low rounded-xl space-y-md">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <select [(ngModel)]="contactForm.typeContact"
+            class="w-full h-10 pl-3 pr-8 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none cursor-pointer transition-all">
+            <option value="Conjoint">Conjoint</option>
+            <option value="Garant">Garant</option>
+            <option value="Reference">Référence</option>
+            <option value="Heritier">Héritier</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input [(ngModel)]="contactForm.relation" placeholder="Relation (ex: père, employeur)"
+            [ngClass]="contactBorder('relation')"
+            (blur)="markContactTouched('relation')"
+            class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+          <div class="flex flex-col gap-xs">
+            <input [(ngModel)]="contactForm.nom" placeholder="Nom *"
+              [ngClass]="contactBorder('nom')"
+              (blur)="markContactTouched('nom')"
+              class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            @if (contactTouched['nom'] && contactMessage('nom')) {
+            <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="contactMessageClass('nom')">
+              <span class="material-symbols-outlined text-[14px]">{{ contactMessageIcon('nom') }}</span>
+              {{ contactMessage('nom') }}
+            </p>
+            }
+          </div>
+          <input [(ngModel)]="contactForm.prenom" placeholder="Prénom"
+            [ngClass]="contactBorder('prenom')"
+            (blur)="markContactTouched('prenom')"
+            class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+          <div class="flex flex-col gap-xs">
+            <input [(ngModel)]="contactForm.telephone" placeholder="Téléphone"
+              [ngClass]="contactBorder('telephone')"
+              (blur)="markContactTouched('telephone')"
+              class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            @if (contactTouched['telephone'] && contactMessage('telephone')) {
+            <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="contactMessageClass('telephone')">
+              <span class="material-symbols-outlined text-[14px]">{{ contactMessageIcon('telephone') }}</span>
+              {{ contactMessage('telephone') }}
+            </p>
+            }
+          </div>
+          <div class="flex flex-col gap-xs">
+            <input [(ngModel)]="contactForm.email" placeholder="Email"
+              [ngClass]="contactBorder('email')"
+              (blur)="markContactTouched('email')"
+              class="w-full h-10 px-3 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            @if (contactTouched['email'] && contactMessage('email')) {
+            <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="contactMessageClass('email')">
+              <span class="material-symbols-outlined text-[14px]">{{ contactMessageIcon('email') }}</span>
+              {{ contactMessage('email') }}
+            </p>
+            }
+          </div>
+          <input [(ngModel)]="contactForm.adresse" placeholder="Adresse"
+            [ngClass]="contactBorder('adresse')"
+            (blur)="markContactTouched('adresse')"
+            class="w-full h-10 px-3 md:col-span-2 bg-white border border-outline-variant/50 rounded-lg text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button (click)="closeContactForm()"
+            class="inline-flex items-center h-10 px-4 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium">
+            Annuler
+          </button>
+          <button (click)="saveContact()" [disabled]="!isContactValid() || savingContact"
+            class="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-primary text-white text-label-sm font-semibold hover:bg-primary-dark transition-all disabled:opacity-40">
+            @if (savingContact) {
+            <span class="material-symbols-outlined animate-spin text-[16px]">sync</span>
+            }
+            Enregistrer
+          </button>
+        </div>
+      </div>
+      }
+
+      @if (loadingContacts) {
+      <div class="text-center py-xl text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+      </div>
+      } @else if (contacts.length === 0) {
+      <div class="text-center py-xl">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">contacts</span>
+        <p class="text-body-md text-on-surface-variant mt-2">Aucun contact associé à ce client.</p>
+      </div>
+      } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low/50 text-left text-label-xs text-on-surface-variant uppercase tracking-wider">
+              <th class="px-lg py-sm">Type</th>
+              <th class="px-lg py-sm">Nom</th>
+              <th class="px-lg py-sm">Coordonnées</th>
+              <th class="px-lg py-sm text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            @for (c of contacts; track c.id) {
+            <tr class="hover:bg-surface-container-low/50 transition-colors">
+              <td class="px-lg py-sm">
+                <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold bg-secondary-container text-on-secondary-container">{{ contactTypeLabel(c.typeContact) }}</span>
+              </td>
+              <td class="px-lg py-sm font-semibold text-on-surface">
+                {{ c.prenom ? c.prenom + ' ' : '' }}{{ c.nom }}
+                @if (c.relation) { <span class="text-label-xs text-on-surface-variant">· {{ c.relation }}</span> }
+              </td>
+              <td class="px-lg py-sm text-on-surface-variant">
+                @if (c.telephone) { {{ c.telephone }}<br> }
+                @if (c.email) { {{ c.email }} }
+                @if (!c.telephone && !c.email) { — }
+              </td>
+              <td class="px-lg py-sm text-center">
+                <div class="inline-flex items-center gap-1">
+                  <button (click)="openContactForm(c)" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all" title="Modifier">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                  <button (click)="deleteContact(c.id)" class="w-8 h-8 rounded-lg flex items-center justify-center text-error hover:bg-error/10 transition-all" title="Supprimer">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+    }
+    @if (activeTab === 'ia') {
+    <div class="space-y-lg">
+      <!-- Résumé IA -->
+      <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+        <div class="flex items-center justify-between mb-lg">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-primary">auto_awesome</span>
+            <h3 class="text-title-lg font-bold">Résumé IA du dossier</h3>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-label-xs font-semibold">{{ aiSummary ? aiSummary.mode === 'llm' ? 'IA' : 'Repli' : '' }}</span>
+        </div>
+        @if (loadingAiSummary) {
+        <div class="space-y-sm">
+          <div class="h-3 bg-surface-container rounded-full animate-pulse"></div>
+          <div class="h-3 bg-surface-container rounded-full animate-pulse w-11/12"></div>
+          <div class="h-3 bg-surface-container rounded-full animate-pulse w-4/5"></div>
+          <div class="h-3 bg-surface-container rounded-full animate-pulse w-2/3"></div>
+        </div>
+        } @else if (aiSummary) {
+        <div class="space-y-sm">
+          @for (ligne of aiSummary.resume.split('\n'); track $index) {
+          <p class="flex items-start gap-sm text-body-sm text-on-surface leading-relaxed">
+            <span class="material-symbols-outlined text-[16px] text-primary mt-0.5">check_circle</span>
+            <span>{{ ligne }}</span>
+          </p>
+          }
+          @if (aiSummary.nbDocumentsManquants > 0 || aiSummary.nbAlertesActives > 0) {
+          <div class="flex flex-wrap gap-sm pt-sm">
+            @if (aiSummary.nbDocumentsManquants > 0) {
+            <span class="px-2 py-0.5 rounded-full bg-warning/10 text-warning text-label-xs font-semibold">{{ aiSummary.nbDocumentsManquants }} doc. manquant(s)</span>
+            }
+            @if (aiSummary.nbAlertesActives > 0) {
+            <span class="px-2 py-0.5 rounded-full bg-error/10 text-error text-label-xs font-semibold">{{ aiSummary.nbAlertesActives }} alerte(s) fraude</span>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Score de risque -->
+      <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+        <div class="flex items-center justify-between mb-lg">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-warning">monitoring</span>
+            <h3 class="text-title-lg font-bold">Score de risque</h3>
+          </div>
+          <button (click)="calculerRisque()" [disabled]="riskCalculEnCours"
+            class="flex items-center gap-sm px-md py-sm rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-label-sm font-bold transition-all disabled:opacity-50">
+            @if (riskCalculEnCours) { <span class="material-symbols-outlined text-[16px] animate-spin">sync</span> }
+            <span class="material-symbols-outlined text-[16px]">refresh</span>
+            Calculer
+          </button>
+        </div>
+        @if (loadingRisk) {
+        <p class="text-body-sm text-on-surface-variant">Chargement...</p>
+        } @else if (riskRapport) {
+        <div class="flex items-center gap-lg">
+          <div class="relative w-24 h-24 shrink-0">
+            <svg viewBox="0 0 100 100" class="w-24 h-24 -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="10" class="text-surface-container"></circle>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"
+                [class.text-error]="riskRapport.score >= 70"
+                [class.text-warning]="riskRapport.score >= 45 && riskRapport.score < 70"
+                [class.text-primary]="riskRapport.score >= 25 && riskRapport.score < 45"
+                [class.text-green-500]="riskRapport.score < 25"
+                stroke-dasharray="264" [attr.stroke-dashoffset]="264 - (264 * riskRapport.score / 100)"></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-headline-sm font-headline-md">{{ riskRapport.score }}</span>
+              <span class="text-label-xs text-on-surface-variant">/100</span>
+            </div>
+          </div>
+          <div class="flex-1 space-y-sm">
+            <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold border" [ngClass]="risqueNiveauClass(riskRapport.niveau)">{{ riskRapport.niveau }}</span>
+            <p class="text-body-sm text-on-surface-variant leading-relaxed">{{ riskRapport.synthese }}</p>
+            <p class="text-label-xs text-on-surface-variant">Calculé le {{ riskRapport.dateCalcul | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-md mt-lg">
+          @for (c of riskRapport.composants; track c.code) {
+          <div class="p-md bg-surface-container-low rounded-xl">
+            <div class="flex items-center justify-between mb-sm">
+              <p class="text-label-sm font-semibold text-on-surface">{{ c.libelle }}</p>
+              <p class="text-label-sm font-bold" [ngClass]="c.points > 0 ? 'text-warning' : 'text-green-600'">{{ c.points }}/{{ c.maxPoints }}</p>
+            </div>
+            <div class="h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [class.bg-warning]="c.points > 0" [class.bg-green-500]="c.points === 0" [style.width.%]="(c.maxPoints > 0 ? c.points / c.maxPoints * 100 : 0)"></div>
+            </div>
+            <p class="text-label-xs text-on-surface-variant mt-sm">{{ c.detail }}</p>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="text-body-sm text-on-surface-variant">Aucun score calculé. Cliquez sur « Calculer » pour générer le profil de risque.</p>
+        }
+      </div>
+
+      <!-- Alertes de fraude -->
+      <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
+        <div class="flex items-center justify-between mb-lg">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-error">gpp_bad</span>
+            <h3 class="text-title-lg font-bold">Alertes de fraude</h3>
+          </div>
+          <button (click)="analyserFraude()" [disabled]="fraudAnalyseEnCours"
+            class="flex items-center gap-sm px-md py-sm rounded-lg bg-error/10 text-error hover:bg-error/20 text-label-sm font-bold transition-all disabled:opacity-50">
+            @if (fraudAnalyseEnCours) { <span class="material-symbols-outlined text-[16px] animate-spin">sync</span> }
+            <span class="material-symbols-outlined text-[16px]">radar</span>
+            Analyser
+          </button>
+        </div>
+        @if (loadingFraud) {
+        <p class="text-body-sm text-on-surface-variant">Chargement...</p>
+        } @else if (fraudAlertes.length === 0) {
+        <p class="text-body-sm text-on-surface-variant">Aucune alerte de fraude pour ce client.</p>
+        } @else {
+        <div class="space-y-sm">
+          @for (a of fraudAlertes; track a.id) {
+          <div class="flex items-start justify-between gap-md p-md bg-surface-container-low rounded-xl">
+            <div class="flex-1">
+              <div class="flex items-center gap-sm flex-wrap">
+                <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold border" [ngClass]="risqueNiveauClass(a.niveau === 'Eleve' ? 'Modere' : a.niveau)">{{ a.niveau }}</span>
+                <span class="px-2 py-0.5 rounded-full text-label-xs font-semibold" [ngClass]="a.statut === 'Traitee' ? 'bg-green-100 text-green-700' : a.statut === 'Ignoree' ? 'bg-surface-container text-on-surface-variant' : 'bg-error/10 text-error'">{{ a.statut }}</span>
+                <span class="text-label-xs text-on-surface-variant">{{ a.dateDetection | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <p class="text-body-sm text-on-surface mt-sm">{{ a.description }}</p>
+              @if (a.commentaire) {
+              <p class="text-label-xs text-on-surface-variant mt-xs">{{ a.commentaire }}</p>
+              }
+            </div>
+            @if (a.statut !== 'Traitee' && a.statut !== 'Ignoree') {
+            <div class="flex gap-xs">
+              <button (click)="traiterAlerteFraude(a, 'Traitee')" title="Marquer traitée" class="w-8 h-8 rounded-lg flex items-center justify-center bg-green-100 text-green-700 hover:bg-green-200 transition-all">
+                <span class="material-symbols-outlined text-[18px]">check</span>
+              </button>
+              <button (click)="traiterAlerteFraude(a, 'Ignoree')" title="Ignorer" class="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-container-low transition-all">
+                <span class="material-symbols-outlined text-[18px]">block</span>
+              </button>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
   <div class="lg:col-span-4 space-y-lg">
     <div class="bg-white border border-outline-variant/30 rounded-2xl p-xl shadow-sm">
       <h3 class="text-title-md font-bold mb-xl">Résumé du Dossier</h3>
@@ -367,6 +1125,33 @@
           <p class="text-label-sm text-on-surface-variant">Documents</p>
           <p class="text-body-md font-bold">{{ documents.length }}</p>
         </div>
+        @if (statusReport) {
+        <div class="pt-md">
+          <div class="flex justify-between items-center mb-sm">
+            <p class="text-label-sm text-on-surface-variant">Complétude du dossier</p>
+            <p class="text-label-sm font-bold text-primary">{{ dossierCompletion }}%</p>
+          </div>
+          <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+            <div class="h-full bg-primary rounded-full transition-all duration-500" [style.width.%]="dossierCompletion"></div>
+          </div>
+          <div class="mt-sm flex justify-between items-center">
+            <p class="text-label-xs text-on-surface-variant">{{ statusReport.documentsValides }} / {{ statusReport.documentsRequis }} documents validés</p>
+            @if (statusReport.peutEtreActif) {
+            <span class="text-label-xs font-semibold text-green-600">Dossier complet</span>
+            }
+          </div>
+          @if (statusReport.documentsManquants.length > 0) {
+          <div class="mt-md p-sm bg-warning/10 border border-warning/20 rounded-lg">
+            <p class="text-label-xs font-semibold text-warning mb-xs">Documents manquants ({{ statusReport.documentsManquants.length }})</p>
+            <div class="flex flex-wrap gap-1">
+              @for (d of statusReport.documentsManquants; track d) {
+              <span class="px-2 py-0.5 rounded-full text-label-xs font-medium bg-white/60 text-warning">{{ d }}</span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
         @if (isBlocked && client.motifBlocage) {
         <div class="p-sm bg-error/5 border border-error/20 rounded-lg">
           <p class="text-label-sm text-error font-semibold mb-xs">Motif de blocage</p>
@@ -397,14 +1182,24 @@
     </div>
     <div>
       <label class="text-label-md font-label-md text-on-surface-variant block mb-sm">Motif de blocage <span class="text-error">*</span></label>
-      <textarea [(ngModel)]="blockReason" rows="3" placeholder="Expliquez la raison du blocage..."
-        class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-error/20 focus:border-error transition-all resize-none"></textarea>
+      <div class="flex flex-col gap-xs">
+        <textarea [(ngModel)]="blockReason" rows="3" placeholder="Expliquez la raison du blocage..."
+          [ngClass]="blockBorder()"
+          (blur)="markBlockTouched()"
+          class="w-full px-md py-sm bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-error/20 focus:border-error transition-all resize-none"></textarea>
+        @if (blockTouched && blockMessage()) {
+        <p class="flex items-center gap-1 text-xs font-medium" [ngClass]="blockMessageClass()">
+          <span class="material-symbols-outlined text-[14px]">{{ blockMessageIcon() }}</span>
+          {{ blockMessage() }}
+        </p>
+        }
+      </div>
     </div>
     <div class="flex gap-3 justify-end">
       <button class="px-lg py-md rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-md font-medium"
         (click)="closeBlockModal()">Annuler</button>
       <button class="px-lg py-md rounded-xl bg-error text-white hover:bg-error/90 transition-all text-label-md font-bold shadow-sm disabled:opacity-50 flex items-center gap-sm"
-        (click)="submitBlock()" [disabled]="!blockReason.trim() || blocking">
+        (click)="submitBlock()" [disabled]="!isBlockValid() || blocking">
         @if (blocking) {
         <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
         } @else {

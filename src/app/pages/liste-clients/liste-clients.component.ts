@@ -31,10 +31,12 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
   searchCode = '';
   searchVille = '';
   searchStatut = '';
+  searchType = '';
   searchDateDebut = '';
   searchDateFin = '';
 
   villes: string[] = [];
+  clientTypes = ['Particulier', 'Entreprise', 'VIP', 'Professionnel', 'Association'];
   confirmActionId: number | null = null;
   confirmActionType: 'archive' | 'restore' | 'block' | 'unblock' = 'archive';
   blockClientId: number | null = null;
@@ -60,6 +62,7 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
       this.searchPrenom = '';
       this.searchVille = '';
       this.searchStatut = '';
+      this.searchType = '';
       this.searchDateDebut = '';
       this.searchDateFin = '';
       this.currentPage = 1;
@@ -113,6 +116,7 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
         codeClient: this.searchCode || undefined,
         ville: this.searchVille || undefined,
         statut: this.searchStatut || undefined,
+        typeClient: this.searchType || undefined,
         dateDebut: this.searchDateDebut || undefined,
         dateFin: this.searchDateFin || undefined,
         page: this.currentPage,
@@ -144,6 +148,7 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
     this.searchPrenom = '';
     this.searchVille = '';
     this.searchStatut = '';
+    this.searchType = '';
     this.searchDateDebut = '';
     this.searchDateFin = '';
     this.currentPage = 1;
@@ -176,6 +181,7 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
     this.searchCode = '';
     this.searchVille = '';
     this.searchStatut = '';
+    this.searchType = '';
     this.searchDateDebut = '';
     this.searchDateFin = '';
     this.currentPage = 1;
@@ -300,6 +306,7 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
       codeClient: this.searchCode || undefined,
       ville: this.searchVille || undefined,
       statut: this.searchStatut || undefined,
+      typeClient: this.searchType || undefined,
       dateDebut: this.searchDateDebut || undefined,
       dateFin: this.searchDateFin || undefined,
     };
@@ -333,6 +340,26 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
       case 'En attente': return 'hourglass_empty';
       case 'Bloqué': return 'block';
       default: return 'help';
+    }
+  }
+
+  getTypeClass(type: string): string {
+    switch (type) {
+      case 'Entreprise': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'VIP': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Professionnel': return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+      case 'Association': return 'bg-orange-50 text-orange-700 border-orange-200';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+  }
+
+  getTypeIcon(type: string): string {
+    switch (type) {
+      case 'Entreprise': return 'business';
+      case 'VIP': return 'star';
+      case 'Professionnel': return 'work';
+      case 'Association': return 'groups';
+      default: return 'person';
     }
   }
 

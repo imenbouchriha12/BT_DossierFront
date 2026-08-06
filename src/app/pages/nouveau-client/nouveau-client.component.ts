@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ClientService } from '../../services/client.service';
 import { CreateClientDto, UpdateClientDto, ClientDto } from '../../models/client.models';
+import { isValidEmail, PHONE_RE } from '../../shared/validation.utils';
 
 @Component({
   selector: 'app-nouveau-client',
@@ -32,6 +33,9 @@ export class NouveauClientComponent implements OnInit {
     adresse: '',
     ville: '',
     statut: 'Actif',
+    typeClient: 'Particulier',
+    matriculeFiscal: '',
+    registreCommerce: '',
     detail: {
       profession: '',
       employeur: '',
@@ -41,6 +45,114 @@ export class NouveauClientComponent implements OnInit {
       typeResidence: 'R',
     }
   };
+
+  clientTypes = ['Particulier', 'Entreprise', 'VIP', 'Professionnel', 'Association'];
+
+  touchedFields: Record<string, boolean> = {};
+
+  private readonly labels: Record<string, string> = {
+    nom: 'Le nom',
+    prenom: 'Le prénom',
+    dateNaissance: 'La date de naissance',
+    sexe: 'Le sexe',
+    nationalite: 'La nationalité',
+    matriculeFiscal: 'Le matricule fiscal',
+    registreCommerce: 'Le registre de commerce',
+    telephone: 'Le téléphone',
+    email: 'L\'adresse email',
+    adresse: 'L\'adresse',
+    ville: 'La ville',
+  };
+
+  isTouched(field: string): boolean {
+    return !!this.touchedFields[field];
+  }
+
+  markTouched(field: string): void {
+    this.touchedFields[field] = true;
+  }
+
+  isRequiredField(field: string): boolean {
+    if (field === 'matriculeFiscal') return this.needsMatriculeFiscal;
+    if (field === 'registreCommerce') return this.needsRegistreCommerce;
+    return true;
+  }
+
+  private fieldValue(field: string): any {
+    switch (field) {
+      case 'nom': return this.formData.nom;
+      case 'prenom': return this.formData.prenom;
+      case 'dateNaissance': return this.formData.dateNaissance;
+      case 'sexe': return this.formData.sexe;
+      case 'nationalite': return this.formData.nationalite;
+      case 'matriculeFiscal': return this.formData.matriculeFiscal;
+      case 'registreCommerce': return this.formData.registreCommerce;
+      case 'telephone': return this.formData.telephone;
+      case 'email': return this.formData.email;
+      case 'adresse': return this.formData.adresse;
+      case 'ville': return this.formData.ville;
+      default: return '';
+    }
+  }
+
+  borderFor(field: string): string {
+    if (!this.isTouched(field)) return '';
+    const value = this.fieldValue(field);
+    const filled = value !== '' && value != null;
+    if (!filled) return this.isRequiredField(field) ? '!border-red-400' : '';
+    if (field === 'email') return isValidEmail(String(value)) ? '!border-emerald-500' : '!border-red-400';
+    if (field === 'telephone') return PHONE_RE.test(String(value)) ? '!border-emerald-500' : '!border-red-400';
+    return '!border-emerald-500';
+  }
+
+  messageFor(field: string): string {
+    if (!this.isTouched(field)) return '';
+    const value = this.fieldValue(field);
+    const filled = value !== '' && value != null;
+    if (!filled) {
+      return this.isRequiredField(field) ? `${this.labels[field] || 'Le champ'} est requis.` : '';
+    }
+    if (field === 'email') return isValidEmail(String(value)) ? 'Adresse email valide.' : 'Adresse email invalide.';
+    if (field === 'telephone') return PHONE_RE.test(String(value)) ? 'Numéro valide.' : 'Numéro de téléphone invalide.';
+    return 'Champ valide.';
+  }
+
+  messageClassFor(field: string): string {
+    if (!this.isTouched(field)) return '';
+    const value = this.fieldValue(field);
+    const filled = value !== '' && value != null;
+    if (!filled) return this.isRequiredField(field) ? 'text-red-600' : '';
+    if (field === 'email') return isValidEmail(String(value)) ? 'text-emerald-600' : 'text-red-600';
+    if (field === 'telephone') return PHONE_RE.test(String(value)) ? 'text-emerald-600' : 'text-red-600';
+    return 'text-emerald-600';
+  }
+
+  messageIconFor(field: string): string {
+    if (!this.isTouched(field)) return '';
+    const value = this.fieldValue(field);
+    const filled = value !== '' && value != null;
+    if (!filled) return this.isRequiredField(field) ? 'error' : '';
+    if (field === 'email') return isValidEmail(String(value)) ? 'check_circle' : 'error';
+    if (field === 'telephone') return PHONE_RE.test(String(value)) ? 'check_circle' : 'error';
+    return 'check_circle';
+  }
+
+  touchStepFields(step: number): void {
+    const fields = step === 1
+      ? ['nom', 'prenom', 'dateNaissance', 'sexe', 'nationalite', 'matriculeFiscal', 'registreCommerce']
+      : step === 2 ? ['telephone', 'email', 'adresse', 'ville'] : [];
+    fields.forEach((f) => { if (this.isRequiredField(f)) this.touchedFields[f] = true; });
+  }
+
+  get needsMatriculeFiscal(): boolean {
+    return this.formData.typeClient === 'Entreprise'
+      || this.formData.typeClient === 'Professionnel'
+      || this.formData.typeClient === 'Association';
+  }
+
+  get needsRegistreCommerce(): boolean {
+    return this.formData.typeClient === 'Entreprise' || this.formData.typeClient === 'Association';
+  }
 
   constructor(
     private clientService: ClientService,
@@ -72,6 +184,9 @@ export class NouveauClientComponent implements OnInit {
           adresse: client.adresse,
           ville: client.ville,
           statut: client.statut,
+          typeClient: client.typeClient || 'Particulier',
+          matriculeFiscal: client.matriculeFiscal || '',
+          registreCommerce: client.registreCommerce || '',
           detail: {
             profession: client.detail?.profession || '',
             employeur: client.detail?.employeur || '',
@@ -92,6 +207,8 @@ export class NouveauClientComponent implements OnInit {
 
   get isStepValid(): boolean {
     if (this.currentStep === 1) {
+      if (this.needsMatriculeFiscal && !this.formData.matriculeFiscal) return false;
+      if (this.needsRegistreCommerce && !this.formData.registreCommerce) return false;
       return !!(
         this.formData.nom &&
         this.formData.prenom &&
@@ -103,7 +220,9 @@ export class NouveauClientComponent implements OnInit {
     if (this.currentStep === 2) {
       return !!(
         this.formData.telephone &&
+        PHONE_RE.test(this.formData.telephone) &&
         this.formData.email &&
+        isValidEmail(this.formData.email) &&
         this.formData.adresse &&
         this.formData.ville
       );
@@ -113,6 +232,8 @@ export class NouveauClientComponent implements OnInit {
 
   nextStep() {
     if (this.currentStep < 3) {
+      this.touchStepFields(this.currentStep);
+      if (!this.isStepValid) return;
       this.currentStep++;
     }
   }

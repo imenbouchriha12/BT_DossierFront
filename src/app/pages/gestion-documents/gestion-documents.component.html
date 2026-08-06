@@ -8,13 +8,13 @@
         <span class="material-symbols-outlined text-[14px] text-on-surface-variant/40">chevron_right</span>
         <span class="text-primary font-semibold">Documents</span>
       </div>
-      <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 class="doc-title">Gestion Documentaire</h1>
           <p class="doc-subtitle">Consultez, téléversez et validez les documents de vos clients.</p>
         </div>
         @if (selectedClient) {
-        <button class="btn-primary" (click)="toggleUpload()">
+        <button class="btn-primary self-start sm:self-auto" (click)="toggleUpload()">
           <span class="material-symbols-outlined text-[18px]">{{ showUpload ? 'close' : 'add' }}</span>
           {{ showUpload ? 'Fermer' : 'Nouveau document' }}
         </button>
@@ -348,10 +348,14 @@
                   }
                   {{ doc.statutValidation }}
                 </span>
-                @if (doc.resultatVerification) {
-                <span class="doc-ocr-badge" [ngClass]="getOcrBadgeClass(doc.resultatVerification)">
-                  <span class="material-symbols-outlined text-[11px]">{{ getOcrBadgeIcon(doc.resultatVerification) }}</span>
-                  {{ getOcrBadgeLabel(doc.resultatVerification) }}
+                @if (getWorkflowForDoc(doc.id); as wf) {
+                <span class="wf-progress-chip"
+                  [class.wf-chip-done]="wf.statutGlobal === 'Valide'"
+                  [class.wf-chip-rejected]="wf.statutGlobal === 'Rejete'"
+                  [title]="'Workflow : ' + getWorkflowGlobalLabel(wf.statutGlobal) + ' (' + workflowProgress(wf) + ' étapes validées)'"
+                  (click)="openWorkflow(doc)">
+                  <span class="material-symbols-outlined text-[10px]">account_tree</span>
+                  {{ workflowProgress(wf) }}
                 </span>
                 }
               </div>
@@ -374,19 +378,26 @@
               <span class="material-symbols-outlined text-[16px]">visibility</span>
             </button>
             }
-            <button class="doc-action doc-action-ocr" (click)="openOcrDetail(doc)" title="Voir vérification OCR">
-              <span class="material-symbols-outlined text-[16px]">document_scanner</span>
-            </button>
             <button class="doc-action doc-action-download" (click)="downloadDocument(doc.id)" title="Télécharger">
               <span class="material-symbols-outlined text-[16px]">download</span>
             </button>
-            @if ((authService.hasRole('Admin') || authService.hasRole('Superviseur')) && doc.statutValidation === 'En attente') {
-            <button class="doc-action doc-action-validate" (click)="validateDocument(doc.id)" title="Valider">
-              <span class="material-symbols-outlined text-[16px]">check_circle</span>
-            </button>
-            <button class="doc-action doc-action-reject" (click)="rejectDocument(doc.id)" title="Rejeter">
-              <span class="material-symbols-outlined text-[16px]">block</span>
-            </button>
+            @if (getWorkflowForDoc(doc.id); as wf) {
+              @if (wf.statutGlobal === 'EnCours' && doc.statutValidation === 'En attente' && canActOnStep(wf)) {
+              <button class="doc-action doc-action-validate" (click)="openWorkflow(doc, 'valider')" title="Valider l'étape courante">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              </button>
+              <button class="doc-action doc-action-reject" (click)="openWorkflow(doc, 'rejeter')" title="Rejeter le document">
+                <span class="material-symbols-outlined text-[16px]">block</span>
+              </button>
+              }
+              @if (wf.statutGlobal === 'Rejete') {
+              <button class="doc-action doc-action-resubmit" (click)="openWorkflow(doc, 'relancer')" title="Relancer la validation">
+                <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+              </button>
+              }
+              <button class="doc-action doc-action-workflow" (click)="openWorkflow(doc)" title="Voir le workflow de validation">
+                <span class="material-symbols-outlined text-[16px]">account_tree</span>
+              </button>
             }
             @if (authService.hasRole('Admin')) {
             <button class="doc-action doc-action-delete" (click)="deleteDocument(doc.id)" title="Supprimer">
@@ -430,237 +441,190 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- ═══               PREVIEW MODAL                        ═══ -->
+<!-- ═══            WORKFLOW VALIDATION MODAL               ═══ -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- ═══         OCR VERIFICATION PANEL - PROFESSIONAL      ═══ -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-@if (showOcrDetail) {
-<div class="ocr-overlay" (click)="closeOcrDetail()">
-  <div class="ocr-panel" (click)="$event.stopPropagation()">
+@if (showWorkflow && activeWorkflow) {
+<div class="preview-overlay" (click)="workflowLoading ? null : closeWorkflow()">
+  <div class="wf-modal" (click)="$event.stopPropagation()">
 
     <!-- Header -->
-    <div class="ocr-panel-header">
-      <div class="ocr-panel-header-left">
-        <div class="ocr-panel-icon">
-          <span class="material-symbols-outlined">document_scanner</span>
+    <div class="wf-header">
+      <div class="wf-header-info">
+        <div class="wf-header-icon">
+          <span class="material-symbols-outlined text-[20px]">account_tree</span>
         </div>
         <div>
-          <h3 class="ocr-panel-title">Vérification automatique</h3>
-          <p class="ocr-panel-subtitle">{{ ocrDoc?.typeDocument }} · {{ ocrDoc?.nomFichier }}</p>
+          <h3 class="text-sm font-bold text-on-surface truncate max-w-[260px]">{{ activeWorkflow.typeDocument }}</h3>
+          <p class="text-[11px] text-on-surface-variant truncate max-w-[260px]">{{ activeWorkflow.nomFichier }}</p>
         </div>
       </div>
-      <div class="ocr-panel-header-right">
-        @if (ocrDoc && ocrDoc.resultatVerification !== 'Correspond') {
-        <button class="ocr-btn-scan" (click)="lancerOcr(ocrDoc!.id)" [disabled]="ocrLoading">
-          <span class="material-symbols-outlined">scan</span>
-          <span>{{ ocrLoading ? 'Analyse...' : "Lancer l'analyse" }}</span>
-          <span class="material-symbols-outlined">scan</span>
-          <span>{{ ocrLoading ? 'Analyse...' : "Lancer l'analyse" }}</span>
-        </button>
-        @if (authService.hasRole('Admin') || authService.hasRole('Superviseur')) {
-        <button class="ocr-btn-task" (click)="createValidationTask(ocrDoc!)">
-          <span class="material-symbols-outlined">assignment_add</span>
-          <span>Créer tâche</span>
-        </button>
-        }
-        }
-        <button class="ocr-btn-close" (click)="closeOcrDetail()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
+      <span class="wf-global-badge"
+        [class.wf-global-done]="activeWorkflow.statutGlobal === 'Valide'"
+        [class.wf-global-rejected]="activeWorkflow.statutGlobal === 'Rejete'"
+        [class.wf-global-pending]="activeWorkflow.statutGlobal === 'EnCours'">
+        {{ getWorkflowGlobalLabel(activeWorkflow.statutGlobal) }}
+      </span>
+      <button class="preview-btn-close" (click)="closeWorkflow()">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
     </div>
 
-    <!-- Body -->
-    <div class="ocr-panel-body">
+    <div class="wf-body">
 
-      @if (ocrLoading) {
-
-      <!-- Loading state -->
-      <div class="ocr-loading">
-        <div class="ocr-loading-ring"></div>
-        <p class="ocr-loading-text">Analyse du document en cours...</p>
-        <p class="ocr-loading-hint">Extraction et comparaison des données par OCR</p>
+      @if (workflowError) {
+      <div class="alert alert-error wf-alert">
+        <span class="material-symbols-outlined text-[18px] text-red-500">error</span>
+        <span class="text-sm font-medium text-red-700">{{ workflowError }}</span>
       </div>
+      }
 
-      } @else if (ocrError) {
-
-      <!-- Error state -->
-      <div class="ocr-error">
-        <span class="material-symbols-outlined">error_outline</span>
-        <p>{{ ocrError }}</p>
-      </div>
-
-      } @else if (ocrResult) {
-
-      <!-- ═══ SCORE GAUGE + STATUS ═══ -->
-      <div class="ocr-status-section">
-        <div class="ocr-gauge-wrap">
-          <svg class="ocr-gauge" viewBox="0 0 120 120">
-            <circle class="ocr-gauge-bg" cx="60" cy="60" r="52" />
-            <circle class="ocr-gauge-fill" cx="60" cy="60" r="52"
-              [style.stroke-dashoffset]="327 - (ocrResult.scoreConfiance || 0) * 327 / 100"
-              [ngClass]="{
-                'stroke-emerald-500': ocrResult.resultatVerification === 'Correspond',
-                'stroke-red-500': ocrResult.resultatVerification === 'Anomalie',
-                'stroke-amber-400': ocrResult.resultatVerification === 'ExtractionUniquement',
-                'stroke-gray-300': ocrResult.resultatVerification === 'NonTraite'
-              }" />
-          </svg>
-          <div class="ocr-gauge-value">
-            <span class="ocr-gauge-number" [ngClass]="{
-              'text-emerald-600': ocrResult.resultatVerification === 'Correspond',
-              'text-red-600': ocrResult.resultatVerification === 'Anomalie',
-              'text-amber-600': ocrResult.resultatVerification === 'ExtractionUniquement',
-              'text-gray-400': ocrResult.resultatVerification === 'NonTraite'
-            }">{{ ocrResult.scoreConfiance || 0 }}<span class="ocr-gauge-pct">%</span></span>
-          </div>
-        </div>
-        <div class="ocr-status-info">
-          <div class="ocr-status-tag" [ngClass]="{
-            'ocr-status-match': ocrResult.resultatVerification === 'Correspond',
-            'ocr-status-alert': ocrResult.resultatVerification === 'Anomalie',
-            'ocr-status-pending': ocrResult.resultatVerification === 'NonTraite' || ocrResult.resultatVerification === 'ExtractionUniquement'
-          }">
-            <span class="material-symbols-outlined">
-              {{ ocrResult.resultatVerification === 'Correspond' ? 'verified' :
-                 ocrResult.resultatVerification === 'Anomalie' ? 'gpp_maybe' :
-                 ocrResult.resultatVerification === 'ExtractionUniquement' ? 'document_scanner' : 'hourglass_empty' }}
-            </span>
-            <span>{{ ocrResult.resultatVerification === 'Correspond' ? 'Correspondance confirmée' :
-                     ocrResult.resultatVerification === 'Anomalie' ? 'Anomalie détectée' :
-                     ocrResult.resultatVerification === 'ExtractionUniquement' ? 'Données extraites sans comparaison' : 'Non traité' }}</span>
-          </div>
-          <div class="ocr-status-meta">
-            <div class="ocr-meta-item">
-              <span class="material-symbols-outlined">checklist</span>
-              <span>{{ getObjectKeysLength(ocrResult.champsComparees) }} champ(s) comparé(s)</span>
+      <!-- Chaîne de validation -->
+      <div class="wf-steps">
+        @for (step of activeWorkflow.etapes; track step.id; let i = $index, last = $last) {
+        <div class="wf-step-row">
+          <div class="wf-step-left">
+            <div class="wf-step-node" [ngClass]="getWorkflowStepClass(step.statut)">
+              @switch (step.statut) {
+                @case ('Valide') { <span class="material-symbols-outlined text-[14px]">check</span> }
+                @case ('Rejete') { <span class="material-symbols-outlined text-[14px]">close</span> }
+                @case ('NonApplicable') { <span class="material-symbols-outlined text-[14px]">remove</span> }
+                @default { <span class="material-symbols-outlined text-[14px]">schedule</span> }
+              }
             </div>
-            @if (ocrResult.dateVerificationOCR) {
-            <div class="ocr-meta-item">
-              <span class="material-symbols-outlined">schedule</span>
-              <span>{{ ocrResult.dateVerificationOCR | date:'dd/MM/yyyy à HH:mm' }}</span>
+            @if (!last) {
+            <div class="wf-step-line" [class.wf-step-line-done]="step.statut === 'Valide' || activeWorkflow.statutGlobal === 'Valide'"></div>
+            }
+          </div>
+          <div class="wf-step-content">
+            <div class="wf-step-title">
+              <span class="text-xs font-semibold text-on-surface">{{ step.libelle }}</span>
+              <span class="wf-step-status" [ngClass]="getWorkflowStepClass(step.statut)">{{ getWorkflowStepLabel(step.statut) }}</span>
             </div>
+            @if (step.nomUser) {
+            <p class="wf-step-meta">
+              <span class="material-symbols-outlined text-[11px]">person</span>
+              {{ step.nomUser }}
+              @if (step.decisionDate) { · {{ step.decisionDate | date:'dd MMM yyyy HH:mm' }} }
+            </p>
+            }
+            @if (step.commentaire) {
+            <p class="wf-step-comment">« {{ step.commentaire }} »</p>
             }
           </div>
         </div>
+        }
       </div>
 
-      <!-- ═══ COMPARAISON DÉTAILLÉE ═══ -->
-      @if (hasKeys(ocrResult.champsComparees)) {
-      <div class="ocr-section">
-        <div class="ocr-section-title">
-          <span class="material-symbols-outlined">compare_arrows</span>
-          <span>Comparaison des données</span>
-        </div>
-        <div class="ocr-compare-grid">
-          @for (entry of ocrResult.champsComparees | keyvalue; track entry.key) {
-          <div class="ocr-compare-card" [class.ocr-card-match]="asAny(entry.value).correspond"
-                                     [class.ocr-card-mismatch]="!asAny(entry.value).correspond">
-            <div class="ocr-card-header">
-              <span class="ocr-card-field">{{ entry.key }}</span>
-              <span class="ocr-card-badge" [class.badge-match]="asAny(entry.value).correspond"
-                                           [class.badge-mismatch]="!asAny(entry.value).correspond">
-                <span class="material-symbols-outlined">{{ asAny(entry.value).correspond ? 'check' : 'close' }}</span>
-                {{ asAny(entry.value).correspond ? 'OK' : 'Différent' }}
-              </span>
-            </div>
-            <div class="ocr-card-body">
-              <div class="ocr-card-col">
-                <span class="ocr-card-label">Attendu (base client)</span>
-                <span class="ocr-card-value ocr-value-client">{{ asAny(entry.value).valeurAttendue }}</span>
-              </div>
-              <div class="ocr-card-arrow">
-                <span class="material-symbols-outlined">arrow_forward</span>
-              </div>
-              <div class="ocr-card-col">
-                <span class="ocr-card-label">Extrait (document)</span>
-                <span class="ocr-card-value" [class.ocr-value-match]="asAny(entry.value).correspond"
-                                           [class.ocr-value-mismatch]="!asAny(entry.value).correspond">
-                  {{ asAny(entry.value).valeurExtraite || '—' }}
-                </span>
-              </div>
-            </div>
-          </div>
-          }
-        </div>
-      </div>
-      } @else if (hasKeys(ocrResult.champsExtraits)) {
-      <!-- Fallback : données extraites brutes -->
-      <div class="ocr-section">
-        <div class="ocr-section-title">
-          <span class="material-symbols-outlined">data_array</span>
-          <span>Données extraites du document</span>
-        </div>
-        <div class="ocr-extracted-grid">
-          @for (entry of ocrResult.champsExtraits | keyvalue; track entry.key) {
-          <div class="ocr-extracted-item">
-            <span class="ocr-extracted-key">{{ entry.key }}</span>
-            <span class="ocr-extracted-value">{{ asAny(entry.value) }}</span>
-          </div>
-          }
+      <!-- Motif de rejet -->
+      @if (activeWorkflow.statutGlobal === 'Rejete' && activeWorkflow.motifRejet) {
+      <div class="wf-reject-box">
+        <span class="material-symbols-outlined text-[16px] text-red-500">report</span>
+        <div>
+          <p class="text-[11px] font-bold text-red-600 uppercase tracking-wide">Motif du rejet</p>
+          <p class="text-xs text-red-700 mt-0.5">{{ activeWorkflow.motifRejet }}</p>
         </div>
       </div>
       }
 
-      <!-- ═══ TEXTE BRUT (accordéon) ═══ -->
-      @if (ocrResult.texteExtrait) {
-      <details class="ocr-raw-accordion">
-        <summary class="ocr-raw-header">
-          <div class="ocr-raw-header-left">
-            <span class="material-symbols-outlined">article</span>
-            <span>Texte brut extrait</span>
-            <span class="ocr-raw-count">{{ ocrResult.texteExtrait.length }} car.</span>
-          </div>
-          <span class="material-symbols-outlined ocr-raw-chevron">expand_more</span>
-        </summary>
-        <div class="ocr-raw-content">
-          <pre>{{ ocrResult.texteExtrait }}</pre>
+      <!-- Actions -->
+      @if (activeWorkflow.statutGlobal === 'EnCours' && canActOnStep(activeWorkflow)) {
+      <div class="wf-actions">
+        <div class="wf-actions-title">
+          <span class="material-symbols-outlined text-[14px] text-primary">verified</span>
+          <span class="text-xs font-bold text-on-surface">Décision — {{ activeWorkflow.etapeCourante }}</span>
         </div>
-      </details>
-      }
-
-      <!-- ═══ VALIDATION MANUELLE (Admin/Superviseur) ═══ -->
-      @if (ocrResult.resultatVerification === 'Anomalie' && (authService.hasRole('Admin') || authService.hasRole('Superviseur'))) {
-      <div class="ocr-section ocr-section-manual">
-        <div class="ocr-section-title ocr-section-title-manual">
-          <span class="material-symbols-outlined">fact_check</span>
-          <span>Validation manuelle</span>
-        </div>
-        <p class="ocr-manual-desc">
-          Les données extraites ne correspondent pas aux informations du client.
-          Vous pouvez passer outre et valider manuellement après vérification visuelle du document.
+        <textarea
+          class="wf-comment-input"
+          [ngClass]="commentBorder()"
+          [(ngModel)]="workflowComment"
+          (blur)="markCommentTouched()"
+          rows="2"
+          placeholder="Commentaire (facultatif pour la validation, obligatoire pour le rejet)..."></textarea>
+        @if (commentMessage()) {
+        <p class="flex items-center gap-1 mt-1 text-xs font-medium text-red-600">
+          <span class="material-symbols-outlined text-[14px]">error</span>
+          {{ commentMessage() }}
         </p>
-        <div class="ocr-manual-actions">
-          <button class="ocr-btn-validate" (click)="validateDocument(ocrDoc!.id); closeOcrDetail()">
-            <span class="material-symbols-outlined">verified</span>
-            Valider le document malgré l'anomalie
+        }
+        <div class="wf-actions-buttons">
+          <button class="btn-primary-sm" (click)="validateWorkflow()" [disabled]="workflowLoading">
+            @if (workflowLoading && workflowAction === 'valider') {
+            <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+            } @else {
+            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            }
+            Valider
+          </button>
+          <button class="wf-btn-reject" (click)="rejectWorkflow()" [disabled]="workflowLoading">
+            @if (workflowLoading && workflowAction === 'rejeter') {
+            <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+            } @else {
+            <span class="material-symbols-outlined text-[16px]">block</span>
+            }
+            Rejeter
           </button>
         </div>
       </div>
       }
 
-      } @else {
-
-      <!-- No OCR yet -->
-      <div class="ocr-empty">
-        <div class="ocr-empty-icon">
-          <span class="material-symbols-outlined">document_scanner</span>
+      @if (activeWorkflow.statutGlobal === 'Rejete' && canRelancer(activeWorkflow)) {
+      <div class="wf-actions">
+        <div class="wf-actions-title">
+          <span class="material-symbols-outlined text-[14px] text-violet-600">restart_alt</span>
+          <span class="text-xs font-bold text-on-surface">Relancer la validation</span>
         </div>
-        <h4>Aucune vérification effectuée</h4>
-        <p>Ce document n'a pas encore été analysé automatiquement.</p>
-        <button class="ocr-btn-scan ocr-btn-scan-lg" (click)="lancerOcr(ocrDoc!.id)">
-          <span class="material-symbols-outlined">scan</span>
-          Lancer la vérification OCR
-        </button>
+        <textarea
+          class="wf-comment-input"
+          [(ngModel)]="workflowComment"
+          rows="2"
+          placeholder="Commentaire de relance (facultatif)..."></textarea>
+        <div class="wf-actions-buttons">
+          <button class="btn-primary-sm" (click)="resubmitWorkflow()" [disabled]="workflowLoading">
+            @if (workflowLoading) {
+            <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+            } @else {
+            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+            }
+            Relancer
+          </button>
+        </div>
       </div>
-
       }
+
+      <!-- Historique des validations -->
+      @if (workflowHistory.length > 1) {
+      <div class="wf-history">
+        <div class="wf-history-title">
+          <span class="material-symbols-outlined text-[14px] text-on-surface-variant">history</span>
+          <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Historique des validations</span>
+        </div>
+        @for (h of workflowHistory; track h.id; let i = $index) {
+        @if (i > 0) {
+        <div class="wf-history-item">
+          <span class="material-symbols-outlined text-[13px] text-on-surface-variant/50">schedule</span>
+          <div>
+            <p class="text-xs text-on-surface font-medium">
+              Tentative du {{ h.dateCreation | date:'dd MMM yyyy HH:mm' }}
+            </p>
+            <p class="text-[11px] text-on-surface-variant">
+              Statut : {{ getWorkflowGlobalLabel(h.statutGlobal) }}
+              @if (h.statutGlobal === 'Rejete' && h.motifRejet) { — Motif : {{ h.motifRejet }} }
+            </p>
+          </div>
+        </div>
+        }
+        }
+      </div>
+      }
+
     </div>
   </div>
 </div>
 }
 
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══               PREVIEW MODAL                        ═══ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
 @if (showPreview) {
 <div class="preview-overlay" (click)="closePreview()">
   <div class="preview-modal" (click)="$event.stopPropagation()">

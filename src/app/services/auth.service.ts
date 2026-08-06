@@ -35,6 +35,8 @@ export class AuthService {
   private readonly TOKEN_KEY = 'accessToken';
   private readonly REFRESH_KEY = 'refreshToken';
   private readonly USER_KEY = 'currentUser';
+  private readonly REMEMBER_KEY = 'rememberMe';
+  private readonly MATRICULE_KEY = 'rememberedMatricule';
 
   private currentUserSignal = signal<UserDto | null>(this.loadUser());
   public currentUser = this.currentUserSignal.asReadonly();
@@ -42,6 +44,33 @@ export class AuthService {
   public userRoles = computed(() => this.currentUserSignal()?.roles ?? []);
 
   constructor(private http: HttpClient, private router: Router) {}
+
+  /** Stockage actif : persistant (localStorage) si « se souvenir de moi », sinon session. */
+  private get storage(): Storage {
+    return this.isRemembered() ? window.localStorage : window.sessionStorage;
+  }
+
+  setRememberMe(value: boolean): void {
+    window.localStorage.setItem(this.REMEMBER_KEY, String(value));
+    if (!value) window.localStorage.removeItem(this.MATRICULE_KEY);
+  }
+
+  isRemembered(): boolean {
+    const raw = window.localStorage.getItem(this.REMEMBER_KEY);
+    return raw === null ? true : raw === 'true';
+  }
+
+  getRememberedMatricule(): string {
+    return window.localStorage.getItem(this.MATRICULE_KEY) ?? '';
+  }
+
+  saveMatricule(matricule: string): void {
+    if (this.isRemembered()) {
+      window.localStorage.setItem(this.MATRICULE_KEY, matricule);
+    } else {
+      window.localStorage.removeItem(this.MATRICULE_KEY);
+    }
+  }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials)
@@ -120,7 +149,7 @@ export class AuthService {
     return this.http.put<UserDto>(`${environment.apiUrl}/auth/profile`, data)
       .pipe(tap(user => {
         const updated: UserDto = { ...user };
-        localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+        this.storage.setItem(this.USER_KEY, JSON.stringify(updated));
         this.currentUserSignal.set(updated);
       }));
   }
@@ -133,7 +162,7 @@ export class AuthService {
         const current = this.loadUser();
         if (current) {
           const updated: UserDto = { ...current, photoUrl: res.photoUrl };
-          localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+          this.storage.setItem(this.USER_KEY, JSON.stringify(updated));
           this.currentUserSignal.set(updated);
         }
       }));
@@ -152,29 +181,32 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return window.localStorage.getItem(this.TOKEN_KEY) ?? window.sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_KEY);
+    return window.localStorage.getItem(this.REFRESH_KEY) ?? window.sessionStorage.getItem(this.REFRESH_KEY);
   }
 
   private saveSession(res: AuthResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, res.accessToken);
-    localStorage.setItem(this.REFRESH_KEY, res.refreshToken);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(res.user));
+    this.storage.setItem(this.TOKEN_KEY, res.accessToken);
+    this.storage.setItem(this.REFRESH_KEY, res.refreshToken);
+    this.storage.setItem(this.USER_KEY, JSON.stringify(res.user));
     this.currentUserSignal.set(res.user);
   }
 
   private clearSession(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    window.localStorage.removeItem(this.TOKEN_KEY);
+    window.localStorage.removeItem(this.REFRESH_KEY);
+    window.localStorage.removeItem(this.USER_KEY);
+    window.sessionStorage.removeItem(this.TOKEN_KEY);
+    window.sessionStorage.removeItem(this.REFRESH_KEY);
+    window.sessionStorage.removeItem(this.USER_KEY);
     this.currentUserSignal.set(null);
   }
 
   private loadUser(): UserDto | null {
-    const raw = localStorage.getItem(this.USER_KEY);
+    const raw = window.localStorage.getItem(this.USER_KEY) ?? window.sessionStorage.getItem(this.USER_KEY);
     return raw ? JSON.parse(raw) : null;
   }
 }

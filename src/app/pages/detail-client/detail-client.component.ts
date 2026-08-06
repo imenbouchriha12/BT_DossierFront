@@ -6,9 +6,22 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ClientService } from '../../services/client.service';
 import { DocumentService } from '../../services/document.service';
 import { AuthService } from '../../services/auth.service';
+import { ActivityService, PagedEvenementsDto } from '../../services/activity.service';
 import { PortalService, GenerateLinkResponse } from '../../services/portal.service';
 import { ClientStatusService, ClientStatusReport } from '../../services/client-status.service';
-import { ClientDto, DocumentDto } from '../../models/client.models';
+import { FinanceService } from '../../services/finance.service';
+import { ReportService } from '../../services/report.service';
+import { AiService } from '../../services/ai.service';
+import { RiskService } from '../../services/risk.service';
+import { FraudService } from '../../services/fraud.service';
+import { ClientDto, DocumentDto, EvenementClientDto, NoteClientDto, ContactClientDto } from '../../models/client.models';
+import { CompteDto, MouvementDto, CompteTotalDto } from '../../models/finance.models';
+import {
+  ClientSummaryDto,
+  RapportRisqueDto,
+  AlertesFraudeDto,
+} from '../../models/ai.models';
+import { fieldBorder, isValidEmail, PHONE_RE } from '../../shared/validation.utils';
 
 @Component({
   selector: 'app-detail-client',
@@ -38,6 +51,35 @@ export class DetailClientComponent implements OnInit {
   isBlocking = true; // true = mode blocage, false = mode déblocage
   blockReason = '';
   blocking = false;
+  blockTouched = false;
+
+  markBlockTouched(): void {
+    this.blockTouched = true;
+  }
+
+  blockBorder(): string {
+    if (!this.blockTouched) return '';
+    return this.blockReason.trim() ? fieldBorder('ok') : fieldBorder('error');
+  }
+
+  blockMessage(): string {
+    if (!this.blockTouched) return '';
+    return this.blockReason.trim() ? 'Champ valide.' : 'La raison du blocage est obligatoire.';
+  }
+
+  blockMessageClass(): string {
+    if (!this.blockTouched) return '';
+    return this.blockReason.trim() ? 'text-emerald-600' : 'text-red-600';
+  }
+
+  blockMessageIcon(): string {
+    if (!this.blockTouched) return '';
+    return this.blockReason.trim() ? 'check_circle' : 'error';
+  }
+
+  isBlockValid(): boolean {
+    return !!this.blockReason?.trim();
+  }
 
   // Portal
   showPortalModal = false;
@@ -56,6 +98,139 @@ export class DetailClientComponent implements OnInit {
   previewLoading = false;
   previewError = '';
 
+  // ── Situation financière & Relevé ─────────────────────────────────────
+  comptes: CompteDto[] = [];
+  totaux: CompteTotalDto[] = [];
+  mouvements: MouvementDto[] = [];
+  mouvementsTotal = 0;
+  loadingComptes = false;
+  loadingMouvements = false;
+  compteSelectionneId: number | null = null;
+  mvtFilterDateDebut = '';
+  mvtFilterDateFin = '';
+  mvtFilterSens = '';
+  mvtFilterMontantMin: number | null = null;
+  mvtFilterMontantMax: number | null = null;
+  mvtPage = 1;
+  mvtPageSize = 20;
+  exportLoading = false;
+
+  // ── Activité (timeline), notes & contacts ─────────────────────────────
+  evenements: EvenementClientDto[] = [];
+  evenementsTotal = 0;
+  evenementPage = 1;
+  evenementPageSize = 20;
+  loadingEvenements = false;
+  evenementsLoaded = false;
+
+  notes: NoteClientDto[] = [];
+  loadingNotes = false;
+  notesLoaded = false;
+  showNoteForm = false;
+  savingNote = false;
+  editingNoteId: number | null = null;
+  noteForm = { titre: '', contenu: '', categorie: 'Général', estEpinglee: false };
+  noteTouched: Record<string, boolean> = {};
+
+  markNoteTouched(field: string): void {
+    this.noteTouched[field] = true;
+  }
+
+  noteBorder(field: string): string {
+    if (!this.noteTouched[field]) return '';
+    const value = field === 'contenu' ? this.noteForm.contenu : this.noteForm.titre;
+    return value && value.trim() ? fieldBorder('ok') : fieldBorder('error');
+  }
+
+  noteMessage(field: string): string {
+    if (!this.noteTouched[field]) return '';
+    const value = field === 'contenu' ? this.noteForm.contenu : this.noteForm.titre;
+    if (!value || !value.trim()) return field === 'contenu' ? 'Le contenu est requis.' : 'Le titre est requis.';
+    return 'Champ valide.';
+  }
+
+  noteMessageClass(field: string): string {
+    if (!this.noteTouched[field]) return '';
+    const value = field === 'contenu' ? this.noteForm.contenu : this.noteForm.titre;
+    return value && value.trim() ? 'text-emerald-600' : 'text-red-600';
+  }
+
+  noteMessageIcon(field: string): string {
+    if (!this.noteTouched[field]) return '';
+    const value = field === 'contenu' ? this.noteForm.contenu : this.noteForm.titre;
+    return value && value.trim() ? 'check_circle' : 'error';
+  }
+
+  isNoteValid(): boolean {
+    return !!this.noteForm.contenu?.trim();
+  }
+
+  contacts: ContactClientDto[] = [];
+  loadingContacts = false;
+  contactsLoaded = false;
+  showContactForm = false;
+  savingContact = false;
+  editingContactId: number | null = null;
+  contactForm = { typeContact: 'Conjoint', nom: '', prenom: '', telephone: '', email: '', adresse: '', relation: '' };
+  contactTouched: Record<string, boolean> = {};
+
+  markContactTouched(field: string): void {
+    this.contactTouched[field] = true;
+  }
+
+  private contactValue(field: string): string {
+    switch (field) {
+      case 'nom': return this.contactForm.nom;
+      case 'prenom': return this.contactForm.prenom;
+      case 'telephone': return this.contactForm.telephone;
+      case 'email': return this.contactForm.email;
+      case 'adresse': return this.contactForm.adresse;
+      case 'relation': return this.contactForm.relation;
+      default: return '';
+    }
+  }
+
+  contactBorder(field: string): string {
+    if (!this.contactTouched[field]) return '';
+    const value = this.contactValue(field);
+    if (!value || !value.trim()) return field === 'nom' ? fieldBorder('error') : '';
+    if (field === 'email') return isValidEmail(value) ? fieldBorder('ok') : fieldBorder('error');
+    if (field === 'telephone') return PHONE_RE.test(value) ? fieldBorder('ok') : fieldBorder('error');
+    return fieldBorder('ok');
+  }
+
+  contactMessage(field: string): string {
+    if (!this.contactTouched[field]) return '';
+    const value = this.contactValue(field);
+    if (!value || !value.trim()) return field === 'nom' ? 'Le nom est requis.' : '';
+    if (field === 'email') return isValidEmail(value) ? 'Adresse email valide.' : 'Adresse email invalide.';
+    if (field === 'telephone') return PHONE_RE.test(value) ? 'Numéro valide.' : 'Numéro de téléphone invalide.';
+    return 'Champ valide.';
+  }
+
+  contactMessageClass(field: string): string {
+    if (!this.contactTouched[field]) return '';
+    const value = this.contactValue(field);
+    if (!value || !value.trim()) return field === 'nom' ? 'text-red-600' : '';
+    if (field === 'email') return isValidEmail(value) ? 'text-emerald-600' : 'text-red-600';
+    if (field === 'telephone') return PHONE_RE.test(value) ? 'text-emerald-600' : 'text-red-600';
+    return 'text-emerald-600';
+  }
+
+  contactMessageIcon(field: string): string {
+    if (!this.contactTouched[field]) return '';
+    const value = this.contactValue(field);
+    if (!value || !value.trim()) return field === 'nom' ? 'error' : '';
+    if (field === 'email') return isValidEmail(value) ? 'check_circle' : 'error';
+    if (field === 'telephone') return PHONE_RE.test(value) ? 'check_circle' : 'error';
+    return 'check_circle';
+  }
+
+  isContactValid(): boolean {
+    const { nom, email, telephone } = this.contactForm;
+    return !!nom?.trim() && (!email?.trim() || isValidEmail(email)) && (!telephone?.trim() || PHONE_RE.test(telephone));
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -64,6 +239,12 @@ export class DetailClientComponent implements OnInit {
     public authService: AuthService,
     private clientStatusService: ClientStatusService,
     private portalService: PortalService,
+    private financeService: FinanceService,
+    private reportService: ReportService,
+    private activityService: ActivityService,
+    private aiService: AiService,
+    private riskService: RiskService,
+    private fraudService: FraudService,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -80,8 +261,10 @@ export class DetailClientComponent implements OnInit {
       next: (client) => {
         this.client = client;
         this.loading = false;
-        // Charger le rapport de statut automatiquement
+        // Charger le rapport de statut et les documents automatiquement
         this.loadStatusReport();
+        this.loadDocuments();
+        this.loadAiFeatures();
       },
       error: () => {
         this.error = 'Erreur lors du chargement du client.';
@@ -104,11 +287,245 @@ export class DetailClientComponent implements OnInit {
     });
   }
 
+  // ── Fonctionnalités IA : résumé, risque, fraude ─────────────────
+  aiSummary: ClientSummaryDto | null = null;
+  loadingAiSummary = false;
+  riskRapport: RapportRisqueDto | null = null;
+  loadingRisk = false;
+  riskCalculEnCours = false;
+  fraudAlertes: AlertesFraudeDto[] = [];
+  loadingFraud = false;
+  fraudAnalyseEnCours = false;
+
+  private loadAiFeatures(): void {
+    if (!this.client) return;
+    this.loadAiSummary();
+    this.loadRiskReport();
+    this.loadFraudAlertes();
+  }
+
+  loadAiSummary(): void {
+    if (!this.client) return;
+    this.loadingAiSummary = true;
+    this.aiService.resumeClient(this.client.id).subscribe({
+      next: (s) => {
+        this.aiSummary = s;
+        this.loadingAiSummary = false;
+      },
+      error: () => {
+        this.loadingAiSummary = false;
+      },
+    });
+  }
+
+  loadRiskReport(): void {
+    if (!this.client) return;
+    this.loadingRisk = true;
+    this.riskService.getRapport(this.client.id).subscribe({
+      next: (r) => {
+        this.riskRapport = r;
+        this.loadingRisk = false;
+      },
+      error: () => {
+        this.riskRapport = null;
+        this.loadingRisk = false;
+      },
+    });
+  }
+
+  calculerRisque(): void {
+    if (!this.client) return;
+    this.riskCalculEnCours = true;
+    this.riskService.calculer(this.client.id).subscribe({
+      next: (r) => {
+        this.riskRapport = r;
+        this.riskCalculEnCours = false;
+        this.loadAiSummary();
+      },
+      error: () => {
+        this.riskCalculEnCours = false;
+      },
+    });
+  }
+
+  loadFraudAlertes(): void {
+    if (!this.client) return;
+    this.loadingFraud = true;
+    this.fraudService.getAlertesByClient(this.client.id).subscribe({
+      next: (items) => {
+        this.fraudAlertes = items;
+        this.loadingFraud = false;
+      },
+      error: () => {
+        this.loadingFraud = false;
+      },
+    });
+  }
+
+  analyserFraude(): void {
+    if (!this.client) return;
+    this.fraudAnalyseEnCours = true;
+    this.fraudService.analyserClient(this.client.id).subscribe({
+      next: () => {
+        this.fraudAnalyseEnCours = false;
+        this.loadFraudAlertes();
+        this.loadAiSummary();
+      },
+      error: () => {
+        this.fraudAnalyseEnCours = false;
+      },
+    });
+  }
+
+  traiterAlerteFraude(a: AlertesFraudeDto, statut: string): void {
+    this.fraudService.traiterAlerte(a.id, statut).subscribe({
+      next: () => this.loadFraudAlertes(),
+      error: () => {},
+    });
+  }
+
+  risqueNiveauClass(niveau: string): string {
+    switch (niveau) {
+      case 'Critique': return 'bg-error/10 text-error border-error/20';
+      case 'Eleve': return 'bg-warning/10 text-warning border-warning/30';
+      case 'Modere': return 'bg-primary/10 text-primary border-primary/20';
+      default: return 'bg-green-50 text-green-700 border-green-200';
+    }
+  }
+
+  risqueBarreClass(score: number): string {
+    if (score >= 70) return 'bg-error';
+    if (score >= 45) return 'bg-warning';
+    if (score >= 25) return 'bg-primary';
+    return 'bg-green-500';
+  }
+
   switchTab(tab: string) {
     this.activeTab = tab;
     if (tab === 'docs' && this.client && this.documents.length === 0) {
       this.loadDocuments();
     }
+    if (tab === 'comptes' && this.client && this.comptes.length === 0) {
+      this.loadComptes();
+    }
+    if (tab === 'activite' && this.client && !this.evenementsLoaded) {
+      this.loadEvenements();
+    }
+    if (tab === 'notes' && this.client) {
+      if (!this.notesLoaded) this.loadNotes();
+      if (!this.contactsLoaded) this.loadContacts();
+    }
+  }
+
+  loadComptes() {
+    if (!this.client) return;
+    this.loadingComptes = true;
+    this.financeService.getComptesByClient(this.client.id).subscribe({
+      next: (comptes) => {
+        this.comptes = comptes;
+        if (comptes.length > 0) {
+          this.compteSelectionneId = comptes[0].id;
+          this.loadMouvements();
+        }
+        this.loadingComptes = false;
+      },
+      error: () => this.loadingComptes = false
+    });
+    this.financeService.getTotauxByClient(this.client.id).subscribe({
+      next: (totaux) => this.totaux = totaux,
+      error: () => {}
+    });
+  }
+
+  selectCompte(id: number) {
+    this.compteSelectionneId = id;
+    this.mvtPage = 1;
+    this.loadMouvements();
+  }
+
+  loadMouvements() {
+    if (!this.client || !this.compteSelectionneId) return;
+    this.loadingMouvements = true;
+    this.financeService.getMouvementsByCompte(this.compteSelectionneId, {
+      dateDebut: this.mvtFilterDateDebut || undefined,
+      dateFin: this.mvtFilterDateFin || undefined,
+      sens: this.mvtFilterSens || undefined,
+      montantMin: this.mvtFilterMontantMin ?? undefined,
+      montantMax: this.mvtFilterMontantMax ?? undefined,
+      page: this.mvtPage,
+      pageSize: this.mvtPageSize
+    }).subscribe({
+      next: (result) => {
+        this.mouvements = result.items;
+        this.mouvementsTotal = result.total;
+        this.loadingMouvements = false;
+      },
+      error: () => this.loadingMouvements = false
+    });
+  }
+
+  resetMouvementFilters() {
+    this.mvtFilterDateDebut = '';
+    this.mvtFilterDateFin = '';
+    this.mvtFilterSens = '';
+    this.mvtFilterMontantMin = null;
+    this.mvtFilterMontantMax = null;
+    this.mvtPage = 1;
+    this.loadMouvements();
+  }
+
+  get compteSelectionne(): CompteDto | null {
+    return this.comptes.find(c => c.id === this.compteSelectionneId) || null;
+  }
+
+  get mvtTotalPages(): number {
+    return Math.max(1, Math.ceil(this.mouvementsTotal / this.mvtPageSize));
+  }
+
+  // Patrimoine consolidé toutes devises confondues (contre-valeur en TND)
+  get patrimoineTotal(): number {
+    return this.totaux.reduce((sum, t) => sum + t.totalContreValeur, 0);
+  }
+
+  get nbComptes(): number {
+    return this.comptes.length;
+  }
+
+  get totalCredit(): number {
+    return this.mouvements.filter(m => m.sens === 'C').reduce((s, m) => s + m.montant, 0);
+  }
+
+  get totalDebit(): number {
+    return this.mouvements.filter(m => m.sens === 'D').reduce((s, m) => s + m.montant, 0);
+  }
+
+  exportReleve(format: 'pdf' | 'excel') {
+    if (!this.compteSelectionneId) return;
+    this.exportLoading = true;
+    const params = {
+      compteId: this.compteSelectionneId,
+      dateDebut: this.mvtFilterDateDebut || undefined,
+      dateFin: this.mvtFilterDateFin || undefined,
+      sens: this.mvtFilterSens || undefined,
+      montantMin: this.mvtFilterMontantMin ?? undefined,
+      montantMax: this.mvtFilterMontantMax ?? undefined,
+    };
+    const obs = format === 'pdf'
+      ? this.reportService.generateRelevePdf(params)
+      : this.reportService.generateReleveExcel(params);
+    obs.subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ext = format === 'pdf' ? 'pdf' : 'xlsx';
+        a.download = `releve_${this.compteSelectionne?.numCompte ?? this.compteSelectionneId}_${new Date().toISOString().slice(0, 10)}.${ext}`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exportLoading = false;
+      },
+      error: () => this.exportLoading = false
+    });
   }
 
   loadDocuments() {
@@ -209,6 +626,7 @@ export class DetailClientComponent implements OnInit {
   openBlockModal() {
     this.isBlocking = true;
     this.blockReason = '';
+    this.blockTouched = false;
     this.showBlockModal = true;
   }
 
@@ -220,6 +638,7 @@ export class DetailClientComponent implements OnInit {
   closeBlockModal() {
     this.showBlockModal = false;
     this.blockReason = '';
+    this.blockTouched = false;
   }
 
   submitBlock() {
@@ -265,6 +684,12 @@ export class DetailClientComponent implements OnInit {
     return this.client?.statut === 'Bloqué';
   }
 
+  // Complétude du dossier : documents validés / documents requis (rapport de statut)
+  get dossierCompletion(): number {
+    if (!this.statusReport || this.statusReport.documentsRequis <= 0) return 0;
+    return Math.min(100, Math.round((this.statusReport.documentsValides / this.statusReport.documentsRequis) * 100));
+  }
+
   getInitials(): string {
     if (!this.client) return '--';
     return (this.client.prenom[0] + this.client.nom[0]).toUpperCase();
@@ -300,6 +725,26 @@ export class DetailClientComponent implements OnInit {
     }
   }
 
+  getTypeClass(type: string): string {
+    switch (type) {
+      case 'Entreprise': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'VIP': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Professionnel': return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+      case 'Association': return 'bg-orange-50 text-orange-700 border-orange-200';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+  }
+
+  getTypeIcon(type: string): string {
+    switch (type) {
+      case 'Entreprise': return 'business';
+      case 'VIP': return 'star';
+      case 'Professionnel': return 'work';
+      case 'Association': return 'groups';
+      default: return 'person';
+    }
+  }
+
   getIcon(type: string): string {
     switch (type) {
       case 'CIN': return 'badge';
@@ -307,6 +752,219 @@ export class DetailClientComponent implements OnInit {
       case 'Justificatif': return 'receipt_long';
       case 'RIB': return 'account_balance';
       default: return 'description';
+    }
+  }
+
+  // ── Activité (timeline) ─────────────────────────────────────────────
+
+  loadEvenements() {
+    if (!this.client) return;
+    this.loadingEvenements = true;
+    this.activityService.getEvenements(this.client.id, this.evenementPage, this.evenementPageSize).subscribe({
+      next: (result) => {
+        this.evenements = result.items;
+        this.evenementsTotal = result.total;
+        this.evenementsLoaded = true;
+        this.loadingEvenements = false;
+      },
+      error: () => {
+        this.loadingEvenements = false;
+        this.evenementsLoaded = true;
+      }
+    });
+  }
+
+  loadMoreEvenements() {
+    if (!this.client || this.loadingEvenements) return;
+    this.evenementPage++;
+    this.loadingEvenements = true;
+    this.activityService.getEvenements(this.client.id, this.evenementPage, this.evenementPageSize).subscribe({
+      next: (result) => {
+        this.evenements = [...this.evenements, ...result.items];
+        this.evenementsTotal = result.total;
+        this.loadingEvenements = false;
+      },
+      error: () => {
+        this.evenementPage--;
+        this.loadingEvenements = false;
+      }
+    });
+  }
+
+  eventIcon(type: string): string {
+    switch (type) {
+      case 'Document': return 'description';
+      case 'Statut': return 'verified_user';
+      case 'Compte': return 'account_balance';
+      case 'Rappel': return 'notifications';
+      case 'Note': return 'sticky_note_2';
+      case 'Contact': return 'contacts';
+      case 'Workflow': return 'rule';
+      default: return 'history';
+    }
+  }
+
+  // ── Notes internes ──────────────────────────────────────────────────
+
+  loadNotes() {
+    if (!this.client) return;
+    this.loadingNotes = true;
+    this.activityService.getNotes(this.client.id).subscribe({
+      next: (notes) => {
+        this.notes = notes;
+        this.notesLoaded = true;
+        this.loadingNotes = false;
+      },
+      error: () => {
+        this.notesLoaded = true;
+        this.loadingNotes = false;
+      }
+    });
+  }
+
+  openNoteForm(note?: NoteClientDto) {
+    this.editingNoteId = note ? note.id : null;
+    this.noteTouched = {};
+    this.noteForm = note
+      ? { titre: note.titre || '', contenu: note.contenu, categorie: note.categorie, estEpinglee: note.estEpinglee }
+      : { titre: '', contenu: '', categorie: 'Général', estEpinglee: false };
+    this.showNoteForm = true;
+  }
+
+  closeNoteForm() {
+    this.showNoteForm = false;
+    this.editingNoteId = null;
+    this.noteTouched = {};
+  }
+
+  saveNote() {
+    this.noteTouched = { contenu: true, titre: true };
+    if (!this.client || !this.isNoteValid()) return;
+    this.savingNote = true;
+    const dto = { titre: this.noteForm.titre || undefined, contenu: this.noteForm.contenu, categorie: this.noteForm.categorie, estEpinglee: this.noteForm.estEpinglee };
+    const obs = this.editingNoteId
+      ? this.activityService.updateNote(this.client.id, this.editingNoteId, dto)
+      : this.activityService.createNote(this.client.id, dto);
+    obs.subscribe({
+      next: () => {
+        this.savingNote = false;
+        this.closeNoteForm();
+        this.loadNotes();
+        this.loadEvenements();
+        this.success = 'Note enregistrée.';
+        this.clearAlerts();
+      },
+      error: (err) => {
+        this.savingNote = false;
+        this.error = err.error?.message || 'Erreur lors de l\'enregistrement de la note.';
+        this.clearAlerts();
+      }
+    });
+  }
+
+  deleteNote(id: number) {
+    if (!this.client || !confirm('Supprimer cette note ?')) return;
+    this.activityService.deleteNote(this.client.id, id).subscribe({
+      next: () => this.loadNotes(),
+      error: () => {
+        this.error = 'Erreur lors de la suppression de la note.';
+        this.clearAlerts();
+      }
+    });
+  }
+
+  // ── Contacts ────────────────────────────────────────────────────────
+
+  loadContacts() {
+    if (!this.client) return;
+    this.loadingContacts = true;
+    this.activityService.getContacts(this.client.id).subscribe({
+      next: (contacts) => {
+        this.contacts = contacts;
+        this.contactsLoaded = true;
+        this.loadingContacts = false;
+      },
+      error: () => {
+        this.contactsLoaded = true;
+        this.loadingContacts = false;
+      }
+    });
+  }
+
+  openContactForm(contact?: ContactClientDto) {
+    this.editingContactId = contact ? contact.id : null;
+    this.contactTouched = {};
+    this.contactForm = contact
+      ? {
+          typeContact: contact.typeContact,
+          nom: contact.nom,
+          prenom: contact.prenom || '',
+          telephone: contact.telephone || '',
+          email: contact.email || '',
+          adresse: contact.adresse || '',
+          relation: contact.relation || ''
+        }
+      : { typeContact: 'Conjoint', nom: '', prenom: '', telephone: '', email: '', adresse: '', relation: '' };
+    this.showContactForm = true;
+  }
+
+  closeContactForm() {
+    this.showContactForm = false;
+    this.editingContactId = null;
+    this.contactTouched = {};
+  }
+
+  saveContact() {
+    this.contactTouched = { nom: true, email: true, telephone: true, prenom: true, adresse: true, relation: true };
+    if (!this.client || !this.isContactValid()) return;
+    this.savingContact = true;
+    const dto = {
+      typeContact: this.contactForm.typeContact,
+      nom: this.contactForm.nom,
+      prenom: this.contactForm.prenom || undefined,
+      telephone: this.contactForm.telephone || undefined,
+      email: this.contactForm.email || undefined,
+      adresse: this.contactForm.adresse || undefined,
+      relation: this.contactForm.relation || undefined
+    };
+    const obs = this.editingContactId
+      ? this.activityService.updateContact(this.client.id, this.editingContactId, dto)
+      : this.activityService.createContact(this.client.id, dto);
+    obs.subscribe({
+      next: () => {
+        this.savingContact = false;
+        this.closeContactForm();
+        this.loadContacts();
+        this.loadEvenements();
+        this.success = 'Contact enregistré.';
+        this.clearAlerts();
+      },
+      error: (err) => {
+        this.savingContact = false;
+        this.error = err.error?.message || 'Erreur lors de l\'enregistrement du contact.';
+        this.clearAlerts();
+      }
+    });
+  }
+
+  deleteContact(id: number) {
+    if (!this.client || !confirm('Supprimer ce contact ?')) return;
+    this.activityService.deleteContact(this.client.id, id).subscribe({
+      next: () => this.loadContacts(),
+      error: () => {
+        this.error = 'Erreur lors de la suppression du contact.';
+        this.clearAlerts();
+      }
+    });
+  }
+
+  contactTypeLabel(type: string): string {
+    switch (type) {
+      case 'Conjoint': return 'Conjoint';
+      case 'Garant': return 'Garant';
+      case 'Reference': return 'Référence';
+      case 'Heritier': return 'Héritier';
+      default: return 'Autre';
     }
   }
 

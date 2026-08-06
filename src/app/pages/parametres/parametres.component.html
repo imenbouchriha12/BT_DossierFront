@@ -1,4 +1,4 @@
-<div class="max-w-2xl mx-auto p-6">
+<div class="max-w-2xl mx-auto p-4 sm:p-6">
   <div class="mb-6">
     <h1 class="text-headline-lg font-headline-lg text-on-surface">Paramètres</h1>
     <p class="text-body-md text-on-surface-variant mt-1">Gérez votre profil et la sécurité de votre compte.</p>
@@ -26,7 +26,7 @@
       {{ profileError }}
     </div>
 
-    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 space-y-6">
+    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 sm:p-6 space-y-6">
       <div class="flex flex-col items-center gap-4">
         <div class="relative group">
           <div class="w-24 h-24 rounded-full bg-primary/10 overflow-hidden border-2 border-outline-variant/30">
@@ -56,16 +56,28 @@
           <label class="text-label-md font-label-md text-on-surface-variant" for="p-username">Nom complet</label>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
-            <input [(ngModel)]="username" id="p-username" name="p-username" class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Votre nom"/>
+            <input [(ngModel)]="username" id="p-username" name="p-username" (blur)="usernameTouched = true" class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" [ngClass]="fieldBorder(usernameState)" placeholder="Votre nom"/>
           </div>
+          @if (usernameTouched && !username) {
+          <p class="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+            <span class="material-symbols-outlined text-[14px]">error</span>
+            Le nom complet est requis.
+          </p>
+          }
         </div>
 
         <div class="space-y-1.5">
           <label class="text-label-md font-label-md text-on-surface-variant" for="p-email">Email professionnel</label>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">mail</span>
-            <input [(ngModel)]="email" id="p-email" name="p-email" type="email" class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="nom@entreprise.com"/>
+            <input [(ngModel)]="email" id="p-email" name="p-email" type="email" (blur)="emailTouched = true" class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" [ngClass]="fieldBorder(emailState)" placeholder="nom@entreprise.com"/>
           </div>
+          @if (emailTouched && emailMessage) {
+          <p class="mt-1 flex items-center gap-1 text-xs font-medium" [ngClass]="emailState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+            <span class="material-symbols-outlined text-[14px]">{{ emailState === 'ok' ? 'check_circle' : 'error' }}</span>
+            {{ emailMessage }}
+          </p>
+          }
         </div>
       </div>
 
@@ -87,25 +99,40 @@
       {{ passwordError }}
     </div>
 
-    <form (ngSubmit)="changePassword()" class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 space-y-5">
+    <form (ngSubmit)="changePassword()" class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 sm:p-6 space-y-5">
       <div class="space-y-1.5">
         <label class="text-label-md font-label-md text-on-surface-variant">Ancien mot de passe</label>
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
-          <input [(ngModel)]="oldPassword" name="oldPassword" type="password" required
+          <input [(ngModel)]="oldPassword" name="oldPassword" type="password" required (blur)="oldPasswordTouched = true"
             class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            [ngClass]="fieldBorder(oldPasswordState)"
             placeholder="Votre mot de passe actuel"/>
         </div>
+        @if (oldPasswordTouched && !oldPassword) {
+        <p class="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+          <span class="material-symbols-outlined text-[14px]">error</span>
+          L'ancien mot de passe est requis.
+        </p>
+        }
       </div>
 
       <div class="space-y-1.5">
         <label class="text-label-md font-label-md text-on-surface-variant">Nouveau mot de passe</label>
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock_reset</span>
-          <input [(ngModel)]="newPassword" name="newPassword" type="password" required
+          <input [(ngModel)]="newPassword" name="newPassword" type="password" required (blur)="newPasswordTouched = true"
             class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            [ngClass]="fieldBorder(newPasswordState)"
             placeholder="Nouveau mot de passe"/>
         </div>
+        @if (newPasswordTouched && newPasswordMessage) {
+        <p class="mt-1 flex items-center gap-1 text-xs font-medium"
+          [ngClass]="newPasswordState === 'ok' ? 'text-emerald-600' : newPasswordState === 'warn' ? 'text-amber-600' : 'text-red-600'">
+          <span class="material-symbols-outlined text-[14px]">{{ newPasswordState === 'ok' ? 'check_circle' : newPasswordState === 'warn' ? 'warning' : 'error' }}</span>
+          {{ newPasswordMessage }}
+        </p>
+        }
         <p class="text-label-sm text-on-surface-variant">Min. 8 caractères, une majuscule, une minuscule et un chiffre.</p>
       </div>
 
@@ -113,10 +140,17 @@
         <label class="text-label-md font-label-md text-on-surface-variant">Confirmer le nouveau mot de passe</label>
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock_reset</span>
-          <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required
+          <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required (blur)="confirmPasswordTouched = true"
             class="w-full h-11 pl-10 pr-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            [ngClass]="fieldBorder(confirmPasswordState)"
             placeholder="Répétez le nouveau mot de passe"/>
         </div>
+        @if (confirmPasswordTouched && confirmPasswordMessage) {
+        <p class="mt-1 flex items-center gap-1 text-xs font-medium" [ngClass]="confirmPasswordState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+          <span class="material-symbols-outlined text-[14px]">{{ confirmPasswordState === 'ok' ? 'check_circle' : 'error' }}</span>
+          {{ confirmPasswordMessage }}
+        </p>
+        }
       </div>
 
       <button [disabled]="passwordLoading" type="submit"

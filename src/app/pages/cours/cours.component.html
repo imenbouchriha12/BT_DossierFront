@@ -1,0 +1,121 @@
+<div class="min-h-screen bg-surface/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Cours de change</h1>
+        <p class="text-body-md text-on-surface-variant mt-1">Taux de référence en temps réel (source : marché)</p>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (dateSource) {
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary text-label-sm font-semibold">
+          <span class="material-symbols-outlined text-[18px]">schedule</span>
+          Actualisé le {{ dateSource | date:'dd/MM/yyyy' }}
+        </span>
+        }
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-label-sm font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Temps réel
+        </span>
+      </div>
+    </div>
+
+    @if (loading) {
+    <div class="py-20 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement des cours...
+    </div>
+    } @else if (error) {
+    <div class="py-20 text-center text-on-surface-variant bg-white border border-outline-variant/30 rounded-2xl shadow-sm">
+      <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">error_outline</span>
+      <p class="text-body-md text-on-surface-variant mt-2">{{ error }}</p>
+    </div>
+    } @else if (cours.length === 0) {
+    <div class="py-20 text-center bg-white border border-outline-variant/30 rounded-2xl shadow-sm">
+      <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30">currency_exchange</span>
+      <p class="text-body-md text-on-surface-variant mt-2">Aucun cours disponible.</p>
+    </div>
+    } @else {
+
+    <!-- Cartes des cours du jour -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+      @for (c of cours; track c.devise) {
+      <button
+        class="bg-white border rounded-2xl p-5 shadow-sm transition-all text-left flex flex-col gap-3"
+        [ngClass]="{
+          'border-primary': deviseSelectionnee === c.devise,
+          'border-outline-variant/30': deviseSelectionnee !== c.devise,
+          'ring-2': deviseSelectionnee === c.devise,
+          'ring-primary/20': deviseSelectionnee === c.devise,
+          'bg-primary/[0.03]': c.devise === 'TND'
+        }"
+        (click)="selectDevise(c.devise)">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-2xl font-black text-primary">{{ c.devise }}</span>
+          <span class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-lg font-bold">
+            {{ c.symbole }}
+          </span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-label-sm text-on-surface-variant truncate" [title]="c.nom">{{ c.nom }}</p>
+          <p class="text-[13px] text-on-surface-variant mt-1">1 {{ c.devise }} = <span class="font-semibold text-on-surface">{{ formatValeur(c) }} TND</span></p>
+        </div>
+      </button>
+      }
+    </div>
+
+    <!-- Note indicative -->
+    <div class="flex items-center gap-2 text-label-sm text-on-surface-variant mb-8 px-1">
+      <span class="material-symbols-outlined text-[16px]">info</span>
+      Taux indicatifs en temps réel — ne font pas foi pour les opérations. L'historique de référence (données SISS) est disponible pour les devises de référence.
+    </div>
+
+    <!-- Historique -->
+    <div class="bg-white border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant/20 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-3 min-w-0">
+          <h3 class="text-title-md font-bold truncate">Évolution du cours — {{ deviseSelectionnee }}</h3>
+        </div>
+        <span class="text-label-sm text-on-surface-variant shrink-0">{{ historique.length }} point(s)</span>
+      </div>
+      <div class="p-lg">
+        @if (historiqueLoading) {
+        <div class="py-16 text-center text-on-surface-variant">
+          <span class="material-symbols-outlined animate-spin inline-block">sync</span> Chargement...
+        </div>
+        } @else if (!historiqueDisponible) {
+        <div class="py-16 text-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[40px] text-on-surface-variant/30">show_chart</span>
+          <p class="text-body-md mt-2">Aucun historique de référence pour cette devise.</p>
+        </div>
+        } @else {
+        <div class="h-72">
+          <canvas #historiqueChart></canvas>
+        </div>
+        <div class="mt-lg overflow-x-auto">
+          <table class="w-full text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low/50 text-left text-label-xs text-on-surface-variant uppercase tracking-wider">
+                <th class="px-lg py-sm">Jour</th>
+                <th class="px-lg py-sm text-right">Valeur (TND)</th>
+                <th class="px-lg py-sm text-center">Multiplicateur</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              @for (h of historique; track h.id) {
+              <tr class="hover:bg-surface-container-low/50 transition-colors">
+                <td class="px-lg py-sm text-on-surface">{{ h.journee | date:'dd/MM/yyyy' }}</td>
+                <td class="px-lg py-sm text-right font-bold text-on-surface">{{ h.valeur.toFixed(4) }}</td>
+                <td class="px-lg py-sm text-center text-on-surface-variant">{{ h.multiplicateur }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+    </div>
+
+    }
+  </div>
+</div>

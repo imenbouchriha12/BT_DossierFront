@@ -30,4 +30,26 @@ export class ReportService {
   generateStatsPdf(): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/stats/pdf`, { responseType: 'blob' });
   }
+
+  generateRelevePdf(params: {
+    compteId: number;
+    dateDebut?: string;
+    dateFin?: string;
+    sens?: string;
+    montantMin?: number;
+    montantMax?: number;
+  }): Observable<Blob> {
+    return this.http.post(`${environment.apiUrl}/releve/pdf`, params, { responseType: 'blob' });
+  }
+
+  generateReleveExcel(params: {
+    compteId: number;
+    dateDebut?: string;
+    dateFin?: string;
+    sens?: string;
+    montantMin?: number;
+    montantMax?: number;
+  }): Observable<Blob> {
+    return this.http.post(`${environment.apiUrl}/releve/excel`, params, { responseType: 'blob' });
+  }
 }

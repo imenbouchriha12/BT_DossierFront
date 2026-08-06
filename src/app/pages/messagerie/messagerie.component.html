@@ -1,0 +1,244 @@
+<div class="min-h-screen bg-surface p-4 sm:p-lg space-y-lg">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
+    <div>
+      <nav class="flex items-center gap-sm text-on-surface-variant/70 text-sm mb-1">
+        <span class="material-symbols-outlined text-[16px]">home</span>
+        <span>/</span>
+        <span class="text-on-surface">Messagerie</span>
+      </nav>
+      <h1 class="text-headline-lg font-headline-lg text-on-surface">Messagerie interne</h1>
+      <p class="text-body-sm font-body-sm text-on-surface-variant/70 mt-1">
+        Échangez en temps réel avec l'équipe (agents, superviseurs, administrateurs)
+        <span *ngIf="unreadTotal > 0" class="text-error font-semibold"> · {{ unreadTotal }} non lu(s)</span>
+      </p>
+    </div>
+    <button
+      class="flex items-center gap-sm bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-md font-label-md hover:bg-primary/90 transition-colors shadow-sm"
+      (click)="openNew()"
+    >
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      Nouveau message
+    </button>
+  </div>
+
+  <!-- Panneau Messenger -->
+  <div class="flex flex-col md:flex-row gap-md h-[calc(100dvh-230px)] min-h-[520px]">
+    <!-- Liste des conversations -->
+    <aside class="w-full md:w-[320px] lg:w-[360px] shrink-0 bg-surface-container-lowest border border-outline-variant/30 rounded-xl flex flex-col overflow-hidden">
+      <div class="p-md border-b border-outline-variant/30 space-y-sm">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-[18px] pointer-events-none">search</span>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilter()"
+            placeholder="Rechercher un contact..."
+            class="w-full bg-surface-container-high rounded-xl pl-10 pr-md py-2.5 text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none focus:ring-2 ring-primary/40"
+          />
+        </div>
+        <div class="flex items-center gap-sm text-label-sm font-label-sm text-on-surface-variant/70">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> En ligne</span>
+          <span class="mx-1 text-outline-variant">|</span>
+          <span>{{ conversations.length }} conversation(s)</span>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar">
+        @if (loading) {
+          <div class="p-lg text-center text-on-surface-variant/70 text-body-sm">Chargement...</div>
+        } @else {
+          @for (conv of filteredConversations; track conv.autreUserId) {
+            <button
+              class="w-full flex items-start gap-sm px-md py-sm hover:bg-primary/5 transition-colors text-left cursor-pointer"
+              [class]="selectedUserId === conv.autreUserId ? 'bg-primary/10' : ''"
+              (click)="selectConversation(conv)"
+            >
+              <div class="relative shrink-0 mt-0.5">
+                <div
+                  class="w-11 h-11 rounded-full flex items-center justify-center text-white text-label-md font-label-md"
+                  [class]="avatarColor(conv.autreUserId)"
+                >
+                  {{ initials(conv.autreNom) }}
+                </div>
+                <span
+                  class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-lowest"
+                  [class]="conv.enLigne ? 'bg-emerald-500' : 'bg-outline-variant'"
+                ></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-sm">
+                  <p class="text-label-md font-label-md text-on-surface truncate">{{ conv.autreNom }}</p>
+                  <span class="text-label-xs font-label-xs text-on-surface-variant/60 shrink-0">{{ formatTime(conv.derniereDate) }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-sm">
+                  <p class="text-label-sm font-label-sm text-on-surface-variant/70 truncate">
+                    {{ conv.dernierMessage || 'Aucun message' }}
+                  </p>
+                  @if (conv.nonLu > 0) {
+                    <span class="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-on-primary text-[11px] font-semibold flex items-center justify-center">
+                      {{ conv.nonLu }}
+                    </span>
+                  }
+                </div>
+                <div class="flex items-center gap-sm mt-0.5">
+                  <span class="text-label-xs font-label-xs px-2 py-0.5 rounded-full" [class]="roleColor(conv.autreRole)">
+                    {{ roleLabel(conv.autreRole) }}
+                  </span>
+                  <span class="text-label-xs font-label-xs" [class]="conv.enLigne ? 'text-emerald-600' : 'text-on-surface-variant/50'">
+                    {{ conv.enLigne ? 'En ligne' : 'Hors ligne' }}
+                  </span>
+                </div>
+              </div>
+            </button>
+          } @empty {
+            <div class="p-lg text-center text-on-surface-variant/70 text-body-sm">
+              Aucune conversation. Cliquez sur « Nouveau message » pour démarrer.
+            </div>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- Fil de discussion -->
+    <section class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant/30 rounded-xl flex flex-col overflow-hidden">
+      @if (selectedUser) {
+        <!-- En-tête du fil -->
+        <div class="p-md border-b border-outline-variant/30 flex items-center gap-sm">
+          <div class="relative shrink-0">
+            <div
+              class="w-10 h-10 rounded-full flex items-center justify-center text-white text-label-md font-label-md"
+              [class]="avatarColor(selectedUser.autreUserId)"
+            >
+              {{ initials(selectedUser.autreNom) }}
+            </div>
+            <span
+              class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-lowest"
+              [class]="selectedUser.enLigne ? 'bg-emerald-500' : 'bg-outline-variant'"
+            ></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-label-md font-label-md text-on-surface truncate">{{ selectedUser.autreNom }}</p>
+            <p class="text-label-xs font-label-xs text-on-surface-variant/70">
+              <span class="px-2 py-0.5 rounded-full mr-1" [class]="roleColor(selectedUser.autreRole)">{{ roleLabel(selectedUser.autreRole) }}</span>
+              <span [class]="selectedUser.enLigne ? 'text-emerald-600' : 'text-on-surface-variant/50'">
+                {{ selectedUser.enLigne ? 'En ligne' : 'Hors ligne' }}
+              </span>
+            </p>
+          </div>
+          <span class="text-label-xs font-label-xs text-on-surface-variant/50 hidden sm:block">
+            {{ selectedUser.autreMatricule || '' }}
+          </span>
+        </div>
+
+        <!-- Messages -->
+        <div #messagesContainer class="flex-1 overflow-y-auto no-scrollbar p-md space-y-sm bg-surface-container-low/50">
+          @if (loadingMessages) {
+            <div class="h-full flex items-center justify-center text-on-surface-variant/60 text-body-sm">Chargement...</div>
+          } @else {
+            @for (m of messages; track $index) {
+              <div class="flex" [class]="isMine(m) ? 'justify-end' : 'justify-start'">
+                <div
+                  class="max-w-[78%] md:max-w-[65%] px-md py-sm rounded-2xl shadow-sm"
+                  [class]="isMine(m)
+                    ? 'bg-primary text-on-primary rounded-br-md'
+                    : 'bg-surface-container-high text-on-surface rounded-bl-md'"
+                >
+                  <p class="text-body-sm font-body-sm whitespace-pre-wrap break-words">{{ m.contenu }}</p>
+                  <div class="flex items-center justify-end gap-1 mt-0.5">
+                    <span class="text-[10px] opacity-70">{{ formatTime(m.dateEnvoi) }}</span>
+                    @if (isMine(m)) {
+                      <span class="material-symbols-outlined text-[14px] opacity-80">{{ m.lu ? 'done_all' : 'done' }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="h-full flex flex-col items-center justify-center text-on-surface-variant/60 gap-sm">
+                <span class="material-symbols-outlined text-[48px]">chat</span>
+                <p class="text-label-md font-label-md">Aucun message pour le moment</p>
+                <p class="text-body-sm text-on-surface-variant/60">Envoyez le premier message !</p>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Zone de saisie -->
+        <div class="p-md border-t border-outline-variant/30 bg-surface-container-lowest">
+          <div class="flex items-end gap-sm">
+            <textarea
+              #chatInput
+              rows="1"
+              [(ngModel)]="inputText"
+              (keydown.enter)="onEnterKey($event)"
+              (input)="autoGrow($event)"
+              placeholder="Écrivez un message... (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"
+              class="flex-1 resize-none bg-surface-container-high rounded-xl px-md py-2.5 text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none focus:ring-2 ring-primary/40 max-h-32"
+            ></textarea>
+            <button
+              class="w-11 h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 shadow-sm shrink-0"
+              [disabled]="!inputText.trim()"
+              (click)="send()"
+            >
+              <span class="material-symbols-outlined text-[20px]">send</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- État vide -->
+        <div class="flex-1 flex flex-col items-center justify-center gap-sm text-on-surface-variant/60 p-lg">
+          <span class="material-symbols-outlined text-[64px]">forum</span>
+          <p class="text-title-md font-title-md text-on-surface-variant/80">Messagerie interne</p>
+          <p class="text-body-sm font-body-sm text-center max-w-sm">
+            Sélectionnez une conversation dans la liste ou démarrez-en une nouvelle avec un membre de l'équipe.
+          </p>
+          <button
+            class="mt-sm flex items-center gap-sm bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-md font-label-md hover:bg-primary/90 transition-colors shadow-sm"
+            (click)="openNew()"
+          >
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Nouveau message
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- Modale nouvelle conversation -->
+@if (showNewModal) {
+  <div class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" (click)="closeNew()">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-md border border-outline-variant/30 shadow-lg overflow-hidden" (click)="$event.stopPropagation()">
+      <div class="p-md border-b border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <h2 class="text-title-md font-title-md text-on-surface">Nouveau message</h2>
+          <p class="text-label-sm font-label-sm text-on-surface-variant/70">Choisissez un membre de l'équipe</p>
+        </div>
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface transition-colors" (click)="closeNew()">close</button>
+      </div>
+      <div class="max-h-[50vh] overflow-y-auto no-scrollbar p-sm">
+        @for (user of users; track user.id) {
+          <button
+            class="w-full flex items-center gap-sm px-sm py-sm rounded-xl hover:bg-primary/5 transition-colors text-left cursor-pointer"
+            (click)="startConversation(user)"
+          >
+            <div class="relative shrink-0">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-label-md font-label-md" [class]="avatarColor(user.id)">
+                {{ initials(user.username) }}
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-label-md font-label-md text-on-surface truncate">{{ user.username }}</p>
+              <p class="text-label-xs font-label-xs text-on-surface-variant/70 truncate">
+                {{ user.matricule }} · {{ roleLabel(user.roles[0]) }}
+              </p>
+            </div>
+            <span class="material-symbols-outlined text-on-surface-variant/50 text-[18px]">north_east</span>
+          </button>
+        } @empty {
+          <div class="p-lg text-center text-on-surface-variant/70 text-body-sm">Aucun utilisateur actif disponible.</div>
+        }
+      </div>
+    </div>
+  </div>
+}

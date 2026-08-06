@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { fieldBorder, isValidEmail } from '../../shared/validation.utils';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, FormsModule, NgIf],
+  imports: [RouterLink, FormsModule, NgIf, NgClass],
   templateUrl: './inscription.component.html',
   styleUrls: ['./inscription.component.css']
 })
@@ -16,15 +17,38 @@ export class InscriptionComponent {
   error = '';
   success = '';
   loading = false;
+  usernameTouched = false;
+  emailTouched = false;
 
   constructor(private auth: AuthService, private router: Router) {}
+
+  get usernameState(): string {
+    if (!this.usernameTouched) return 'idle';
+    return this.username ? 'ok' : 'error';
+  }
+
+  get emailState(): string {
+    if (!this.emailTouched) return 'idle';
+    if (!this.email) return 'error';
+    return isValidEmail(this.email) ? 'ok' : 'error';
+  }
+
+  get emailMessage(): string {
+    if (!this.emailTouched) return '';
+    if (!this.email) return 'L\'adresse email est requise.';
+    return isValidEmail(this.email) ? 'Adresse email valide.' : 'Adresse email invalide.';
+  }
+
+  fieldBorder = fieldBorder;
 
   onSubmit(): void {
     this.error = '';
     this.success = '';
+    this.usernameTouched = true;
+    this.emailTouched = true;
 
-    if (!this.username || !this.email) {
-      this.error = 'Veuillez remplir tous les champs.';
+    if (!this.username || !this.email || !isValidEmail(this.email)) {
+      this.error = 'Veuillez vérifier les champs du formulaire.';
       return;
     }
 
