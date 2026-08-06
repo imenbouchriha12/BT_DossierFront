@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, OnDestroy, Output, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, OnDestroy, Output, ChangeDetectorRef, signal } from '@angular/core';
 import { NgIf, NgFor, NgClass, AsyncPipe, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, interval, Subscription, sw
 import { AuthService } from '../../services/auth.service';
 import { SearchService, GlobalSearchResult } from '../../services/search.service';
 import { NotificationService, NotificationDto } from '../../services/notification.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -19,6 +20,7 @@ export class TopbarComponent implements OnDestroy {
 
   private searchTerms = new Subject<string>();
   private pollingSub?: Subscription;
+  private notifRealTimeSub?: Subscription;
   searchQuery = '';
   searchResults?: GlobalSearchResult;
   showSearchDropdown = false;
@@ -31,7 +33,9 @@ export class TopbarComponent implements OnDestroy {
     public auth: AuthService,
     private searchService: SearchService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {
     this.searchTerms.pipe(
       debounceTime(300),
@@ -63,10 +67,20 @@ export class TopbarComponent implements OnDestroy {
         this.notificationCount.set(count.totalNonLu);
       });
     });
+
+    this.notifRealTimeSub = this.notificationService.recevoirNotification$.subscribe(notif => {
+      const dejaPresente = notif.id !== 0 && this.notifications.some(n => n.id === notif.id);
+      if (!dejaPresente) {
+        this.notifications.unshift(notif);
+        this.notificationCount.update(c => c + 1);
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy(): void {
     this.pollingSub?.unsubscribe();
+    this.notifRealTimeSub?.unsubscribe();
   }
 
   onSearchInput(): void {
@@ -129,6 +143,7 @@ export class TopbarComponent implements OnDestroy {
     this.notificationService.markAllAsLu().subscribe(() => {
       this.notifications.forEach(n => n.estLu = true);
       this.notificationCount.set(0);
+      this.toast.info('Toutes les notifications sont marquées comme lues.');
     });
   }
 
@@ -148,12 +163,16 @@ export class TopbarComponent implements OnDestroy {
   toggleDarkMode(): void {
     const html = document.documentElement;
     html.classList.toggle('dark');
-    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+    const dark = html.classList.contains('dark');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    this.toast.info(dark ? 'Mode sombre activé.' : 'Mode clair activé.', 'Thème');
   }
 
   get userPhotoUrl(): string | null {
     const relative = this.auth.currentUser()?.photoUrl;
-    return relative ? `${environment.staticUrl}${relative}` : null;
+    if (!relative) return null;
+    const sansPrefixe = relative.replace(/^\/?uploads\//, '');
+    return `${environment.staticUrl}${sansPrefixe}`;
   }
 
   get userInitial(): string {

@@ -131,3 +131,199 @@
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+html, body {
+  background-color: var(--background);
+  color: var(--on-background);
+  min-height: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Mode sombre : surcharges globales des classes utilitaires
+   codées en dur dans les templates (remplacent Tailwind).
+   ───────────────────────────────────────────────────────────── */
+.dark .bg-white { background-color: var(--surface-container-low); }
+.dark .bg-gray-50 { background-color: var(--surface-container-low); }
+.dark .bg-gray-100 { background-color: var(--surface-container); }
+.dark .bg-gray-200 { background-color: var(--surface-container-high); }
+.dark .bg-slate-50 { background-color: var(--surface-container-low); }
+.dark .bg-slate-100 { background-color: var(--surface-container); }
+.dark .bg-neutral-50 { background-color: var(--surface-container-low); }
+.dark .bg-neutral-100 { background-color: var(--surface-container); }
+
+.dark .text-gray-400,
+.dark .text-gray-500,
+.dark .text-slate-400,
+.dark .text-slate-500,
+.dark .text-neutral-400,
+.dark .text-neutral-500 { color: var(--on-surface-variant); }
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-slate-600,
+.dark .text-slate-700,
+.dark .text-neutral-600,
+.dark .text-neutral-700 { color: var(--on-surface); }
+.dark .text-gray-800,
+.dark .text-gray-900,
+.dark .text-slate-800,
+.dark .text-slate-900,
+.dark .text-neutral-800,
+.dark .text-neutral-900 { color: var(--on-surface); }
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-200,
+.dark .border-neutral-200 { border-color: var(--outline-variant); }
+.dark .border-gray-300,
+.dark .border-slate-300,
+.dark .border-neutral-300 { border-color: var(--outline); }
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--outline-variant); }
+
+.dark .placeholder-gray-400::placeholder { color: var(--on-surface-variant); }
+
+/* ── Badges & fonds colorés doux ─────────────────────────── */
+.dark .bg-red-50,
+.dark .bg-red-100 { background-color: rgba(248, 113, 113, 0.12); }
+.dark .text-red-500,
+.dark .text-red-600,
+.dark .text-red-700,
+.dark .text-rose-500,
+.dark .text-rose-600,
+.dark .text-rose-700 { color: #fca5a5; }
+.dark .border-red-200,
+.dark .border-red-300 { border-color: rgba(248, 113, 113, 0.3); }
+
+.dark .bg-green-50,
+.dark .bg-green-100,
+.dark .bg-emerald-50,
+.dark .bg-emerald-100,
+.dark .bg-teal-50,
+.dark .bg-teal-100 { background-color: rgba(52, 211, 153, 0.12); }
+.dark .text-green-500,
+.dark .text-green-600,
+.dark .text-green-700,
+.dark .text-emerald-500,
+.dark .text-emerald-600,
+.dark .text-emerald-700,
+.dark .text-teal-500,
+.dark .text-teal-600,
+.dark .text-teal-700 { color: #6ee7b7; }
+.dark .border-green-200,
+.dark .border-green-300,
+.dark .border-emerald-200,
+.dark .border-emerald-300,
+.dark .border-teal-200,
+.dark .border-teal-300 { border-color: rgba(52, 211, 153, 0.3); }
+
+.dark .bg-amber-50,
+.dark .bg-amber-100,
+.dark .bg-yellow-50,
+.dark .bg-yellow-100,
+.dark .bg-orange-50,
+.dark .bg-orange-100 { background-color: rgba(251, 191, 36, 0.12); }
+.dark .text-amber-500,
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-yellow-500,
+.dark .text-yellow-600,
+.dark .text-yellow-700,
+.dark .text-orange-500,
+.dark .text-orange-600,
+.dark .text-orange-700 { color: #fcd34d; }
+.dark .border-amber-200,
+.dark .border-amber-300,
+.dark .border-yellow-200,
+.dark .border-yellow-300,
+.dark .border-orange-200,
+.dark .border-orange-300 { border-color: rgba(251, 191, 36, 0.3); }
+
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-sky-50,
+.dark .bg-sky-100,
+.dark .bg-indigo-50,
+.dark .bg-indigo-100 { background-color: rgba(96, 165, 250, 0.12); }
+.dark .text-blue-500,
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-sky-500,
+.dark .text-sky-600,
+.dark .text-sky-700,
+.dark .text-indigo-500,
+.dark .text-indigo-600,
+.dark .text-indigo-700 { color: #93c5fd; }
+.dark .border-blue-200,
+.dark .border-blue-300,
+.dark .border-sky-200,
+.dark .border-sky-300,
+.dark .border-indigo-200,
+.dark .border-indigo-300 { border-color: rgba(96, 165, 250, 0.3); }
+
+.dark .bg-purple-50,
+.dark .bg-purple-100,
+.dark .bg-violet-50,
+.dark .bg-violet-100,
+.dark .bg-fuchsia-50,
+.dark .bg-fuchsia-100 { background-color: rgba(192, 132, 252, 0.12); }
+.dark .text-purple-500,
+.dark .text-purple-600,
+.dark .text-purple-700,
+.dark .text-violet-500,
+.dark .text-violet-600,
+.dark .text-violet-700,
+.dark .text-fuchsia-500,
+.dark .text-fuchsia-600,
+.dark .text-fuchsia-700 { color: #d8b4fe; }
+.dark .border-purple-200,
+.dark .border-purple-300,
+.dark .border-violet-200,
+.dark .border-violet-300,
+.dark .border-fuchsia-200,
+.dark .border-fuchsia-300 { border-color: rgba(192, 132, 252, 0.3); }
+
+.dark .bg-rose-50,
+.dark .bg-rose-100 { background-color: rgba(244, 114, 182, 0.12); }
+
+.dark .bg-cyan-50,
+.dark .bg-cyan-100 { background-color: rgba(34, 211, 238, 0.12); }
+.dark .text-cyan-500,
+.dark .text-cyan-600,
+.dark .text-cyan-700 { color: #67e8f9; }
+
+.dark .bg-lime-50,
+.dark .bg-lime-100 { background-color: rgba(163, 230, 53, 0.12); }
+.dark .text-lime-500,
+.dark .text-lime-600,
+.dark .text-lime-700 { color: #bef264; }
+
+/* ── Variantes avec opacité & teintes restantes ──────────── */
+.dark .bg-gray-50\/50,
+.dark .bg-gray-50\/60 { background-color: var(--surface-container-low); }
+.dark .bg-gray-200\/60 { background-color: var(--surface-container-high); }
+.dark .hover\:bg-gray-50\/60:hover { background-color: var(--surface-container); }
+
+.dark .bg-indigo-50,
+.dark .bg-indigo-100 { background-color: rgba(129, 140, 248, 0.12); }
+.dark .border-indigo-100 { border-color: rgba(129, 140, 248, 0.3); }
+
+.dark .border-amber-100 { border-color: rgba(251, 191, 36, 0.3); }
+.dark .border-emerald-100 { border-color: rgba(52, 211, 153, 0.3); }
+
+.dark .text-amber-800 { color: #fbbf24; }
+.dark .text-blue-800,
+.dark .text-blue-900 { color: #93c5fd; }
+.dark .text-emerald-800,
+.dark .text-green-800 { color: #6ee7b7; }
+.dark .text-red-800 { color: #fca5a5; }
+.dark .text-emerald-300 { color: #6ee7b7; }
+.dark .text-rose-300 { color: #fda4af; }
+
+/* ── Boutons colorés pleins : reste lisible en sombre ────── */
+.dark .hover\:bg-white:hover { background-color: rgba(255, 255, 255, 0.12); }
+.dark .hover\:bg-gray-50:hover { background-color: var(--surface-container); }
+.dark .hover\:bg-gray-100:hover { background-color: var(--surface-container-high); }
+
+/* ── Page connexion / inscription (dégradés clairs) ──────── */
+.dark .bg-gradient-to-br.from-blue-50.via-white.to-purple-50 {
+  background-image: linear-gradient(to bottom right, #0a1a2e, #0f2340, #141a30);
+}

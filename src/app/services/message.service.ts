@@ -9,6 +9,7 @@ import {
   ConversationDto,
   ConversationPagedDto,
   SendMessageDto,
+  PieceJointeDto,
 } from '../models/message.models';
 
 @Injectable({ providedIn: 'root' })
@@ -29,10 +30,9 @@ export class MessageService {
     if (this.hub && (this.hub.state === signalR.HubConnectionState.Connected || this.hub.state === signalR.HubConnectionState.Connecting)) {
       return;
     }
-    const token = this.auth.getToken();
     const hub = new signalR.HubConnectionBuilder()
       .withUrl(`${this.baseUrl}/hubs/messages`, {
-        accessTokenFactory: () => token ?? '',
+        accessTokenFactory: () => this.auth.getToken() ?? '',
       })
       .withAutomaticReconnect()
       .build();
@@ -65,6 +65,16 @@ export class MessageService {
 
   send(dto: SendMessageDto): Observable<MessageDto> {
     return this.http.post<MessageDto>(`${this.apiUrl}/envoyer`, dto);
+  }
+
+  uploadPieceJointe(file: File): Observable<PieceJointeDto> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<PieceJointeDto>(`${this.apiUrl}/upload`, formData);
+  }
+
+  getEnLigne(): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiUrl}/en-ligne`);
   }
 
   markRead(otherUserId: number): Observable<{ totalNonLu: number }> {

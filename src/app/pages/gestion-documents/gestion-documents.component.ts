@@ -8,6 +8,8 @@ import { ClientService } from '../../services/client.service';
 import { WorkflowService } from '../../services/workflow.service';
 import { DocumentDto, ClientDto, PagedResult, WorkflowValidationDto } from '../../models/client.models';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
+import { lastValueFrom } from 'rxjs';
 
 
 @Component({
@@ -77,7 +79,8 @@ export class GestionDocumentsComponent implements OnInit {
     public clientService: ClientService,
     public workflowService: WorkflowService,
     public authService: AuthService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -190,7 +193,10 @@ export class GestionDocumentsComponent implements OnInit {
   }
 
   uploadDocument() {
-    if (!this.selectedClient || !this.uploadType || !this.uploadFile) return;
+    if (!this.selectedClient || !this.uploadType || !this.uploadFile) {
+      this.toast.error('Veuillez sélectionner un type de document et un fichier.');
+      return;
+    }
 
     this.uploading = true;
     this.documentService.create(this.selectedClient.id, this.uploadType, this.uploadFile).subscribe({
@@ -200,12 +206,14 @@ export class GestionDocumentsComponent implements OnInit {
         this.uploadType = '';
         this.uploadFile = null;
         this.success = 'Document ajouté avec succès.';
+        this.toast.success('Document ajouté avec succès.');
         this.loadDocuments();
         this.clearAlerts();
       },
       error: (err) => {
         this.uploading = false;
         this.error = err.error?.message || 'Erreur lors de l\'upload.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
@@ -220,9 +228,11 @@ export class GestionDocumentsComponent implements OnInit {
         a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.toast.success('Document téléchargé avec succès.');
       },
       error: () => {
         this.error = 'Erreur lors du téléchargement.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
@@ -296,6 +306,7 @@ export class GestionDocumentsComponent implements OnInit {
         this.workflowLoading = false;
         this.workflowByDocUpdate(updated);
         this.success = 'Étape de validation approuvée avec succès.';
+        this.toast.success('Étape de validation approuvée avec succès.');
         this.closeWorkflow();
         this.loadDocuments();
         this.clearAlerts();
@@ -303,6 +314,7 @@ export class GestionDocumentsComponent implements OnInit {
       error: (err) => {
         this.workflowLoading = false;
         this.workflowError = err.error?.message || 'Erreur lors de la validation.';
+        this.toast.error(this.workflowError);
       }
     });
   }
@@ -312,6 +324,7 @@ export class GestionDocumentsComponent implements OnInit {
     if (!this.workflowComment || !this.workflowComment.trim()) {
       this.commentTouched = true;
       this.workflowError = 'Le motif de rejet est obligatoire.';
+      this.toast.error(this.workflowError);
       return;
     }
     this.workflowLoading = true;
@@ -320,6 +333,7 @@ export class GestionDocumentsComponent implements OnInit {
         this.workflowLoading = false;
         this.workflowByDocUpdate(updated);
         this.success = 'Document rejeté.';
+        this.toast.info('Document rejeté.');
         this.closeWorkflow();
         this.loadDocuments();
         this.clearAlerts();
@@ -327,18 +341,21 @@ export class GestionDocumentsComponent implements OnInit {
       error: (err) => {
         this.workflowLoading = false;
         this.workflowError = err.error?.message || 'Erreur lors du rejet.';
+        this.toast.error(this.workflowError);
       }
     });
   }
 
-  resubmitWorkflow() {
+  async resubmitWorkflow() {
     if (!this.activeWorkflow) return;
-    if (!confirm('Relancer le workflow de validation de ce document ?')) return;
+    const ok = await lastValueFrom(this.toast.confirm('Relancer le workflow de validation de ce document ?'));
+    if (!ok) return;
     this.workflowLoading = true;
     this.workflowService.relancer(this.activeWorkflow.id, this.workflowComment || undefined).subscribe({
       next: () => {
         this.workflowLoading = false;
         this.success = 'Document relancé pour validation.';
+        this.toast.success('Document relancé pour validation.');
         this.closeWorkflow();
         this.loadDocuments();
         this.clearAlerts();
@@ -346,6 +363,7 @@ export class GestionDocumentsComponent implements OnInit {
       error: (err) => {
         this.workflowLoading = false;
         this.workflowError = err.error?.message || 'Erreur lors de la relance.';
+        this.toast.error(this.workflowError);
       }
     });
   }
@@ -382,11 +400,13 @@ export class GestionDocumentsComponent implements OnInit {
     }
   }
 
-  deleteDocument(id: number) {
-    if (!confirm('Supprimer ce document définitivement ?')) return;
+  async deleteDocument(id: number) {
+    const ok = await lastValueFrom(this.toast.confirm('Supprimer ce document définitivement ?'));
+    if (!ok) return;
     this.documentService.delete(id).subscribe({
       next: () => {
         this.success = 'Document supprimé.';
+        this.toast.success('Document supprimé avec succès.');
         this.loadDocuments();
         this.clearAlerts();
       },

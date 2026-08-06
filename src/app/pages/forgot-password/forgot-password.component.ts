@@ -4,6 +4,7 @@ import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ToastService } from '../../shared/toast/toast.service';
 import { fieldBorder, isValidEmail } from '../../shared/validation.utils';
 
 @Component({
@@ -19,7 +20,7 @@ export class ForgotPasswordComponent {
   loading = false;
   emailTouched = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private toast: ToastService) {}
 
   get emailState(): string {
     if (!this.emailTouched) return 'idle';
@@ -42,6 +43,7 @@ export class ForgotPasswordComponent {
 
     if (!this.email || !isValidEmail(this.email)) {
       this.error = 'Veuillez saisir une adresse email valide.';
+      this.toast.error('Veuillez saisir une adresse email valide.');
       return;
     }
 
@@ -50,11 +52,15 @@ export class ForgotPasswordComponent {
     this.http.post<{ message: string }>(`${environment.apiUrl}/auth/forgot-password`, { email: this.email })
       .subscribe({
         next: (res) => {
-          this.success = res.message || 'Si cette adresse email existe, un lien de réinitialisation vous a été envoyé.';
+          const msg = res.message || 'Si cette adresse email existe, un lien de réinitialisation vous a été envoyé.';
+          this.success = msg;
+          this.toast.info(msg, 'Mot de passe oublié');
           this.loading = false;
         },
         error: (err) => {
-          this.error = err.error?.message || 'Erreur lors de la demande.';
+          const msg = err.error?.message || 'Erreur lors de la demande.';
+          this.error = msg;
+          this.toast.error(msg);
           this.loading = false;
         }
       });

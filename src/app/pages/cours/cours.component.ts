@@ -1,8 +1,10 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { FinanceService } from '../../services/finance.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { CoursTempsReelDto, CoursDto } from '../../models/finance.models';
 Chart.register(...registerables);
 
@@ -11,7 +13,7 @@ Chart.register(...registerables);
   imports: [CommonModule, FormsModule],
   templateUrl: './cours.component.html',
 })
-export class CoursComponent implements OnInit, AfterViewInit {
+export class CoursComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('historiqueChart') historiqueCanvas!: ElementRef<HTMLCanvasElement>;
 
   cours: CoursTempsReelDto[] = [];
@@ -24,15 +26,41 @@ export class CoursComponent implements OnInit, AfterViewInit {
   historiqueDisponible = true;
 
   private chart: Chart | null = null;
+  private coursMajSub: Subscription | null = null;
+  private lastMajAt: Date | null = null;
 
-  constructor(private financeService: FinanceService, private cdr: ChangeDetectorRef) {}
+  constructor(private financeService: FinanceService, private cdr: ChangeDetectorRef, private toast: ToastService) {}
 
   get dateSource(): Date | null {
     const dated = this.cours.find(c => !!c.date);
     return dated?.date ? new Date(dated.date) : null;
   }
 
+  get derniereMaj(): Date | null {
+    return this.lastMajAt ?? this.dateSource;
+  }
+
   ngOnInit(): void {
+    this.financeService.connect();
+    this.loadCours();
+    this.coursMajSub = this.financeService.coursMaj$.subscribe((nouveauxCours) => {
+      if (!nouveauxCours || nouveauxCours.length === 0) return;
+      this.cours = nouveauxCours;
+      this.lastMajAt = new Date();
+      this.loading = false;
+      const eur = nouveauxCours.find(c => c.devise === 'EUR');
+      const courante = this.deviseSelectionnee || eur?.devise || nouveauxCours[0]?.devise || '';
+      this.deviseSelectionnee = courante;
+      this.loadHistorique();
+      this.cdr.detectChanges();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.coursMajSub?.unsubscribe();
+  }
+
+  loadCours(): void {
     this.financeService.getCoursTempsReel().subscribe({
       next: (cours) => {
         this.cours = cours;
@@ -43,6 +71,7 @@ export class CoursComponent implements OnInit, AfterViewInit {
       },
       error: () => {
         this.error = 'Impossible de charger les cours de change.';
+        this.toast.error(this.error);
         this.loading = false;
       }
     });

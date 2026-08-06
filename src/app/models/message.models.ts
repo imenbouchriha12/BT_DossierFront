@@ -5,6 +5,9 @@ export interface MessageDto {
   destinataireUserId: number;
   destinataireNom?: string;
   contenu: string;
+  pieceJointeUrl?: string | null;
+  pieceJointeNom?: string | null;
+  pieceJointeType?: string | null;
   dateEnvoi: string;
   lu: boolean;
   dateLecture?: string | null;
@@ -29,4 +32,13 @@ export interface ConversationPagedDto {
 export interface SendMessageDto {
   destinataireUserId: number;
   contenu: string;
+  pieceJointeUrl?: string | null;
+  pieceJointeNom?: string | null;
+  pieceJointeType?: string | null;
+}
+
+export interface PieceJointeDto {
+  url: string;
+  nom: string;
+  type: string;
 }

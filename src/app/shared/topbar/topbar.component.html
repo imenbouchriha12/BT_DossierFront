@@ -46,7 +46,7 @@
           <div class="text-label-sm text-on-surface-variant px-3 py-1 uppercase tracking-wider">Clients</div>
           <a
             *ngFor="let client of searchResults.clients"
-            [routerLink]="['/detail-client', client.id]"
+            [routerLink]="['/client', client.id]"
             (click)="selectSearchResult()"
             class="flex items-center gap-3 px-3 py-2 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer"
           >
@@ -132,19 +132,21 @@
             <span
               class="material-symbols-outlined text-lg flex-shrink-0 mt-0.5"
               [ngClass]="{
-                'text-primary': notif.type === 'Info',
+                'text-primary': notif.type === 'Info' || notif.type === 'Message',
                 'text-success': notif.type === 'Succès',
-                'text-warning': notif.type === 'Avertissement',
-                'text-error': notif.type === 'Erreur'
+                'text-warning': notif.type === 'Avertissement' || notif.type === 'Alerte',
+                'text-error': notif.type === 'Erreur' || notif.type === 'Urgent'
               }"
             >
               {{
                 notif.type === 'Succès'
                   ? 'check_circle'
-                  : notif.type === 'Avertissement'
+                  : notif.type === 'Avertissement' || notif.type === 'Alerte'
                   ? 'warning'
-                  : notif.type === 'Erreur'
+                  : notif.type === 'Erreur' || notif.type === 'Urgent'
                   ? 'error'
+                  : notif.type === 'Message'
+                  ? 'forum'
                   : 'info'
               }}
             </span>

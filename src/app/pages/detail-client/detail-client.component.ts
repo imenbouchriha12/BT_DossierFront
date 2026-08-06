@@ -14,8 +14,10 @@ import { ReportService } from '../../services/report.service';
 import { AiService } from '../../services/ai.service';
 import { RiskService } from '../../services/risk.service';
 import { FraudService } from '../../services/fraud.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { ClientDto, DocumentDto, EvenementClientDto, NoteClientDto, ContactClientDto } from '../../models/client.models';
 import { CompteDto, MouvementDto, CompteTotalDto } from '../../models/finance.models';
+import { lastValueFrom } from 'rxjs';
 import {
   ClientSummaryDto,
   RapportRisqueDto,
@@ -245,7 +247,8 @@ export class DetailClientComponent implements OnInit {
     private aiService: AiService,
     private riskService: RiskService,
     private fraudService: FraudService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -340,10 +343,12 @@ export class DetailClientComponent implements OnInit {
       next: (r) => {
         this.riskRapport = r;
         this.riskCalculEnCours = false;
+        this.toast.success('Score de risque recalculé avec succès.');
         this.loadAiSummary();
       },
-      error: () => {
+      error: (err) => {
         this.riskCalculEnCours = false;
+        this.toast.error(err.error?.message || 'Erreur lors du calcul du risque.');
       },
     });
   }
@@ -368,19 +373,26 @@ export class DetailClientComponent implements OnInit {
     this.fraudService.analyserClient(this.client.id).subscribe({
       next: () => {
         this.fraudAnalyseEnCours = false;
+        this.toast.success('Analyse de fraude lancée avec succès.');
         this.loadFraudAlertes();
         this.loadAiSummary();
       },
-      error: () => {
+      error: (err) => {
         this.fraudAnalyseEnCours = false;
+        this.toast.error(err.error?.message || 'Erreur lors de l\'analyse de fraude.');
       },
     });
   }
 
   traiterAlerteFraude(a: AlertesFraudeDto, statut: string): void {
     this.fraudService.traiterAlerte(a.id, statut).subscribe({
-      next: () => this.loadFraudAlertes(),
-      error: () => {},
+      next: () => {
+        this.loadFraudAlertes();
+        this.toast.success(statut === 'Traité' ? 'Alerte de fraude traitée.' : 'Alerte de fraude ignorée.');
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Erreur lors du traitement de l\'alerte.');
+      },
     });
   }
 
@@ -523,8 +535,12 @@ export class DetailClientComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
         this.exportLoading = false;
+        this.toast.success('Relevé exporté avec succès.');
       },
-      error: () => this.exportLoading = false
+      error: () => {
+        this.exportLoading = false;
+        this.toast.error('Erreur lors de l\'export du relevé.');
+      }
     });
   }
 
@@ -549,6 +565,10 @@ export class DetailClientComponent implements OnInit {
         a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.toast.success('Document téléchargé avec succès.');
+      },
+      error: () => {
+        this.toast.error('Erreur lors du téléchargement du document.');
       }
     });
   }
@@ -564,7 +584,10 @@ export class DetailClientComponent implements OnInit {
   }
 
   uploadDocument() {
-    if (!this.client || !this.uploadType || !this.uploadFile) return;
+    if (!this.client || !this.uploadType || !this.uploadFile) {
+      this.toast.error('Veuillez sélectionner un type de document et un fichier.');
+      return;
+    }
     this.uploading = true;
     this.documentService.create(this.client.id, this.uploadType, this.uploadFile).subscribe({
       next: () => {
@@ -573,12 +596,14 @@ export class DetailClientComponent implements OnInit {
         this.uploadType = '';
         this.uploadFile = null;
         this.success = 'Document ajouté avec succès.';
+        this.toast.success('Document ajouté avec succès.');
         this.loadDocuments();
         this.clearAlerts();
       },
       error: (err) => {
         this.uploading = false;
         this.error = err.error?.message || 'Erreur lors de l\'upload.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
@@ -586,9 +611,13 @@ export class DetailClientComponent implements OnInit {
 
   validateDocument(id: number) {
     this.documentService.updateValidation(id, 'Validé').subscribe({
-      next: () => this.loadDocuments(),
-      error: () => {
-        this.error = 'Erreur lors de la validation.';
+      next: () => {
+        this.loadDocuments();
+        this.toast.success('Document validé avec succès.');
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors de la validation.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
@@ -596,19 +625,25 @@ export class DetailClientComponent implements OnInit {
 
   rejectDocument(id: number) {
     this.documentService.updateValidation(id, 'Rejeté').subscribe({
-      next: () => this.loadDocuments(),
-      error: () => {
-        this.error = 'Erreur lors du rejet.';
+      next: () => {
+        this.loadDocuments();
+        this.toast.info('Document rejeté.');
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors du rejet.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
   }
 
-  deleteDocument(id: number) {
-    if (!confirm('Supprimer ce document définitivement ?')) return;
+  async deleteDocument(id: number) {
+    const ok = await lastValueFrom(this.toast.confirm('Supprimer ce document définitivement ?'));
+    if (!ok) return;
     this.documentService.delete(id).subscribe({
       next: () => {
         this.success = 'Document supprimé.';
+        this.toast.success('Document supprimé avec succès.');
         this.loadDocuments();
         this.clearAlerts();
       },
@@ -642,11 +677,15 @@ export class DetailClientComponent implements OnInit {
   }
 
   submitBlock() {
-    if (!this.client || !this.blockReason.trim()) return;
+    if (!this.client || !this.blockReason.trim()) {
+      this.toast.error('La raison du blocage est obligatoire.');
+      return;
+    }
     this.blocking = true;
     this.clientStatusService.blockClient(this.client.id, this.blockReason.trim()).subscribe({
       next: () => {
         this.success = 'Client bloqué avec succès.';
+        this.toast.success('Client bloqué avec succès.');
         this.blocking = false;
         this.showBlockModal = false;
         this.blockReason = '';
@@ -655,6 +694,7 @@ export class DetailClientComponent implements OnInit {
       },
       error: (err) => {
         this.error = err.error?.message || 'Erreur lors du blocage.';
+        this.toast.error(this.error);
         this.blocking = false;
         this.clearAlerts();
       }
@@ -667,6 +707,7 @@ export class DetailClientComponent implements OnInit {
     this.clientStatusService.unblockClient(this.client.id).subscribe({
       next: () => {
         this.success = 'Client débloqué avec succès.';
+        this.toast.success('Client débloqué avec succès.');
         this.blocking = false;
         this.showBlockModal = false;
         this.loadClient(this.client!.id);
@@ -674,6 +715,7 @@ export class DetailClientComponent implements OnInit {
       },
       error: (err) => {
         this.error = err.error?.message || 'Erreur lors du déblocage.';
+        this.toast.error(this.error);
         this.blocking = false;
         this.clearAlerts();
       }
@@ -852,20 +894,24 @@ export class DetailClientComponent implements OnInit {
         this.loadNotes();
         this.loadEvenements();
         this.success = 'Note enregistrée.';
+        this.toast.success(this.editingNoteId ? 'Note modifiée avec succès.' : 'Note ajoutée avec succès.');
         this.clearAlerts();
       },
       error: (err) => {
         this.savingNote = false;
         this.error = err.error?.message || 'Erreur lors de l\'enregistrement de la note.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
   }
 
-  deleteNote(id: number) {
-    if (!this.client || !confirm('Supprimer cette note ?')) return;
+  async deleteNote(id: number) {
+    if (!this.client) return;
+    const ok = await lastValueFrom(this.toast.confirm('Supprimer cette note ?'));
+    if (!ok) return;
     this.activityService.deleteNote(this.client.id, id).subscribe({
-      next: () => this.loadNotes(),
+      next: () => { this.loadNotes(); this.toast.success('Note supprimée.'); },
       error: () => {
         this.error = 'Erreur lors de la suppression de la note.';
         this.clearAlerts();
@@ -937,20 +983,24 @@ export class DetailClientComponent implements OnInit {
         this.loadContacts();
         this.loadEvenements();
         this.success = 'Contact enregistré.';
+        this.toast.success(this.editingContactId ? 'Contact modifié avec succès.' : 'Contact ajouté avec succès.');
         this.clearAlerts();
       },
       error: (err) => {
         this.savingContact = false;
         this.error = err.error?.message || 'Erreur lors de l\'enregistrement du contact.';
+        this.toast.error(this.error);
         this.clearAlerts();
       }
     });
   }
 
-  deleteContact(id: number) {
-    if (!this.client || !confirm('Supprimer ce contact ?')) return;
+  async deleteContact(id: number) {
+    if (!this.client) return;
+    const ok = await lastValueFrom(this.toast.confirm('Supprimer ce contact ?'));
+    if (!ok) return;
     this.activityService.deleteContact(this.client.id, id).subscribe({
-      next: () => this.loadContacts(),
+      next: () => { this.loadContacts(); this.toast.success('Contact supprimé.'); },
       error: () => {
         this.error = 'Erreur lors de la suppression du contact.';
         this.clearAlerts();
@@ -994,10 +1044,12 @@ export class DetailClientComponent implements OnInit {
         this.portalExpiration = result.dateExpiration;
         this.portalSuccess = result.message;
         this.portalSending = false;
+        this.toast.success('Lien du portail client généré avec succès.');
       },
       error: (err) => {
         this.portalError = err.error?.message || 'Erreur lors de la génération du lien.';
         this.portalSending = false;
+        this.toast.error(this.portalError);
       }
     });
   }
@@ -1005,6 +1057,7 @@ export class DetailClientComponent implements OnInit {
   copyPortalLink() {
     if (this.portalLink) {
       navigator.clipboard.writeText(this.portalLink);
+      this.toast.success('Lien copié dans le presse-papiers.');
     }
   }
 

@@ -7,6 +7,7 @@ module.exports = {
       colors: {
         "surface-container-low": "var(--surface-container-low)",
         "surface-container-lowest": "var(--surface-container-lowest)",
+        "surface-container": "var(--surface-container)",
         "on-error-container": "var(--on-error-container)",
         "secondary-container": "var(--secondary-container)",
         "surface-variant": "var(--surface-variant)",

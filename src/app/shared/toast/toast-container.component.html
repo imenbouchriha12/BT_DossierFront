@@ -1,0 +1,40 @@
+<div class="toast-stack">
+  <div
+    *ngFor="let t of toasts"
+    class="toast-item"
+    [ngClass]="{
+      'toast-info': t.type === 'info',
+      'toast-success': t.type === 'success',
+      'toast-confirm': t.type === 'confirm',
+      'toast-error': t.type === 'error'
+    }"
+  >
+    <div class="toast-icon">
+      <span class="material-symbols-outlined">
+        {{
+          t.type === 'success'
+            ? 'check_circle'
+            : t.type === 'confirm'
+            ? 'warning'
+            : t.type === 'error'
+            ? 'error'
+            : 'info'
+        }}
+      </span>
+    </div>
+
+    <div class="toast-body">
+      <p class="toast-titre">{{ t.titre }}</p>
+      <p class="toast-message">{{ t.message }}</p>
+
+      <div *ngIf="t.type === 'confirm'" class="toast-actions">
+        <button class="toast-btn-confirm" (click)="onOui(t.id)">Oui, supprimer</button>
+        <button class="toast-btn-annuler" (click)="onNon(t.id)">Non</button>
+      </div>
+    </div>
+
+    <button *ngIf="t.type !== 'confirm'" class="toast-close material-symbols-outlined" (click)="dismiss(t.id)">
+      close
+    </button>
+  </div>
+</div>

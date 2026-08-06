@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, UserDto } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { fieldBorder, isValidEmail, checkPassword } from '../../shared/validation.utils';
 
@@ -36,7 +37,7 @@ export class ParametresComponent implements OnInit {
   newPasswordTouched = false;
   confirmPasswordTouched = false;
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private toast: ToastService) {}
 
   fieldBorder = fieldBorder;
 
@@ -107,19 +108,24 @@ export class ParametresComponent implements OnInit {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
     if (!allowed.includes(file.type)) {
       this.profileError = `Format '${file.type}' non supporté. Utilisez jpg, png, gif ou webp.`;
+      this.toast.error(this.profileError);
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
       this.profileError = 'L\'image ne doit pas dépasser 2 Mo.';
+      this.toast.error(this.profileError);
       return;
     }
 
     this.auth.uploadPhoto(file).subscribe({
       next: (res) => {
         this.photoUrl = res.photoUrl;
+        this.profileSuccess = 'Photo de profil mise à jour avec succès.';
+        this.toast.success(this.profileSuccess);
       },
       error: (err) => {
         this.profileError = err.error?.message || 'Erreur lors de l\'upload de la photo.';
+        this.toast.error(this.profileError);
       },
     });
   }
@@ -132,6 +138,7 @@ export class ParametresComponent implements OnInit {
 
     if (!this.username || !this.email || !isValidEmail(this.email)) {
       this.profileError = 'Veuillez vérifier les champs du formulaire.';
+      this.toast.error(this.profileError);
       return;
     }
 
@@ -139,11 +146,13 @@ export class ParametresComponent implements OnInit {
     this.auth.updateProfile({ username: this.username, email: this.email }).subscribe({
       next: () => {
         this.profileSuccess = 'Profil mis à jour avec succès.';
+        this.toast.success(this.profileSuccess);
         this.saving = false;
         setTimeout(() => this.profileSuccess = '', 4000);
       },
       error: (err) => {
         this.profileError = err.error?.message || 'Erreur lors de la mise à jour.';
+        this.toast.error(this.profileError);
         this.saving = false;
       },
     });
@@ -158,17 +167,20 @@ export class ParametresComponent implements OnInit {
 
     if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
       this.passwordError = 'Veuillez remplir tous les champs.';
+      this.toast.error(this.passwordError);
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
       this.passwordError = 'Les nouveaux mots de passe ne correspondent pas.';
+      this.toast.error(this.passwordError);
       return;
     }
 
     const pwd = checkPassword(this.newPassword);
     if (pwd.error) {
       this.passwordError = pwd.error;
+      this.toast.error(pwd.error);
       return;
     }
 
@@ -176,6 +188,7 @@ export class ParametresComponent implements OnInit {
     this.auth.changePassword(this.oldPassword, this.newPassword).subscribe({
       next: () => {
         this.passwordSuccess = 'Mot de passe changé avec succès.';
+        this.toast.success(this.passwordSuccess);
         this.oldPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
@@ -184,6 +197,7 @@ export class ParametresComponent implements OnInit {
       },
       error: (err) => {
         this.passwordError = err.error?.message || 'Erreur lors du changement.';
+        this.toast.error(this.passwordError);
         this.passwordLoading = false;
       },
     });
@@ -194,6 +208,8 @@ export class ParametresComponent implements OnInit {
   }
 
   get fullPhotoUrl(): string | null {
-    return this.photoUrl ? `${environment.staticUrl}${this.photoUrl}` : null;
+    if (!this.photoUrl) return null;
+    const sansPrefixe = this.photoUrl.replace(/^\/?uploads\//, '');
+    return `${environment.staticUrl}${sansPrefixe}`;
   }
 }

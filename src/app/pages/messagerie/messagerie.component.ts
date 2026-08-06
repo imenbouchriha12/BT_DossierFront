@@ -10,7 +10,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from '../../services/message.service';
 import { AuthService, UserDto } from '../../services/auth.service';
-import { MessageDto, ConversationDto } from '../../models/message.models';
+import { MessageDto, ConversationDto, PieceJointeDto } from '../../models/message.models';
+import { ToastService } from '../../shared/toast/toast.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-messagerie',
@@ -22,11 +24,13 @@ import { MessageDto, ConversationDto } from '../../models/message.models';
 export class MessagerieComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('chatInput') chatInput!: ElementRef;
+  @ViewChild('fileInput') fileInput!: ElementRef;
 
   conversations: ConversationDto[] = [];
   filteredConversations: ConversationDto[] = [];
   messages: MessageDto[] = [];
   users: UserDto[] = [];
+  onlineUsers = new Set<number>();
   currentUserId: number = 0;
   selectedUserId: number | null = null;
   selectedUser: ConversationDto | null = null;
@@ -36,11 +40,14 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   loading = true;
   loadingMessages = false;
   showNewModal = false;
+  pendingAttachment: PieceJointeDto | null = null;
+  uploading = false;
 
   constructor(
     private messageService: MessageService,
     public auth: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -48,6 +55,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     this.messageService.connect();
     this.loadConversations();
     this.loadUsers();
+    this.loadOnlineUsers();
     this.subscribeToEvents();
   }
 
@@ -100,7 +108,19 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       const conv = this.conversations.find(c => c.autreUserId === userId);
       if (conv) conv.enLigne = enLigne;
       if (this.selectedUser?.autreUserId === userId) this.selectedUser.enLigne = enLigne;
+      if (enLigne) this.onlineUsers.add(userId);
+      else this.onlineUsers.delete(userId);
       this.cdr.detectChanges();
+    });
+  }
+
+  private loadOnlineUsers(): void {
+    this.messageService.getEnLigne().subscribe({
+      next: ids => {
+        this.onlineUsers = new Set(ids);
+        this.cdr.detectChanges();
+      },
+      error: () => {},
     });
   }
 
@@ -133,6 +153,13 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     this.loadMessages();
   }
 
+  closeConversation(): void {
+    this.selectedUserId = null;
+    this.selectedUser = null;
+    this.messages = [];
+    this.pendingAttachment = null;
+  }
+
   startConversation(user: UserDto): void {
     this.showNewModal = false;
     const existing = this.conversations.find(c => c.autreUserId === user.id);
@@ -142,7 +169,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       autreNom: user.username,
       autreMatricule: user.matricule,
       autreRole: user.roles?.[0] ?? '',
-      enLigne: false,
+      enLigne: this.isOnline(user.id),
       nonLu: 0,
     };
     this.messages = [];
@@ -177,8 +204,10 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
   send(): void {
     const contenu = this.inputText.trim();
-    if (!contenu || !this.selectedUserId) return;
+    const pj = this.pendingAttachment;
+    if ((!contenu && !pj) || !this.selectedUserId) return;
     this.inputText = '';
+    this.pendingAttachment = null;
     if (this.chatInput) this.chatInput.nativeElement.style.height = 'auto';
 
     const temp: MessageDto = {
@@ -187,15 +216,24 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       expediteurNom: this.auth.currentUser()?.username,
       destinataireUserId: this.selectedUserId,
       contenu,
+      pieceJointeUrl: pj?.url,
+      pieceJointeNom: pj?.nom,
+      pieceJointeType: pj?.type,
       dateEnvoi: new Date().toISOString(),
       lu: false,
     };
     this.messages.push(temp);
     this.scrollToBottom();
 
-    this.messageService.send({ destinataireUserId: this.selectedUserId, contenu }).subscribe({
+    this.messageService.send({
+      destinataireUserId: this.selectedUserId,
+      contenu,
+      pieceJointeUrl: pj?.url ?? null,
+      pieceJointeNom: pj?.nom ?? null,
+      pieceJointeType: pj?.type ?? null,
+    }).subscribe({
       next: sent => {
-        const idx = this.messages.findIndex(m => m.id === 0 && m.contenu === sent.contenu);
+        const idx = this.messages.findIndex(m => m.id === 0 && m.contenu === sent.contenu && m.pieceJointeUrl === sent.pieceJointeUrl);
         if (idx >= 0) this.messages[idx] = sent;
         else this.messages.push(sent);
         this.refreshLastMessage();
@@ -203,10 +241,49 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.inputText = contenu;
+        this.pendingAttachment = pj;
         this.messages = this.messages.filter(m => m !== temp);
+        this.toast.error('Échec de l\'envoi du message.');
         this.cdr.detectChanges();
       },
     });
+  }
+
+  triggerImageUpload(): void {
+    this.fileInput.nativeElement.accept = 'image/*';
+    this.fileInput.nativeElement.value = '';
+    this.fileInput.nativeElement.click();
+  }
+
+  triggerFileUpload(): void {
+    this.fileInput.nativeElement.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip';
+    this.fileInput.nativeElement.value = '';
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading = true;
+    this.messageService.uploadPieceJointe(file).subscribe({
+      next: pj => {
+        this.pendingAttachment = pj;
+        this.uploading = false;
+        this.toast.success('Fichier joint prêt à être envoyé.');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.uploading = false;
+        const msg = err?.error?.message ?? 'Échec de l\'envoi du fichier.';
+        this.toast.error(msg);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  removeAttachment(): void {
+    this.pendingAttachment = null;
   }
 
   refreshLastMessage(): void {
@@ -257,6 +334,24 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
   isMine(m: MessageDto): boolean {
     return m.expediteurUserId === this.currentUserId;
+  }
+
+  isImage(type?: string | null): boolean {
+    return !!type && type.startsWith('image/');
+  }
+
+  hasPieceJointe(m: MessageDto): boolean {
+    return !!m.pieceJointeUrl;
+  }
+
+  fullUrl(relative?: string | null): string {
+    if (!relative) return '';
+    const sansPrefixe = relative.replace(/^\/?uploads\//, '');
+    return `${environment.staticUrl}${sansPrefixe}`;
+  }
+
+  isOnline(userId: number): boolean {
+    return this.onlineUsers.has(userId);
   }
 
   formatTime(d?: string | null): string {

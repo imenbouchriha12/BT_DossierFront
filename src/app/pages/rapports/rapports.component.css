@@ -1076,3 +1076,14 @@
   color: var(--on-surface-var);
   margin-top: 0.25rem;
 }
+
+/* ── Mode sombre ─────────────────────────────────────────── */
+:host-context(.dark) .msg-success {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+:host-context(.dark) .msg-error {
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+:host-context(.dark) .error-text,
+:host-context(.dark) .text-error { color: #fca5a5; }

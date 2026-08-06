@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ClientService } from '../../services/client.service';
 import { CreateClientDto, UpdateClientDto, ClientDto } from '../../models/client.models';
+import { ToastService } from '../../shared/toast/toast.service';
 import { isValidEmail, PHONE_RE } from '../../shared/validation.utils';
 
 @Component({
@@ -157,7 +158,8 @@ export class NouveauClientComponent implements OnInit {
   constructor(
     private clientService: ClientService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -200,6 +202,7 @@ export class NouveauClientComponent implements OnInit {
       },
       error: () => {
         this.error = 'Erreur lors du chargement du client.';
+        this.toast.error('Erreur lors du chargement du client.');
         this.loading = false;
       }
     });
@@ -275,6 +278,7 @@ export class NouveauClientComponent implements OnInit {
         this.success = this.editMode
           ? 'Client modifié avec succès.'
           : 'Client créé avec succès.';
+        this.toast.success(this.success);
         setTimeout(() => {
           this.router.navigate(['/liste-clients']);
         }, 1500);
@@ -282,6 +286,7 @@ export class NouveauClientComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.error = err.error?.message || 'Erreur lors de l\'enregistrement.';
+        this.toast.error(this.error);
       }
     });
   }

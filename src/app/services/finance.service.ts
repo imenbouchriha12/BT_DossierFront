@@ -1,14 +1,48 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 import { CompteDto, MouvementDto, CoursDto, CoursTempsReelDto, CompteTotalDto, PagedResult } from '../models/finance.models';
 
 @Injectable({ providedIn: 'root' })
 export class FinanceService {
   private baseUrl = `${environment.apiUrl}`;
+  private hubBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
-  constructor(private http: HttpClient) {}
+  private hub?: signalR.HubConnection;
+  /** Événement poussé par le serveur quand les cours de change sont actualisés. */
+  coursMaj$ = new Subject<CoursTempsReelDto[]>();
+
+  constructor(private http: HttpClient, private auth: AuthService) {}
+
+  /** Établit la connexion temps réel au hub des cours de change (/hubs/cours). */
+  connect(): void {
+    if (this.hub && (this.hub.state === signalR.HubConnectionState.Connected || this.hub.state === signalR.HubConnectionState.Connecting)) {
+      return;
+    }
+    const hub = new signalR.HubConnectionBuilder()
+      .withUrl(`${this.hubBaseUrl}/hubs/cours`, {
+        accessTokenFactory: () => this.auth.getToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    hub.on('CoursMaj', (data: CoursTempsReelDto[]) => {
+      this.coursMaj$.next(data ?? []);
+    });
+
+    hub.start().catch(err => console.error('SignalR cours : échec de connexion', err));
+    this.hub = hub;
+  }
+
+  disconnect(): void {
+    if (this.hub) {
+      this.hub.stop();
+      this.hub = undefined;
+    }
+  }
 
   getComptesByClient(idClient: number): Observable<CompteDto[]> {
     return this.http.get<CompteDto[]>(`${this.baseUrl}/comptes/client/${idClient}`);

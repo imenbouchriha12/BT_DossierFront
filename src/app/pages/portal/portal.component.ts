@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PortalService, ClientPortalView, RequiredDocumentStatus } from '../../services/portal.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-portal',
@@ -25,7 +26,8 @@ export class PortalComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private portalService: PortalService
+    private portalService: PortalService,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -77,7 +79,10 @@ export class PortalComponent implements OnInit {
   }
 
   submitUpload() {
-    if (!this.uploadingType || !this.uploadingFile) return;
+    if (!this.uploadingType || !this.uploadingFile) {
+      this.toast.error('Veuillez sélectionner un fichier à envoyer.');
+      return;
+    }
     this.uploading = true;
     this.uploadError = '';
     this.uploadSuccess = '';
@@ -85,6 +90,7 @@ export class PortalComponent implements OnInit {
       next: (result) => {
         this.uploading = false;
         this.uploadSuccess = result.message;
+        this.toast.success(result.message);
         this.uploadingType = '';
         this.uploadingFile = null;
         this.loadPortal();
@@ -93,6 +99,7 @@ export class PortalComponent implements OnInit {
       error: (err) => {
         this.uploading = false;
         this.uploadError = err.error?.message || 'Erreur lors de l\'upload.';
+        this.toast.error(this.uploadError);
       }
     });
   }

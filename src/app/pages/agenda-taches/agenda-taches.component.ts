@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { lastValueFrom } from 'rxjs';
 import { ReminderService, ReminderDto, CreateReminderDto, ReminderStatsDto } from '../../services/reminder.service';
 import { ClientService } from '../../services/client.service';
 import { AuthService, UserDto } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { fieldBorder } from '../../shared/validation.utils';
 
 @Component({
@@ -100,7 +102,8 @@ export class AgendaTachesComponent implements OnInit {
   constructor(
     private reminderService: ReminderService,
     private clientService: ClientService,
-    public auth: AuthService
+    public auth: AuthService,
+    private toast: ToastService
   ) {}
 
   get isTeamView(): boolean {
@@ -425,9 +428,13 @@ export class AgendaTachesComponent implements OnInit {
     });
   }
 
-  deleteReminder(r: ReminderDto): void {
-    if (!confirm('Supprimer cet élément ?')) return;
-    this.reminderService.delete(r.id).subscribe({ next: () => this.loadData() });
+  async deleteReminder(r: ReminderDto): Promise<void> {
+    const ok = await lastValueFrom(this.toast.confirm(`Supprimer définitivement « ${r.title} » ?`));
+    if (!ok) return;
+    this.reminderService.delete(r.id).subscribe({
+      next: () => { this.loadData(); this.toast.success('Rappel supprimé avec succès.'); },
+      error: (err) => { console.error('Erreur suppression:', err); this.toast.info("Impossible de supprimer ce rappel.", 'Échec'); }
+    });
   }
 
   // ── Helpers d'affichage ──────────────────────────────────────────────

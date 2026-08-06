@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FraudService } from '../../services/fraud.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
+import { lastValueFrom } from 'rxjs';
 import {
   AlertesFraudeDto,
   CreateRegleAntifraudeDto,
@@ -50,7 +52,7 @@ export class SurveillanceFraudeComponent implements OnInit {
   stats: FraudStatsDto | null = null;
   isAdminOrSuperviseur = false;
 
-  constructor(private fraudService: FraudService, private authService: AuthService) {}
+  constructor(private fraudService: FraudService, private authService: AuthService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.isAdminOrSuperviseur =
@@ -255,11 +257,13 @@ export class SurveillanceFraudeComponent implements OnInit {
     });
   }
 
-  supprimerRegle(r: RegleAntifraudeDto): void {
-    if (!confirm(`Supprimer la règle « ${r.nom} » ?`)) return;
+  async supprimerRegle(r: RegleAntifraudeDto): Promise<void> {
+    const ok = await lastValueFrom(this.toast.confirm(`Supprimer la règle « ${r.nom} » ?`));
+    if (!ok) return;
     this.fraudService.deleteRegle(r.id).subscribe({
       next: () => {
         this.success = 'Règle supprimée.';
+        this.toast.success('Règle supprimée avec succès.');
         this.loadRegles();
       },
       error: () => (this.error = 'Erreur lors de la suppression.'),

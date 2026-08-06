@@ -1269,6 +1269,90 @@
 .wf-btn-reject:hover { background: #fee2e2; }
 .wf-btn-reject:disabled { opacity: .5; cursor: not-allowed; }
 
+/* ── Mode sombre ─────────────────────────────────────────── */
+:host-context(.dark) .alert-success {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+:host-context(.dark) .alert-error {
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+:host-context(.dark) .filter-chip-validated,
+:host-context(.dark) .doc-icon-validated,
+:host-context(.dark) .doc-status-validated {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+:host-context(.dark) .doc-action-preview { color: #c4b5fd; }
+:host-context(.dark) .doc-action-validate { color: #34d399; }
+:host-context(.dark) .doc-action-validate:hover { background: rgba(52, 211, 153, 0.12); }
+:host-context(.dark) .doc-action-reject { color: #f87171; }
+:host-context(.dark) .wf-global-pending {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fcd34d;
+}
+:host-context(.dark) .wf-global-done {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+:host-context(.dark) .wf-global-rejected {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+:host-context(.dark) .wf-step-pending {
+  border-color: #f59e0b;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fcd34d;
+}
+:host-context(.dark) .wf-step-done {
+  border-color: #059669;
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+:host-context(.dark) .wf-step-rejected {
+  border-color: #ef4444;
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+:host-context(.dark) .upload-file-remove:hover { color: #fca5a5; }
+
+:host-context(.dark) .wf-chip-done {
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+:host-context(.dark) .wf-chip-rejected {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+:host-context(.dark) .doc-action-resubmit {
+  color: #c4b5fd !important;
+  background: rgba(192, 132, 252, 0.12) !important;
+}
+:host-context(.dark) .wf-reject-box {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+:host-context(.dark) .wf-btn-reject,
+:host-context(.dark) .wf-actions-error {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+:host-context(.dark) .wf-btn-reject:hover { background: rgba(248, 113, 113, 0.2); }
+:host-context(.dark) .wf-info-success {
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+:host-context(.dark) .wf-info-error,
+:host-context(.dark) .wf-error-box {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
 /* History */
 .wf-history {
   margin-top: 18px;

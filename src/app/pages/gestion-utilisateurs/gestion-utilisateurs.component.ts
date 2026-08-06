@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, UserDto } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
+import { lastValueFrom } from 'rxjs';
 import { fieldBorder } from '../../shared/validation.utils';
 
 interface RoleOption {
@@ -81,7 +83,7 @@ export class GestionUtilisateursComponent implements OnInit {
   total = 0;
   totalPages = 0;
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -155,19 +157,22 @@ export class GestionUtilisateursComponent implements OnInit {
         this.pendingUsers = this.pendingUsers.filter(u => u.id !== userId);
         this.processingId = null;
         this.successMessage = 'Utilisateur approuvé. Un email lui a été envoyé avec ses identifiants.';
+        this.toast.success('Utilisateur approuvé avec succès.');
         this.loadApprovedUsers();
         this.autoClear();
       },
       error: (err) => {
         this.processingId = null;
         this.errorMessage = err.error?.message || 'Erreur lors de l\'approbation.';
+        this.toast.error(this.errorMessage);
         this.autoClear();
       }
     });
   }
 
-  reject(userId: number): void {
-    if (!confirm('Êtes-vous sûr de vouloir rejeter cette demande ? L\'utilisateur sera supprimé.')) return;
+  async reject(userId: number): Promise<void> {
+    const ok = await lastValueFrom(this.toast.confirm('Êtes-vous sûr de vouloir rejeter cette demande ? L\'utilisateur sera supprimé.'));
+    if (!ok) return;
 
     this.processingId = userId;
     this.clearMessages();
@@ -177,6 +182,7 @@ export class GestionUtilisateursComponent implements OnInit {
         this.pendingUsers = this.pendingUsers.filter(u => u.id !== userId);
         this.processingId = null;
         this.successMessage = 'Demande rejetée.';
+        this.toast.success('Demande rejetée.');
         this.autoClear();
       },
       error: (err) => {
@@ -187,9 +193,10 @@ export class GestionUtilisateursComponent implements OnInit {
     });
   }
 
-  toggleActivation(user: UserDto): void {
+  async toggleActivation(user: UserDto): Promise<void> {
     const action = user.isActive ? 'désactiver' : 'activer';
-    if (!confirm(`Êtes-vous sûr de vouloir ${action} le compte de ${user.username} ?`)) return;
+    const ok = await lastValueFrom(this.toast.confirm(`Êtes-vous sûr de vouloir ${action} le compte de ${user.username} ?`));
+    if (!ok) return;
 
     this.processingId = user.id;
     this.clearMessages();
@@ -202,6 +209,7 @@ export class GestionUtilisateursComponent implements OnInit {
       next: () => {
         this.processingId = null;
         this.successMessage = `Compte ${action === 'désactiver' ? 'désactivé' : 'activé'} avec succès.`;
+        this.toast.success(`Compte ${action === 'désactiver' ? 'désactivé' : 'activé'} avec succès.`);
         this.loadApprovedUsers();
         this.autoClear();
       },
@@ -229,12 +237,14 @@ export class GestionUtilisateursComponent implements OnInit {
         next: () => {
           this.changingRole[user.id] = false;
           this.successMessage = `Rôle de ${user.username} changé en ${this.roles.find(r => r.id === newRoleId)?.name}.`;
+          this.toast.success(this.successMessage);
           this.loadApprovedUsers();
           this.autoClear();
         },
         error: (err) => {
           this.changingRole[user.id] = false;
           this.errorMessage = err.error?.message || 'Erreur lors du changement de rôle.';
+          this.toast.error(this.errorMessage);
           this.autoClear();
         }
       });
@@ -246,6 +256,7 @@ export class GestionUtilisateursComponent implements OnInit {
         error: (err) => {
           this.changingRole[user.id] = false;
           this.errorMessage = err.error?.message || 'Erreur lors du changement de rôle.';
+          this.toast.error(this.errorMessage);
           this.autoClear();
         }
       });
@@ -288,12 +299,14 @@ export class GestionUtilisateursComponent implements OnInit {
       next: () => {
         this.sendingEmail = false;
         this.successMessage = `Email envoyé à ${this.emailModalUser!.email}.`;
+        this.toast.success(this.successMessage);
         this.closeEmailModal();
         this.autoClear();
       },
       error: (err) => {
         this.sendingEmail = false;
         this.errorMessage = err.error?.message || 'Erreur lors de l\'envoi.';
+        this.toast.error(this.errorMessage);
         this.autoClear();
       }
     });

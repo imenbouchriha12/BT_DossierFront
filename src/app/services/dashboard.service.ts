@@ -77,6 +77,7 @@ export interface DocumentTypeCount {
 
 export interface PendingDocumentItem {
   documentId: number;
+  clientId: number;
   clientCode: string;
   clientName: string;
   documentType: string;

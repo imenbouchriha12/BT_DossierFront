@@ -8,10 +8,10 @@
         <p class="text-body-md text-on-surface-variant mt-1">Taux de référence en temps réel (source : marché)</p>
       </div>
       <div class="flex items-center gap-3">
-        @if (dateSource) {
+        @if (derniereMaj) {
         <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary text-label-sm font-semibold">
           <span class="material-symbols-outlined text-[18px]">schedule</span>
-          Actualisé le {{ dateSource | date:'dd/MM/yyyy' }}
+          Actualisé le {{ derniereMaj | date:'dd/MM/yyyy' }}
         </span>
         }
         <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-label-sm font-semibold">

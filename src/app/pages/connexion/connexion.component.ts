@@ -3,6 +3,7 @@ import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { fieldBorder } from '../../shared/validation.utils';
 
 @Component({
@@ -21,7 +22,7 @@ export class ConnexionComponent {
   matriculeTouched = false;
   passwordTouched = false;
 
-  constructor(private auth: AuthService, private router: Router) {
+  constructor(private auth: AuthService, private router: Router, private toast: ToastService) {
     this.matricule = auth.getRememberedMatricule();
     this.rememberMe = auth.isRemembered();
   }
@@ -44,6 +45,7 @@ export class ConnexionComponent {
 
     if (!this.matricule || !this.password) {
       this.error = 'Veuillez remplir tous les champs.';
+      this.toast.error('Veuillez remplir tous les champs.');
       return;
     }
 
@@ -54,10 +56,13 @@ export class ConnexionComponent {
 
     this.auth.login({ matricule: this.matricule, password: this.password }).subscribe({
       next: () => {
+        this.toast.success('Connexion réussie. Bienvenue !');
         this.router.navigate(['/tableau-de-bord']);
       },
       error: (err) => {
-        this.error = err.error?.message || 'Identifiants invalides ou compte inactif.';
+        const msg = err.error?.message || 'Identifiants invalides ou compte inactif.';
+        this.error = msg;
+        this.toast.error(msg);
         this.loading = false;
       }
     });

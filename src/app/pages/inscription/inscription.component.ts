@@ -3,6 +3,7 @@ import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { fieldBorder, isValidEmail } from '../../shared/validation.utils';
 
 @Component({
@@ -20,7 +21,7 @@ export class InscriptionComponent {
   usernameTouched = false;
   emailTouched = false;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router, private toast: ToastService) {}
 
   get usernameState(): string {
     if (!this.usernameTouched) return 'idle';
@@ -49,6 +50,7 @@ export class InscriptionComponent {
 
     if (!this.username || !this.email || !isValidEmail(this.email)) {
       this.error = 'Veuillez vérifier les champs du formulaire.';
+      this.toast.error('Veuillez vérifier les champs du formulaire.');
       return;
     }
 
@@ -60,10 +62,13 @@ export class InscriptionComponent {
     }).subscribe({
       next: (res) => {
         this.success = res.message || 'Compte créé avec succès. En attente d\'activation par l\'administrateur.';
+        this.toast.success(this.success);
         this.loading = false;
       },
       error: (err) => {
-        this.error = err.error?.message || 'Erreur lors de l\'inscription.';
+        const msg = err.error?.message || 'Erreur lors de l\'inscription.';
+        this.error = msg;
+        this.toast.error(msg);
         this.loading = false;
       }
     });

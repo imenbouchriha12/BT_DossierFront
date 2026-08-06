@@ -6,6 +6,7 @@ import { ClientService } from '../../services/client.service';
 import { ClientStatusService } from '../../services/client-status.service';
 import { ClientDto, ClientSearchDto, PagedResult } from '../../models/client.models';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 @Component({
@@ -50,7 +51,8 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
   constructor(
     public clientService: ClientService,
     public authService: AuthService,
-    private clientStatusService: ClientStatusService
+    private clientStatusService: ClientStatusService,
+    private toast: ToastService
   ) {
     this.quickSearch$.pipe(
       debounceTime(300),
@@ -231,7 +233,10 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
   }
 
   submitBlock() {
-    if (!this.blockClientId || !this.blockReason.trim()) return;
+    if (!this.blockClientId || !this.blockReason.trim()) {
+      this.toast.error('Veuillez saisir un motif de blocage.');
+      return;
+    }
     this.blocking = true;
     this.clientStatusService.blockClient(this.blockClientId, this.blockReason.trim()).subscribe({
       next: () => {
@@ -239,27 +244,34 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
         this.showBlockModal = false;
         this.blockClientId = null;
         this.blockReason = '';
+        this.toast.success('Client bloqué avec succès.');
         this.loadClients();
       },
       error: (err) => {
         this.error = err.error?.message || 'Erreur lors du blocage.';
+        this.toast.error(this.error);
         this.blocking = false;
       }
     });
   }
 
   submitUnblock() {
-    if (!this.blockClientId) return;
+    if (!this.blockClientId) {
+      this.toast.error('Client introuvable.');
+      return;
+    }
     this.blocking = true;
     this.clientStatusService.unblockClient(this.blockClientId).subscribe({
       next: () => {
         this.blocking = false;
         this.showBlockModal = false;
         this.blockClientId = null;
+        this.toast.success('Client débloqué avec succès.');
         this.loadClients();
       },
       error: (err) => {
         this.error = err.error?.message || 'Erreur lors du déblocage.';
+        this.toast.error(this.error);
         this.blocking = false;
       }
     });
@@ -278,10 +290,12 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
       this.clientService.archive(id).subscribe({
         next: () => {
           this.confirmActionId = null;
+          this.toast.success('Client archivé avec succès.');
           this.loadClients();
         },
         error: (err) => {
           this.error = err.error?.message || "Erreur lors de l'archivage.";
+          this.toast.error(this.error);
           this.confirmActionId = null;
         }
       });
@@ -289,10 +303,12 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
       this.clientService.restore(id).subscribe({
         next: () => {
           this.confirmActionId = null;
+          this.toast.success('Client restauré avec succès.');
           this.loadClients();
         },
         error: (err) => {
           this.error = err.error?.message || 'Erreur lors de la restauration.';
+          this.toast.error(this.error);
           this.confirmActionId = null;
         }
       });
@@ -318,9 +334,11 @@ export class ListeClientsComponent implements OnInit, OnDestroy {
         a.download = `clients_${new Date().toISOString().slice(0, 10)}.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.toast.success('Export Excel téléchargé avec succès.');
       },
       error: () => {
         this.error = 'Erreur lors de l\'export Excel.';
+        this.toast.error(this.error);
       }
     });
   }

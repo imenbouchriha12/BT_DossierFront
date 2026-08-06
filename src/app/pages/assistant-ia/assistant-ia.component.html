@@ -1,10 +1,10 @@
-<div class="max-w-5xl mx-auto px-md py-lg flex flex-col h-[calc(100vh-8rem)]">
+<div class="max-w-5xl mx-auto px-md py-lg flex flex-col h-[calc(100dvh-25rem)] min-h-[420px] md:h-[calc(100dvh-15rem)] md:min-h-[520px]">
   <!-- En-tête -->
-  <div class="flex items-center gap-md mb-lg">
-    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-on-primary-fixed-variant flex items-center justify-center shadow-sm">
+  <div class="flex flex-wrap items-center gap-md mb-lg">
+    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-on-primary-fixed-variant flex items-center justify-center shadow-sm shrink-0">
       <span class="material-symbols-outlined text-white text-[28px]">auto_awesome</span>
     </div>
-    <div>
+    <div class="flex-1 min-w-[200px]">
       <p class="text-label-sm text-on-surface-variant">Productivité des agents</p>
       <h1 class="text-headline-md font-headline-md text-on-surface">Assistant IA</h1>
       <p class="text-body-sm text-on-surface-variant">Interrogez vos données en langage naturel — l'IA traduit votre question en requête puis répond.</p>
@@ -14,7 +14,7 @@
 
   <!-- Zone de conversation -->
   <div class="flex-1 bg-white border border-outline-variant/30 rounded-2xl shadow-sm flex flex-col overflow-hidden min-h-0">
-    <div class="flex-1 overflow-y-auto p-lg space-y-md" #scrollContainer>
+    <div class="flex-1 overflow-y-auto p-md md:p-lg space-y-md" #scrollContainer>
       @for (m of messages; track $index) {
       <div class="flex" [class.justify-end]="m.role === 'user'">
         @if (m.role === 'assistant') {
@@ -22,8 +22,8 @@
           <span class="material-symbols-outlined text-white text-[18px]">auto_awesome</span>
         </div>
         }
-        <div class="max-w-[80%]">
-          <div class="px-lg py-md rounded-2xl text-body-md whitespace-pre-wrap leading-relaxed"
+        <div class="max-w-[88%] sm:max-w-[80%]">
+          <div class="px-md md:px-lg py-md rounded-2xl text-body-md whitespace-pre-wrap leading-relaxed"
             [ngClass]="m.role === 'user'
               ? 'bg-primary text-white rounded-br-sm'
               : 'bg-surface-container-low text-on-surface rounded-bl-sm border border-outline-variant/20'">
@@ -74,7 +74,7 @@
 
     <!-- Suggestions -->
     @if (messages.length <= 2 && !loading) {
-    <div class="px-lg pb-sm flex flex-wrap gap-sm">
+    <div class="px-md md:px-lg pb-sm flex flex-wrap gap-sm">
       @for (s of suggestions; track s) {
       <button (click)="envoyer(s)"
         class="px-md py-sm rounded-full border border-outline-variant/40 text-label-sm text-on-surface-variant hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all">
@@ -85,13 +85,13 @@
     }
 
     <!-- Saisie -->
-    <div class="border-t border-outline-variant/20 p-lg">
-      <div class="flex items-center gap-md">
+    <div class="border-t border-outline-variant/20 p-md md:p-lg">
+      <div class="flex items-center gap-sm md:gap-md">
         <input [(ngModel)]="input" (keydown.enter)="envoyer()" [disabled]="loading"
           placeholder="Posez votre question en français..."
-          class="flex-1 px-lg py-md bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-60" />
+          class="flex-1 min-w-0 px-md md:px-lg py-md bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-60" />
         <button (click)="envoyer()" [disabled]="loading || !input.trim()"
-          class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm hover:bg-on-primary-fixed-variant transition-all disabled:opacity-40">
+          class="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm hover:bg-on-primary-fixed-variant transition-all disabled:opacity-40 shrink-0">
           @if (loading) {
           <span class="material-symbols-outlined animate-spin">sync</span>
           } @else {

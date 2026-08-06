@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReportService } from '../../services/report.service';
 import { ClientService } from '../../services/client.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { ClientStatsDto } from '../../models/client.models';
 
 type Tab = 'export' | 'import';
@@ -151,7 +152,8 @@ export class RapportsComponent implements OnInit {
 
   constructor(
     private reportService: ReportService,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private toast: ToastService
   ) {
     this.loadRecentDownloads();
     this.loadImportHistory();
@@ -287,12 +289,14 @@ export class RapportsComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.loading = false;
         this.successMessage = `"${report.title}" téléchargé avec succès.`;
+        this.toast.success(`Rapport "${report.title}" téléchargé avec succès.`);
         this.addToRecent(report.title, ext, filename);
         setTimeout(() => this.successMessage = '', 5000);
       },
       error: () => {
         this.loading = false;
         this.errorMessage = 'Erreur lors de la génération du rapport. Réessayez.';
+        this.toast.error(this.errorMessage);
         setTimeout(() => this.errorMessage = '', 5000);
       }
     });
@@ -329,11 +333,13 @@ export class RapportsComponent implements OnInit {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!['xlsx', 'xls'].includes(ext ?? '')) {
       this.errorMessage = 'Format non supporté. Utilisez un fichier Excel (.xlsx, .xls).';
+      this.toast.error(this.errorMessage);
       setTimeout(() => this.errorMessage = '', 4000);
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
       this.errorMessage = 'Le fichier dépasse la taille maximale de 10 Mo.';
+      this.toast.error(this.errorMessage);
       setTimeout(() => this.errorMessage = '', 4000);
       return;
     }
@@ -351,10 +357,12 @@ export class RapportsComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
         this.successMessage = 'Modèle Excel téléchargé. Remplissez-le puis importez-le.';
+        this.toast.success('Modèle Excel téléchargé avec succès.');
         setTimeout(() => this.successMessage = '', 5000);
       },
       error: () => {
         this.errorMessage = 'Erreur lors du téléchargement du modèle. Réessayez.';
+        this.toast.error(this.errorMessage);
         setTimeout(() => this.errorMessage = '', 5000);
       }
     });
@@ -366,7 +374,10 @@ export class RapportsComponent implements OnInit {
   }
 
   importFile(): void {
-    if (!this.selectedFile) return;
+    if (!this.selectedFile) {
+      this.toast.error('Veuillez sélectionner un fichier à importer.');
+      return;
+    }
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -380,6 +391,7 @@ export class RapportsComponent implements OnInit {
         this.loading = false;
         const imported = res?.imported ?? 0;
         this.successMessage = `Import réussi : ${imported} client(s) importé(s) avec succès.`;
+        this.toast.success(this.successMessage);
         this.addToImportHistory(fileName, imported, true, this.successMessage);
         this.selectedFile = null;
         this.importStep = 1;
@@ -389,6 +401,7 @@ export class RapportsComponent implements OnInit {
         this.loading = false;
         const message = err.error?.message || 'Erreur lors de l\'import. Vérifiez le format de votre fichier.';
         this.errorMessage = message;
+        this.toast.error(message);
         this.addToImportHistory(fileName, 0, false, message);
         setTimeout(() => this.errorMessage = '', 6000);
       }
@@ -418,6 +431,7 @@ export class RapportsComponent implements OnInit {
   clearRecentDownloads(): void {
     this.recentDownloads.set([]);
     localStorage.removeItem('recentDownloads');
+    this.toast.info('Historique des téléchargements effacé.');
   }
 
   // ─── Historique des imports ──────────────────────────────
@@ -439,5 +453,6 @@ export class RapportsComponent implements OnInit {
   clearImportHistory(): void {
     this.importHistory.set([]);
     localStorage.removeItem('importHistory');
+    this.toast.info('Historique des imports effacé.');
   }
 }

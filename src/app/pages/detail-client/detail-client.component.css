@@ -1,4 +1,4 @@
-/* ── Minimal icon-only action buttons ────────────────────────────────── */
+﻿/* â”€â”€ Minimal icon-only action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .action-icon-btn {
   display: inline-flex;
@@ -32,7 +32,7 @@
   font-size: 20px;
 }
 
-/* Primary — navy icon */
+/* Primary â€” navy icon */
 
 .action-icon-primary {
   border-color: #c7d2e8;
@@ -45,7 +45,7 @@
   background: #e4eaf6;
 }
 
-/* Green — unblock */
+/* Green â€” unblock */
 
 .action-icon-green {
   border-color: #c3e6d5;
@@ -58,7 +58,7 @@
   background: #ddf2e6;
 }
 
-/* Purple — portal */
+/* Purple â€” portal */
 
 .action-icon-purple {
   border-color: #d5cde8;
@@ -71,7 +71,7 @@
   background: #ebe6f5;
 }
 
-/* Red — block */
+/* Red â€” block */
 
 .action-icon-red {
   border-color: #e8c8cb;
@@ -84,53 +84,53 @@
   background: var(--error-bg);
 }
 
-/* ── Dark mode ───────────────────────────────────────────────────────── */
+/* â”€â”€ Dark mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-.dark .action-icon-btn {
+:host-context(.dark) .action-icon-btn {
   background: var(--surface-container-low);
   border-color: var(--outline-variant);
 }
 
-.dark .action-icon-primary {
+:host-context(.dark) .action-icon-primary {
   border-color: rgba(91, 127, 214, 0.3);
   background: rgba(91, 127, 214, 0.1);
   color: #8aa6e8;
 }
 
-.dark .action-icon-primary:hover {
+:host-context(.dark) .action-icon-primary:hover {
   background: rgba(91, 127, 214, 0.18);
   border-color: rgba(91, 127, 214, 0.45);
 }
 
-.dark .action-icon-green {
+:host-context(.dark) .action-icon-green {
   border-color: rgba(46, 166, 106, 0.3);
   background: rgba(46, 166, 106, 0.1);
   color: #5cc98a;
 }
 
-.dark .action-icon-green:hover {
+:host-context(.dark) .action-icon-green:hover {
   background: rgba(46, 166, 106, 0.18);
   border-color: rgba(46, 166, 106, 0.45);
 }
 
-.dark .action-icon-purple {
+:host-context(.dark) .action-icon-purple {
   border-color: rgba(149, 120, 212, 0.3);
   background: rgba(149, 120, 212, 0.1);
   color: #b49be0;
 }
 
-.dark .action-icon-purple:hover {
+:host-context(.dark) .action-icon-purple:hover {
   background: rgba(149, 120, 212, 0.18);
   border-color: rgba(149, 120, 212, 0.45);
 }
 
-.dark .action-icon-red {
+:host-context(.dark) .action-icon-red {
   border-color: rgba(232, 96, 110, 0.3);
   background: rgba(232, 96, 110, 0.1);
   color: var(--error-on-bg);
 }
 
-.dark .action-icon-red:hover {
+:host-context(.dark) .action-icon-red:hover {
   background: rgba(232, 96, 110, 0.18);
   border-color: rgba(232, 96, 110, 0.45);
 }

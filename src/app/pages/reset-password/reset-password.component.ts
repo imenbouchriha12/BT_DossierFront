@@ -4,6 +4,7 @@ import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ToastService } from '../../shared/toast/toast.service';
 import { fieldBorder, checkPassword } from '../../shared/validation.utils';
 
 @Component({
@@ -24,7 +25,7 @@ export class ResetPasswordComponent implements OnInit {
   newPasswordTouched = false;
   confirmPasswordTouched = false;
 
-  constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router) {}
+  constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
@@ -75,11 +76,13 @@ export class ResetPasswordComponent implements OnInit {
 
     if (this.newPassword !== this.confirmPassword) {
       this.error = 'Les mots de passe ne correspondent pas.';
+      this.toast.error('Les mots de passe ne correspondent pas.');
       return;
     }
 
     if (pwd.error) {
       this.error = pwd.error;
+      this.toast.error(pwd.error);
       return;
     }
 
@@ -92,11 +95,14 @@ export class ResetPasswordComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.success = 'Mot de passe réinitialisé avec succès.';
+        this.toast.success('Mot de passe réinitialisé avec succès.');
         this.loading = false;
         setTimeout(() => this.router.navigate(['/connexion']), 3000);
       },
       error: (err) => {
-        this.error = err.error?.message || 'Erreur lors de la réinitialisation.';
+        const msg = err.error?.message || 'Erreur lors de la réinitialisation.';
+        this.error = msg;
+        this.toast.error(msg);
         this.loading = false;
       }
     });

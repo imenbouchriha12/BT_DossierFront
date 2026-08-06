@@ -36,7 +36,6 @@ export const routes: Routes = [
       { path: 'messagerie', loadComponent: () => import('./pages/messagerie/messagerie.component').then(m => m.MessagerieComponent) },
       { path: 'surveillance-fraude', loadComponent: () => import('./pages/surveillance-fraude/surveillance-fraude.component').then(m => m.SurveillanceFraudeComponent) },
       { path: 'parametres', loadComponent: () => import('./pages/parametres/parametres.component').then(m => m.ParametresComponent) },
-      { path: 'changement-mot-de-passe', loadComponent: () => import('./pages/changement-mot-de-passe/changement-mot-de-passe.component').then(m => m.ChangementMotDePasseComponent) },
       { path: 'historique-modifications', loadComponent: () => import('./pages/historique-modifications/historique-modifications.component').then(m => m.HistoriqueModificationsComponent) },
       { path: 'portal', loadComponent: () => import('./pages/portal/portal.component').then(m => m.PortalComponent) },
       {

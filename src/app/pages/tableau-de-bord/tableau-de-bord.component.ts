@@ -13,6 +13,9 @@ import {
   AlertSeverity,
 } from '../../services/dashboard.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { ToastService } from '../../shared/toast/toast.service';
+import { FinanceService } from '../../services/finance.service';
+import { Subscription } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -65,15 +68,34 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
   private docsChart: Chart | null = null;
   private agentChart: Chart | null = null;
   private typeChart: Chart | null = null;
+  private coursMajSub: Subscription | null = null;
 
   constructor(
     private dashboardService: DashboardService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService,
+    private financeService: FinanceService
   ) {}
 
   ngOnInit() {
     this.loadFinance();
     this.loadStats();
+    this.financeService.connect();
+    this.coursMajSub = this.financeService.coursMaj$.subscribe(nouveauxCours => {
+      const fin = this.finance();
+      if (!fin || !nouveauxCours || nouveauxCours.length === 0) return;
+      const date = nouveauxCours.find(c => !!c.date)?.date ?? fin.coursJour.find(c => !!c.date)?.date;
+      fin.coursJour = nouveauxCours.map(c => ({
+        devise: c.devise,
+        symbole: c.symbole,
+        nom: c.nom,
+        valeur: c.valeur,
+        date: c.date ?? date ?? null,
+      }));
+      this.finance.set(fin);
+      if (this.pageView === 'finance') this.initDeviseChart();
+      this.cdr.detectChanges();
+    });
   }
 
   ngAfterViewInit() {}
@@ -81,6 +103,7 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
   ngOnDestroy() {
     this.stopEvolution();
     this.destroyAllCharts();
+    this.coursMajSub?.unsubscribe();
   }
 
   get today(): Date {
@@ -130,6 +153,7 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
     } else {
       this.loadStats();
     }
+    this.toast.info('Tableau de bord actualisé.', 'Actualisation');
   }
 
   loadFinance() {

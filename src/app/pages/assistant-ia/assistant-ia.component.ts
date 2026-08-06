@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiService } from '../../services/ai.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { DonneeContextuelleDto } from '../../models/ai.models';
 
 interface MessageBubble {
@@ -40,7 +41,7 @@ export class AssistantIaComponent {
     'Quels sont les mouvements récents du client Ben Salah ?',
   ];
 
-  constructor(private aiService: AiService) {}
+  constructor(private aiService: AiService, private toast: ToastService) {}
 
   envoyer(texte?: string): void {
     const contenu = (texte ?? this.input).trim();
@@ -69,6 +70,7 @@ export class AssistantIaComponent {
           time: new Date(),
         });
         this.loading = false;
+        this.toast.error('Erreur lors de la génération de la réponse de l\'assistant.');
       },
     });
   }
