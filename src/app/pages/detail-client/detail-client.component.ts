@@ -12,6 +12,7 @@ import { ClientStatusService, ClientStatusReport } from '../../services/client-s
 import { FinanceService } from '../../services/finance.service';
 import { ReportService } from '../../services/report.service';
 import { AiService } from '../../services/ai.service';
+import { AdvancedSearchService, TagDto } from '../../services/advanced-search.service';
 import { RiskService } from '../../services/risk.service';
 import { FraudService } from '../../services/fraud.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -247,6 +248,7 @@ export class DetailClientComponent implements OnInit {
     private aiService: AiService,
     private riskService: RiskService,
     private fraudService: FraudService,
+    private advancedSearchService: AdvancedSearchService,
     private sanitizer: DomSanitizer,
     private toast: ToastService
   ) {}
@@ -268,6 +270,7 @@ export class DetailClientComponent implements OnInit {
         this.loadStatusReport();
         this.loadDocuments();
         this.loadAiFeatures();
+        this.loadClientTags();
       },
       error: () => {
         this.error = 'Erreur lors du chargement du client.';
@@ -286,6 +289,57 @@ export class DetailClientComponent implements OnInit {
       },
       error: () => {
         this.loadingStatus = false;
+      }
+    });
+  }
+
+  // ── Tags client ─────────────────────────────────────────────────
+  clientTags: TagDto[] = [];
+  tagInput = '';
+  tagSaving = false;
+  tagRemovingId: number | null = null;
+
+  loadClientTags(): void {
+    if (!this.client) return;
+    this.advancedSearchService.getClientTags(this.client.id).subscribe({
+      next: (tags) => {
+        this.clientTags = tags;
+      },
+      error: () => this.clientTags = []
+    });
+  }
+
+  addClientTag(): void {
+    const tag = this.tagInput.trim();
+    if (!tag || !this.client) return;
+    this.tagSaving = true;
+    this.advancedSearchService.addClientTag(this.client.id, tag).subscribe({
+      next: (t) => {
+        this.tagSaving = false;
+        this.clientTags.push(t);
+        this.tagInput = '';
+        this.toast.success(`Tag « ${t.tag} » ajouté au client.`);
+      },
+      error: (err) => {
+        this.tagSaving = false;
+        this.toast.error(err.error?.message || 'Erreur lors de l\'ajout du tag.');
+      }
+    });
+  }
+
+  async removeClientTag(tag: TagDto): Promise<void> {
+    const ok = await lastValueFrom(this.toast.confirm(`Supprimer le tag « ${tag.tag} » ?`));
+    if (!ok) return;
+    this.tagRemovingId = tag.id;
+    this.advancedSearchService.removeClientTag(tag.id).subscribe({
+      next: () => {
+        this.tagRemovingId = null;
+        this.clientTags = this.clientTags.filter(t => t.id !== tag.id);
+        this.toast.success('Tag supprimé.');
+      },
+      error: (err) => {
+        this.tagRemovingId = null;
+        this.toast.error(err.error?.message || 'Erreur lors de la suppression du tag.');
       }
     });
   }

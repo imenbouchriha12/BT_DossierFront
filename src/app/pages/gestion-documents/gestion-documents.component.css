@@ -849,6 +849,9 @@
 .doc-action-delete { color: var(--on-surface-variant); }
 .doc-action-delete:hover { background: var(--error-bg); color: var(--error-on-bg); }
 
+.doc-action-tags { color: #7c3aed; }
+.doc-action-tags:hover { background: var(--info-bg); }
+
 /* ── Doc List Empty ─────────────────────────────────────── */
 
 .doc-list-empty {

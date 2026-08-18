@@ -6,6 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DocumentService } from '../../services/document.service';
 import { ClientService } from '../../services/client.service';
 import { WorkflowService } from '../../services/workflow.service';
+import { AdvancedSearchService, TagDto } from '../../services/advanced-search.service';
 import { DocumentDto, ClientDto, PagedResult, WorkflowValidationDto } from '../../models/client.models';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -79,6 +80,7 @@ export class GestionDocumentsComponent implements OnInit {
     public clientService: ClientService,
     public workflowService: WorkflowService,
     public authService: AuthService,
+    private advancedSearchService: AdvancedSearchService,
     private sanitizer: DomSanitizer,
     private toast: ToastService
   ) {}
@@ -504,5 +506,75 @@ export class GestionDocumentsComponent implements OnInit {
 
   get isPreviewImage(): boolean {
     return this.previewType.startsWith('image/');
+  }
+
+  // ═══════════════ TAGS DOCUMENTS ═══════════════
+  showDocTags = false;
+  activeDocForTags: DocumentDto | null = null;
+  docTags: TagDto[] = [];
+  docTagInput = '';
+  docTagLoading = false;
+  docTagSaving = false;
+  docTagRemovingId: number | null = null;
+
+  openDocTags(doc: DocumentDto): void {
+    this.activeDocForTags = doc;
+    this.showDocTags = true;
+    this.docTagInput = '';
+    this.docTagLoading = true;
+    this.docTags = [];
+    this.advancedSearchService.getDocumentTags(doc.id).subscribe({
+      next: (tags) => {
+        this.docTags = tags;
+        this.docTagLoading = false;
+      },
+      error: () => {
+        this.docTagLoading = false;
+        this.toast.error('Impossible de charger les tags.');
+      }
+    });
+  }
+
+  closeDocTags(): void {
+    this.showDocTags = false;
+    this.activeDocForTags = null;
+    this.docTags = [];
+    this.docTagInput = '';
+    this.docTagRemovingId = null;
+  }
+
+  addDocTag(): void {
+    const tag = this.docTagInput.trim();
+    if (!tag || !this.activeDocForTags) return;
+    this.docTagSaving = true;
+    this.advancedSearchService.addDocumentTag(this.activeDocForTags.id, tag).subscribe({
+      next: (t) => {
+        this.docTagSaving = false;
+        this.docTags.push(t);
+        this.docTagInput = '';
+        this.toast.success(`Tag « ${t.tag} » ajouté au document.`);
+      },
+      error: (err) => {
+        this.docTagSaving = false;
+        this.toast.error(err.error?.message || 'Erreur lors de l\'ajout du tag.');
+      }
+    });
+  }
+
+  async removeDocTag(tag: TagDto): Promise<void> {
+    const ok = await lastValueFrom(this.toast.confirm(`Supprimer le tag « ${tag.tag} » ?`));
+    if (!ok) return;
+    this.docTagRemovingId = tag.id;
+    this.advancedSearchService.removeDocumentTag(tag.id).subscribe({
+      next: () => {
+        this.docTagRemovingId = null;
+        this.docTags = this.docTags.filter(t => t.id !== tag.id);
+        this.toast.success('Tag supprimé.');
+      },
+      error: (err) => {
+        this.docTagRemovingId = null;
+        this.toast.error(err.error?.message || 'Erreur lors de la suppression du tag.');
+      }
+    });
   }
 }

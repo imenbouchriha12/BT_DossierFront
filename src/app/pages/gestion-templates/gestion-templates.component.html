@@ -1,0 +1,363 @@
+<div class="min-h-screen bg-surface/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Templates de documents</h1>
+        <p class="text-body-md text-on-surface-variant mt-1">Gérez les documents requis pour chaque type de client.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="loadData()"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low transition-all text-label-sm font-medium">
+          <span class="material-symbols-outlined text-[18px]">refresh</span>
+          Actualiser
+        </button>
+        @if (isAdmin) {
+        <button (click)="openCreateModal()"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all text-label-sm font-medium shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Nouveau template
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (successMessage) {
+    <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-body-sm font-medium flex items-center gap-3">
+      <span class="material-symbols-outlined text-green-600 text-[20px]">check_circle</span>
+      {{ successMessage }}
+    </div>
+    }
+    @if (errorMessage) {
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-body-sm font-medium flex items-center gap-3">
+      <span class="material-symbols-outlined text-red-600 text-[20px]">error</span>
+      {{ errorMessage }}
+    </div>
+    }
+
+    <!-- Loading -->
+    @if (loading) {
+    <div class="flex flex-col items-center justify-center py-24">
+      <div class="relative w-16 h-16">
+        <div class="absolute inset-0 rounded-full border-4 border-primary/10"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"></div>
+      </div>
+      <p class="mt-4 text-body-md text-on-surface-variant">Chargement des templates...</p>
+    </div>
+    }
+
+    @if (!loading) {
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-label-xs text-on-surface-variant uppercase tracking-wider">Total templates</p>
+            <p class="text-2xl font-bold text-on-surface mt-1">{{ templates.length }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-[22px]">description</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-label-xs text-on-surface-variant uppercase tracking-wider">Types de clients</p>
+            <p class="text-2xl font-bold text-on-surface mt-1">{{ typesCount }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-blue-600 text-[22px]">badge</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-label-xs text-on-surface-variant uppercase tracking-wider">Obligatoires</p>
+            <p class="text-2xl font-bold text-on-surface mt-1">{{ obligatoryCount }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-amber-600 text-[22px]">priority_high</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-label-xs text-on-surface-variant uppercase tracking-wider">Actifs</p>
+            <p class="text-2xl font-bold text-on-surface mt-1">{{ activeCount }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-600 text-[22px]">check_circle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Type filter -->
+    <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+      <button (click)="setFilterType('Tous')"
+        class="px-3.5 py-1.5 rounded-full text-label-sm font-medium transition-all whitespace-nowrap"
+        [ngClass]="filterType === 'Tous' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'">
+        Tous ({{ templates.length }})
+      </button>
+      @for (type of types; track type) {
+      <button (click)="setFilterType(type)"
+        class="px-3.5 py-1.5 rounded-full text-label-sm font-medium transition-all whitespace-nowrap"
+        [ngClass]="filterType === type ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'">
+        {{ type }} ({{ countForType(type) }})
+      </button>
+      }
+    </div>
+
+    <!-- Empty state -->
+    @if (filteredTemplates.length === 0) {
+    <div class="bg-white rounded-2xl border border-outline-variant/30 shadow-sm p-8 sm:p-12 text-center">
+      <div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-[32px] text-on-surface-variant">description</span>
+      </div>
+      <h3 class="text-lg font-bold text-on-surface mb-1">Aucun template trouvé</h3>
+      <p class="text-body-md text-on-surface-variant">Aucun template pour ce type de client pour le moment.</p>
+    </div>
+    }
+
+    <!-- Templates grid -->
+    @if (filteredTemplates.length > 0) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (template of filteredTemplates; track template.id) {
+      <div class="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200">
+        <div class="flex items-start gap-3">
+          <div class="w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
+            [ngClass]="template.isActive ? 'bg-primary/10 text-primary' : 'bg-surface-container-low text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[22px]">description</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-body-md font-bold text-on-surface truncate">{{ template.nomDocument }}</h3>
+            </div>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-label-xs font-semibold mt-1">{{ template.typeClient }}</span>
+          </div>
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold border"
+              [ngClass]="template.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'">
+              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="template.isActive ? 'bg-green-500' : 'bg-red-500'"></span>
+              {{ template.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-xs font-semibold border"
+              [ngClass]="template.estObligatoire ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-surface-container-low text-on-surface-variant border-transparent'">
+              <span class="material-symbols-outlined text-[12px]">{{ template.estObligatoire ? 'priority_high' : 'check' }}</span>
+              {{ template.estObligatoire ? 'Obligatoire' : 'Optionnel' }}
+            </span>
+          </div>
+        </div>
+
+        @if (template.description) {
+        <p class="text-label-sm text-on-surface-variant">{{ template.description }}</p>
+        }
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-label-xs text-on-surface-variant">
+          <span class="inline-flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">format_list_numbered</span>
+            Ordre : {{ template.ordre }}
+          </span>
+          @if (template.tailleMaxMo) {
+          <span class="inline-flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">data_usage</span>
+            Max {{ template.tailleMaxMo }} Mo
+          </span>
+          }
+        </div>
+
+        @if (formatChips(template).length > 0) {
+        <div class="flex flex-wrap gap-1.5">
+          @for (fmt of formatChips(template); track fmt) {
+          <span class="px-2 py-0.5 bg-surface-container-low text-on-surface-variant rounded-md text-label-xs font-medium uppercase">{{ fmt }}</span>
+          }
+        </div>
+        }
+
+        @if (isAdmin) {
+        <div class="pt-3 border-t border-outline-variant/10 flex items-center justify-end gap-1">
+          <button (click)="openEditModal(template)"
+            class="w-9 h-9 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all text-on-surface-variant"
+            title="Modifier le template">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button (click)="toggleActive(template)" [disabled]="processingId === template.id"
+            class="w-9 h-9 rounded-lg hover:bg-surface-container-low flex items-center justify-center transition-all disabled:opacity-50"
+            [class.text-green-600]="!template.isActive"
+            [class.text-red-600]="template.isActive"
+            [title]="template.isActive ? 'Désactiver' : 'Activer'">
+            @if (processingId === template.id) {
+            <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+            } @else {
+            <span class="material-symbols-outlined text-[18px]">{{ template.isActive ? 'toggle_off' : 'toggle_on' }}</span>
+            }
+          </button>
+          <button (click)="deleteTemplate(template)" [disabled]="deletingId === template.id"
+            class="w-9 h-9 rounded-lg hover:bg-error/10 flex items-center justify-center transition-all text-error disabled:opacity-50"
+            title="Supprimer le template">
+            @if (deletingId === template.id) {
+            <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+            } @else {
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            }
+          </button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    @if (!isAdmin) {
+    <p class="mt-6 text-label-sm text-on-surface-variant text-center">
+      Vous êtes en lecture seule. Seul un administrateur peut créer, modifier ou supprimer des templates.
+    </p>
+    }
+    }
+  </div>
+
+  <!-- Template Modal -->
+  @if (modalOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="closeModal()">
+    <div class="bg-white rounded-2xl w-full max-w-lg mx-4 p-6 shadow-xl max-h-[92vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-[20px]">description</span>
+          </div>
+          <div>
+            <h3 class="text-title-md font-bold text-on-surface">{{ modalMode === 'create' ? 'Nouveau template' : 'Modifier le template' }}</h3>
+            <p class="text-label-sm text-on-surface-variant">{{ modalMode === 'create' ? 'Définissez un document requis pour un type de client' : 'Mettez à jour les informations du template' }}</p>
+          </div>
+        </div>
+        <button (click)="closeModal()" class="w-8 h-8 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Type de client</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 material-symbols-outlined text-[18px]">badge</span>
+            <input [(ngModel)]="formTypeClient" type="text" list="client-types-list" placeholder="Ex. : Particulier, Entreprise, VIP..."
+              [disabled]="modalMode === 'edit'"
+              [ngClass]="fieldBorder(typeClientState)"
+              (blur)="typeClientTouched = true"
+              class="w-full h-11 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none placeholder:text-on-surface-variant/50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <datalist id="client-types-list">
+              @for (type of types; track type) {
+              <option [value]="type"></option>
+              }
+            </datalist>
+          </div>
+          @if (typeClientTouched && typeClientMessage) {
+          <p class="flex items-center gap-1 mt-1.5 text-xs font-medium"
+            [ngClass]="typeClientState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+            <span class="material-symbols-outlined text-[14px]">{{ typeClientState === 'ok' ? 'check_circle' : 'error' }}</span>
+            {{ typeClientMessage }}
+          </p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Nom du document</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 material-symbols-outlined text-[18px]">description</span>
+            <input [(ngModel)]="formNomDocument" type="text" placeholder="Ex. : Carte d'identité nationale"
+              [ngClass]="fieldBorder(nomDocumentState)"
+              (blur)="nomDocumentTouched = true"
+              (keydown.enter)="saveTemplate()"
+              class="w-full h-11 pl-9 pr-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none placeholder:text-on-surface-variant/50">
+          </div>
+          @if (nomDocumentTouched && nomDocumentMessage) {
+          <p class="flex items-center gap-1 mt-1.5 text-xs font-medium"
+            [ngClass]="nomDocumentState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+            <span class="material-symbols-outlined text-[14px]">{{ nomDocumentState === 'ok' ? 'check_circle' : 'error' }}</span>
+            {{ nomDocumentMessage }}
+          </p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Description</label>
+          <textarea [(ngModel)]="formDescription" rows="3" placeholder="Instructions pour le client..."
+            class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none resize-none placeholder:text-on-surface-variant/50"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Ordre</label>
+            <input [(ngModel)]="formOrdre" type="number" min="0"
+              [ngClass]="fieldBorder(ordreState)"
+              (blur)="ordreTouched = true"
+              class="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none">
+            @if (ordreTouched && ordreMessage) {
+            <p class="flex items-center gap-1 mt-1.5 text-xs font-medium"
+              [ngClass]="ordreState === 'ok' ? 'text-emerald-600' : 'text-red-600'">
+              <span class="material-symbols-outlined text-[14px]">{{ ordreState === 'ok' ? 'check_circle' : 'error' }}</span>
+              {{ ordreMessage }}
+            </p>
+            }
+          </div>
+          <div>
+            <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Taille max. (Mo)</label>
+            <input [(ngModel)]="formTailleMaxMo" type="number" min="1" placeholder="Ex. : 5"
+              class="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none placeholder:text-on-surface-variant/50">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-label-xs font-medium text-on-surface-variant uppercase tracking-wider mb-2">Formats acceptés</label>
+          <div class="flex flex-wrap gap-2">
+            @for (fmt of formats; track fmt) {
+            <button type="button" (click)="toggleFormat(fmt)"
+              class="px-3 py-1.5 rounded-lg text-label-sm font-medium uppercase transition-all border"
+              [ngClass]="isFormatSelected(fmt)
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-surface-container-low text-on-surface-variant border-outline-variant/40 hover:bg-surface-container-high'">
+              {{ fmt }}
+            </button>
+            }
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-1">
+          <button (click)="formEstObligatoire = !formEstObligatoire"
+            class="relative w-11 h-6 rounded-full transition-colors shrink-0"
+            [ngClass]="formEstObligatoire ? 'bg-amber-500' : 'bg-surface-container-high'">
+            <span class="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
+              [ngClass]="formEstObligatoire ? 'left-[22px]' : 'left-0.5'"></span>
+          </button>
+          <div>
+            <p class="text-body-sm font-semibold text-on-surface">Document obligatoire</p>
+            <p class="text-label-xs text-on-surface-variant">Si activé, le client devra fournir ce document lors de son dossier.</p>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-outline-variant/10">
+          <button (click)="closeModal()"
+            class="px-5 py-2.5 rounded-xl border border-outline-variant/50 text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-all">
+            Annuler
+          </button>
+          <button (click)="saveTemplate()" [disabled]="!isFormValid() || formSaving"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 disabled:bg-primary/50 text-label-sm font-medium transition-all shadow-sm">
+            @if (formSaving) {
+            <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+            } @else {
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            }
+            {{ modalMode === 'create' ? 'Créer' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>

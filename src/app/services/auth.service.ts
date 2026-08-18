@@ -24,6 +24,12 @@ export interface RegisterRequest {
   email: string;
 }
 
+export interface RoleDto {
+  id: number;
+  name: string;
+  isActive: boolean;
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -109,8 +115,24 @@ export class AuthService {
     return this.http.delete<{ message: string }>(`${environment.apiUrl}/users/${userId}`);
   }
 
-  getRoles(): Observable<{ id: number; name: string; isActive: boolean }[]> {
-    return this.http.get<{ id: number; name: string; isActive: boolean }[]>(`${environment.apiUrl}/roles`);
+  getRoles(): Observable<RoleDto[]> {
+    return this.http.get<RoleDto[]>(`${environment.apiUrl}/roles`);
+  }
+
+  createRole(name: string): Observable<RoleDto> {
+    return this.http.post<RoleDto>(`${environment.apiUrl}/roles`, { name });
+  }
+
+  updateRole(roleId: number, name: string): Observable<RoleDto> {
+    return this.http.put<RoleDto>(`${environment.apiUrl}/roles/${roleId}`, { name });
+  }
+
+  activateRole(roleId: number): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${environment.apiUrl}/roles/${roleId}/activate`, {});
+  }
+
+  deactivateRole(roleId: number): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${environment.apiUrl}/roles/${roleId}/deactivate`, {});
   }
 
   getAllUsers(): Observable<UserDto[]> {

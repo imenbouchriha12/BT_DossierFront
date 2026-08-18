@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService, UserDto } from '../../services/auth.service';
+import { AuthService, RoleDto, UserDto } from '../../services/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { lastValueFrom } from 'rxjs';
 import { fieldBorder } from '../../shared/validation.utils';
@@ -19,10 +19,12 @@ interface RoleOption {
 })
 export class GestionUtilisateursComponent implements OnInit {
   Math = Math;
+  fieldBorder = fieldBorder;
   pendingUsers: UserDto[] = [];
   approvedUsers: UserDto[] = [];
   roles: RoleOption[] = [];
   filteredRoles: RoleOption[] = [];
+  allRoles: RoleDto[] = [];
 
   loading = true;
   processingId: number | null = null;
@@ -35,6 +37,14 @@ export class GestionUtilisateursComponent implements OnInit {
   emailBody = '';
   sendingEmail = false;
   emailTouched: Record<string, boolean> = {};
+
+  roleModalOpen = false;
+  roleModalMode: 'create' | 'edit' = 'create';
+  editingRoleId: number | null = null;
+  roleName = '';
+  roleNameTouched = false;
+  roleSaving = false;
+  processingRoleId: number | null = null;
 
   markEmailTouched(field: string): void {
     this.emailTouched[field] = true;
@@ -93,6 +103,7 @@ export class GestionUtilisateursComponent implements OnInit {
     this.loading = true;
     this.auth.getRoles().subscribe({
       next: (roles) => {
+        this.allRoles = roles;
         this.roles = roles.filter(r => r.name !== 'Admin' && r.isActive);
         this.filteredRoles = this.roles;
         const defaultRoleId = this.roles.length > 0 ? this.roles[0].id : 0;
@@ -120,6 +131,18 @@ export class GestionUtilisateursComponent implements OnInit {
       },
       error: () => this.loading = false
     });
+  }
+
+  isProtectedRole(role: RoleDto): boolean {
+    return role.name === 'Admin';
+  }
+
+  get activeRolesCount(): number {
+    return this.allRoles.filter(r => r.isActive).length;
+  }
+
+  get inactiveRolesCount(): number {
+    return this.allRoles.filter(r => !r.isActive).length;
   }
 
   get paginatedUsers(): UserDto[] {
@@ -306,6 +329,116 @@ export class GestionUtilisateursComponent implements OnInit {
       error: (err) => {
         this.sendingEmail = false;
         this.errorMessage = err.error?.message || 'Erreur lors de l\'envoi.';
+        this.toast.error(this.errorMessage);
+        this.autoClear();
+      }
+    });
+  }
+
+  openCreateRoleModal(): void {
+    this.roleModalMode = 'create';
+    this.editingRoleId = null;
+    this.roleName = '';
+    this.roleNameTouched = false;
+    this.roleModalOpen = true;
+  }
+
+  openEditRoleModal(role: RoleDto): void {
+    this.roleModalMode = 'edit';
+    this.editingRoleId = role.id;
+    this.roleName = role.name;
+    this.roleNameTouched = false;
+    this.roleModalOpen = true;
+  }
+
+  closeRoleModal(): void {
+    this.roleModalOpen = false;
+    this.editingRoleId = null;
+    this.roleName = '';
+    this.roleNameTouched = false;
+  }
+
+  get roleNameState(): 'idle' | 'error' | 'ok' {
+    if (!this.roleNameTouched) return 'idle';
+    const name = this.roleName?.trim() ?? '';
+    if (!name) return 'error';
+    return name.length >= 2 ? 'ok' : 'error';
+  }
+
+  get roleNameMessage(): string {
+    if (!this.roleNameTouched) return '';
+    const name = this.roleName?.trim() ?? '';
+    if (!name) return 'Le nom du rôle est requis.';
+    if (name.length < 2) return 'Le nom doit contenir au moins 2 caractères.';
+    const duplicate = this.allRoles.some(r =>
+      r.name.toLowerCase() === name.toLowerCase() && r.id !== this.editingRoleId
+    );
+    return duplicate ? 'Ce rôle existe déjà.' : 'Nom de rôle valide.';
+  }
+
+  isRoleNameValid(): boolean {
+    if (!this.roleName || this.roleName.trim().length < 2) return false;
+    const name = this.roleName.trim();
+    return !this.allRoles.some(r =>
+      r.name.toLowerCase() === name.toLowerCase() && r.id !== this.editingRoleId
+    );
+  }
+
+  saveRole(): void {
+    this.roleNameTouched = true;
+    if (!this.isRoleNameValid()) return;
+
+    const name = this.roleName.trim();
+    this.roleSaving = true;
+    this.clearMessages();
+
+    const request = this.roleModalMode === 'create'
+      ? this.auth.createRole(name)
+      : this.auth.updateRole(this.editingRoleId!, name);
+
+    request.subscribe({
+      next: (role) => {
+        this.roleSaving = false;
+        this.successMessage = this.roleModalMode === 'create'
+          ? `Rôle « ${role.name} » créé avec succès.`
+          : `Rôle renommé en « ${role.name} ».`;
+        this.toast.success(this.successMessage);
+        this.closeRoleModal();
+        this.loadData();
+        this.autoClear();
+      },
+      error: (err) => {
+        this.roleSaving = false;
+        this.errorMessage = err.error?.message || 'Erreur lors de l\'enregistrement du rôle.';
+        this.toast.error(this.errorMessage);
+        this.autoClear();
+      }
+    });
+  }
+
+  async toggleRole(role: RoleDto): Promise<void> {
+    const action = role.isActive ? 'désactiver' : 'activer';
+    const ok = await lastValueFrom(this.toast.confirm(`Êtes-vous sûr de vouloir ${action} le rôle « ${role.name} » ?`));
+    if (!ok) return;
+
+    this.processingRoleId = role.id;
+    this.clearMessages();
+
+    const request = role.isActive
+      ? this.auth.deactivateRole(role.id)
+      : this.auth.activateRole(role.id);
+
+    request.subscribe({
+      next: () => {
+        this.processingRoleId = null;
+        this.successMessage = `Rôle « ${role.name} » ${role.isActive ? 'désactivé' : 'activé'} avec succès.`;
+        this.toast.success(this.successMessage);
+        this.loadData();
+        this.autoClear();
+      },
+      error: (err) => {
+        this.processingRoleId = null;
+        this.errorMessage = err.error?.message || 'Erreur lors de l\'opération.';
         this.toast.error(this.errorMessage);
         this.autoClear();
       }

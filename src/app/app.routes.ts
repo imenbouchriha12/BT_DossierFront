@@ -44,6 +44,12 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Superviseur'] },
       },
+      {
+        path: 'gestion-templates',
+        loadComponent: () => import('./pages/gestion-templates/gestion-templates.component').then(m => m.GestionTemplatesComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Superviseur'] },
+      },
       { path: '**', redirectTo: 'tableau-de-bord' },
     ],
   },

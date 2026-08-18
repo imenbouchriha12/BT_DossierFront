@@ -226,7 +226,70 @@
         </div>
       </div>
     </div>
+}
+
+<!-- Doc Tags Modal -->
+@if (showDocTags && activeDocForTags) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="closeDocTags()">
+  <div class="bg-white rounded-2xl w-full max-w-md mx-4 p-6 shadow-xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-violet-600 text-[20px]">sell</span>
+        </div>
+        <div>
+          <h3 class="text-title-md font-bold text-on-surface">Tags du document</h3>
+          <p class="text-label-sm text-on-surface-variant truncate max-w-[260px]">{{ activeDocForTags.nomFichier }}</p>
+        </div>
+      </div>
+      <button (click)="closeDocTags()" class="w-8 h-8 rounded-lg hover:bg-surface-container-high flex items-center justify-center transition-all">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    @if (docTagLoading) {
+    <div class="py-8 flex justify-center">
+      <span class="material-symbols-outlined text-primary animate-spin">sync</span>
+    </div>
+    } @else {
+    <div class="flex items-center gap-2 mb-4">
+      <input [(ngModel)]="docTagInput" type="text" placeholder="Nouveau tag (Entrée pour ajouter)"
+        (keydown.enter)="addDocTag(); $event.preventDefault()"
+        class="flex-1 h-10 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none placeholder:text-on-surface-variant/50 text-label-sm">
+      <button (click)="addDocTag()" [disabled]="docTagSaving || !docTagInput.trim()"
+        class="inline-flex items-center gap-1 px-3.5 h-10 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 transition-all text-label-sm font-medium disabled:opacity-50">
+        @if (docTagSaving) {
+        <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+        } @else {
+        <span class="material-symbols-outlined text-[16px]">add</span>
+        }
+        Ajouter
+      </button>
+    </div>
+
+    @if (docTags.length === 0) {
+    <p class="text-label-sm text-on-surface-variant text-center py-6">Aucun tag pour le moment.</p>
+    } @else {
+    <div class="flex flex-wrap gap-2">
+      @for (t of docTags; track t.id) {
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-label-sm font-medium">
+        #{{ t.tag }}
+        <button (click)="removeDocTag(t)" [disabled]="docTagRemovingId === t.id"
+          class="hover:text-violet-900 transition-all disabled:opacity-50">
+          @if (docTagRemovingId === t.id) {
+          <span class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+          } @else {
+          <span class="material-symbols-outlined text-[14px]">close</span>
+          }
+        </button>
+      </span>
+      }
+    </div>
     }
+    }
+  </div>
+</div>
+}
 
     <!-- ═══ Stats ═══ -->
     @if (documents.length > 0) {
@@ -380,6 +443,9 @@
             }
             <button class="doc-action doc-action-download" (click)="downloadDocument(doc.id)" title="Télécharger">
               <span class="material-symbols-outlined text-[16px]">download</span>
+            </button>
+            <button class="doc-action doc-action-tags" (click)="openDocTags(doc)" title="Gérer les tags">
+              <span class="material-symbols-outlined text-[16px]">sell</span>
             </button>
             @if (getWorkflowForDoc(doc.id); as wf) {
               @if (wf.statutGlobal === 'EnCours' && doc.statutValidation === 'En attente' && canActOnStep(wf)) {

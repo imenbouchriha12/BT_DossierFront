@@ -48,6 +48,37 @@
           {{ client.statut }}
         </span>
       </div>
+      <div class="flex flex-wrap items-center gap-sm mt-sm">
+        @for (tag of clientTags; track tag.id) {
+        <span class="inline-flex items-center gap-xs px-sm py-xs bg-violet-50 text-violet-700 rounded-full text-label-sm font-medium">
+          #{{ tag.tag }}
+          @if (authService.hasRole('Admin') || authService.hasRole('Agent') || authService.hasRole('Superviseur')) {
+          <button (click)="removeClientTag(tag)" [disabled]="tagRemovingId === tag.id" class="hover:text-violet-900 transition-all disabled:opacity-50">
+            @if (tagRemovingId === tag.id) {
+            <span class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+            } @else {
+            <span class="material-symbols-outlined text-[14px]">close</span>
+            }
+          </button>
+          }
+        </span>
+        }
+        @if (authService.hasRole('Admin') || authService.hasRole('Agent') || authService.hasRole('Superviseur')) {
+        <span class="inline-flex items-center gap-xs">
+          <input [(ngModel)]="tagInput" type="text" placeholder="+ tag"
+            (keydown.enter)="addClientTag(); $event.preventDefault()"
+            class="w-28 h-8 px-2.5 bg-surface-container-low border border-outline-variant/50 rounded-lg text-label-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none placeholder:text-on-surface-variant/50">
+          <button (click)="addClientTag()" [disabled]="tagSaving || !tagInput.trim()"
+            class="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 flex items-center justify-center transition-all disabled:opacity-50">
+            @if (tagSaving) {
+            <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+            } @else {
+            <span class="material-symbols-outlined text-[16px]">add</span>
+            }
+          </button>
+        </span>
+        }
+      </div>
     </div>
   </div>
   <div class="flex items-center gap-sm flex-wrap">

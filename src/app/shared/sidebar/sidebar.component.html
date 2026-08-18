@@ -157,6 +157,18 @@
         <span class="text-label-md font-label-md">Utilisateurs</span>
       </a>
       }
+      @if (auth.hasRole('Admin') || auth.hasRole('Superviseur')) {
+      <a
+        class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
+        routerLink="/gestion-templates"
+        routerLinkActive="nav-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeSidebar()"
+      >
+        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">article</span>
+        <span class="text-label-md font-label-md">Templates documents</span>
+      </a>
+      }
     </div>
     }
   </nav>
