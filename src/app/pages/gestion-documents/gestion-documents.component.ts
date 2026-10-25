@@ -51,6 +51,7 @@ export class GestionDocumentsComponent implements OnInit {
   workflowHistory: WorkflowValidationDto[] = [];
   workflowComment = '';
   workflowAction: 'valider' | 'rejeter' | 'relancer' | null = null;
+  workflowDerogation = false;
   workflowLoading = false;
   workflowError = '';
   commentTouched = false;
@@ -242,8 +243,6 @@ export class GestionDocumentsComponent implements OnInit {
 
   // ═══════════════ WORKFLOW DE VALIDATION MULTI-NIVEAUX ═══════════════
 
-  private readonly roleRank: Record<string, number> = { 'Agent': 1, 'Superviseur': 2, 'Admin': 3 };
-
   getWorkflowForDoc(docId: number): WorkflowValidationDto | null {
     return this.workflowsByDoc.get(docId) ?? null;
   }
@@ -256,9 +255,13 @@ export class GestionDocumentsComponent implements OnInit {
 
   canActOnStep(workflow: WorkflowValidationDto): boolean {
     if (!workflow || workflow.statutGlobal !== 'EnCours' || !workflow.etapeCourante) return false;
-    const stepRank = this.roleRank[workflow.etapeCourante] ?? 0;
-    const userRank = Math.max(0, ...this.authService.userRoles().map(r => this.roleRank[r] ?? 0));
-    return userRank >= stepRank;
+    return this.authService.userRoles().includes(workflow.etapeCourante);
+  }
+
+  canDerogateStep(workflow: WorkflowValidationDto): boolean {
+    if (!workflow || workflow.statutGlobal !== 'EnCours' || !workflow.etapeCourante) return false;
+    if (this.canActOnStep(workflow)) return false;
+    return this.authService.hasRole('Superviseur') || this.authService.hasRole('Admin');
   }
 
   canRelancer(workflow: WorkflowValidationDto): boolean {
@@ -275,6 +278,7 @@ export class GestionDocumentsComponent implements OnInit {
     this.activeWorkflow = workflow;
     this.workflowAction = action;
     this.workflowComment = '';
+    this.workflowDerogation = false;
     this.workflowError = '';
     this.commentTouched = false;
     this.showWorkflow = true;
@@ -296,19 +300,36 @@ export class GestionDocumentsComponent implements OnInit {
     this.activeWorkflow = null;
     this.workflowHistory = [];
     this.workflowComment = '';
+    this.workflowDerogation = false;
     this.workflowAction = null;
     this.workflowError = '';
   }
 
   validateWorkflow() {
     if (!this.activeWorkflow) return;
+    if (this.workflowDerogation && !this.workflowComment.trim()) {
+      this.workflowError = 'Un commentaire est obligatoire pour déroger à l\'étape assignée.';
+      this.toast.error(this.workflowError);
+      return;
+    }
+    if (this.canDerogateStep(this.activeWorkflow) && !this.workflowDerogation) {
+      this.workflowError = 'Cochez la dérogation et motivez-la pour intervenir sur une étape non assignée à votre rôle.';
+      this.toast.error(this.workflowError);
+      return;
+    }
     this.workflowLoading = true;
-    this.workflowService.valider(this.activeWorkflow.id, this.workflowComment || undefined).subscribe({
+    this.workflowService.valider(
+      this.activeWorkflow.id,
+      this.workflowComment || undefined,
+      this.workflowDerogation
+    ).subscribe({
       next: (updated) => {
         this.workflowLoading = false;
         this.workflowByDocUpdate(updated);
-        this.success = 'Étape de validation approuvée avec succès.';
-        this.toast.success('Étape de validation approuvée avec succès.');
+        this.success = this.workflowDerogation
+          ? 'Dérogation enregistrée : étape approuvée.'
+          : 'Étape de validation approuvée avec succès.';
+        this.toast.success(this.success);
         this.closeWorkflow();
         this.loadDocuments();
         this.clearAlerts();
@@ -329,8 +350,13 @@ export class GestionDocumentsComponent implements OnInit {
       this.toast.error(this.workflowError);
       return;
     }
+    if (this.canDerogateStep(this.activeWorkflow) && !this.workflowDerogation) {
+      this.workflowError = 'Cochez la dérogation et motivez-la pour intervenir sur une étape non assignée à votre rôle.';
+      this.toast.error(this.workflowError);
+      return;
+    }
     this.workflowLoading = true;
-    this.workflowService.rejeter(this.activeWorkflow.id, this.workflowComment.trim()).subscribe({
+    this.workflowService.rejeter(this.activeWorkflow.id, this.workflowComment.trim(), this.workflowDerogation).subscribe({
       next: (updated) => {
         this.workflowLoading = false;
         this.workflowByDocUpdate(updated);

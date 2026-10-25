@@ -408,16 +408,6 @@
               (click)="downloadDocument(doc.id)" title="Télécharger">
               <span class="material-symbols-outlined text-[18px]">download</span>
             </button>
-            @if ((authService.hasRole('Admin') || authService.hasRole('Superviseur')) && doc.statutValidation === 'En attente') {
-            <button class="w-9 h-9 rounded-lg hover:bg-green-50 flex items-center justify-center transition-all text-green-600"
-              (click)="validateDocument(doc.id)" title="Valider">
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
-            </button>
-            <button class="w-9 h-9 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all text-red-600"
-              (click)="rejectDocument(doc.id)" title="Rejeter">
-              <span class="material-symbols-outlined text-[18px]">cancel</span>
-            </button>
-            }
             @if (authService.hasRole('Admin')) {
             <button class="w-9 h-9 rounded-lg hover:bg-red-50 flex items-center justify-center transition-all text-error"
               (click)="deleteDocument(doc.id)" title="Supprimer">

@@ -84,6 +84,16 @@
       </a>
       <a
         class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
+        routerLink="/mes-validations"
+        routerLinkActive="nav-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeSidebar()"
+      >
+        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">fact_check</span>
+        <span class="text-label-md font-label-md">Mes validations</span>
+      </a>
+      <a
+        class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-all rounded-xl cursor-pointer group"
         routerLink="/assistant-ia"
         routerLinkActive="nav-active"
         [routerLinkActiveOptions]="{ exact: true }"

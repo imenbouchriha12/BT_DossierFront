@@ -15,6 +15,9 @@ import {
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { ToastService } from '../../shared/toast/toast.service';
 import { FinanceService } from '../../services/finance.service';
+import { WorkflowService } from '../../services/workflow.service';
+import { AuthService } from '../../services/auth.service';
+import { WorkflowValidationDto } from '../../models/client.models';
 import { Subscription } from 'rxjs';
 
 Chart.register(...registerables);
@@ -38,6 +41,10 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
   statsLoading = signal(true);
   statsError = signal('');
   stats = signal<DashboardStats | null>(null);
+
+  mesValidations = signal<WorkflowValidationDto[]>([]);
+  validationLoading = signal(true);
+  validationTotal = signal(0);
 
   Math = Math;
 
@@ -74,12 +81,15 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
     private dashboardService: DashboardService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
-    private financeService: FinanceService
+    private financeService: FinanceService,
+    private workflowService: WorkflowService,
+    private auth: AuthService
   ) {}
 
   ngOnInit() {
     this.loadFinance();
     this.loadStats();
+    this.loadMesValidations();
     this.financeService.connect();
     this.coursMajSub = this.financeService.coursMaj$.subscribe(nouveauxCours => {
       const fin = this.finance();
@@ -118,6 +128,49 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
     return this.stats()?.kpis ?? null;
   }
 
+  get isTeamView(): boolean {
+    return this.auth.hasRole('Admin') || this.auth.hasRole('Superviseur');
+  }
+
+  get roleLabel(): string {
+    if (this.auth.hasRole('Admin')) return 'Administrateur';
+    if (this.auth.hasRole('Superviseur')) return 'Superviseur';
+    return 'Agent';
+  }
+
+  get roleMessage(): string {
+    if (this.auth.hasRole('Admin')) {
+      return 'Vue direction : validation finale des dossiers, pilotage de l\'équipe et alertes.';
+    }
+    if (this.auth.hasRole('Superviseur')) {
+      return 'Vue équipe : contrôle des dossiers validés par les agents et suivi des activités.';
+    }
+    return 'Vue opérationnelle : vos dossiers à traiter et vos activités de la journée.';
+  }
+
+  loadMesValidations(): void {
+    this.validationLoading.set(true);
+    this.workflowService.getEnAttente(1, 4).subscribe({
+      next: (res) => {
+        this.mesValidations.set(res.items ?? []);
+        this.validationTotal.set(res.total);
+        this.validationLoading.set(false);
+      },
+      error: () => {
+        this.mesValidations.set([]);
+        this.validationTotal.set(0);
+        this.validationLoading.set(false);
+      }
+    });
+  }
+
+  validationProgress(wf: WorkflowValidationDto): number {
+    const applicable = (wf.etapes ?? []).filter(e => e.statut !== 'NonApplicable');
+    if (!applicable.length) return 0;
+    const done = applicable.filter(e => e.statut === 'Valide').length;
+    return Math.round((done * 100) / applicable.length);
+  }
+
   get evolution(): ClientEvolution | null {
     return this.stats()?.clientEvolution ?? null;
   }
@@ -153,6 +206,7 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
     } else {
       this.loadStats();
     }
+    this.loadMesValidations();
     this.toast.info('Tableau de bord actualisé.', 'Actualisation');
   }
 
@@ -762,6 +816,7 @@ export class TableauDeBordComponent implements OnInit, AfterViewInit, OnDestroy 
 
   /** Barre : performance des agents */
   private initAgentChart() {
+    if (!this.isTeamView) return;
     if (!this.agentCanvas || !this.stats()?.agentPerformance) return;
     const agents = this.stats()!.agentPerformance.slice(0, 8);
 

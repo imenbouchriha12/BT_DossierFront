@@ -448,11 +448,11 @@
               <span class="material-symbols-outlined text-[16px]">sell</span>
             </button>
             @if (getWorkflowForDoc(doc.id); as wf) {
-              @if (wf.statutGlobal === 'EnCours' && doc.statutValidation === 'En attente' && canActOnStep(wf)) {
-              <button class="doc-action doc-action-validate" (click)="openWorkflow(doc, 'valider')" title="Valider l'étape courante">
-                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              @if (wf.statutGlobal === 'EnCours' && doc.statutValidation === 'En attente' && (canActOnStep(wf) || canDerogateStep(wf))) {
+              <button class="doc-action doc-action-validate" (click)="openWorkflow(doc, 'valider')" [title]="canDerogateStep(wf) ? 'Débloquer par dérogation' : 'Valider l\'étape courante'">
+                <span class="material-symbols-outlined text-[16px]">{{ canDerogateStep(wf) ? 'key' : 'check_circle' }}</span>
               </button>
-              <button class="doc-action doc-action-reject" (click)="openWorkflow(doc, 'rejeter')" title="Rejeter le document">
+              <button class="doc-action doc-action-reject" (click)="openWorkflow(doc, 'rejeter')" [title]="canDerogateStep(wf) ? 'Rejeter par dérogation' : 'Rejeter le document'">
                 <span class="material-symbols-outlined text-[16px]">block</span>
               </button>
               }
@@ -593,7 +593,7 @@
       }
 
       <!-- Actions -->
-      @if (activeWorkflow.statutGlobal === 'EnCours' && canActOnStep(activeWorkflow)) {
+      @if (activeWorkflow.statutGlobal === 'EnCours' && (canActOnStep(activeWorkflow) || canDerogateStep(activeWorkflow))) {
       <div class="wf-actions">
         <div class="wf-actions-title">
           <span class="material-symbols-outlined text-[14px] text-primary">verified</span>
@@ -612,14 +612,23 @@
           {{ commentMessage() }}
         </p>
         }
+        @if (canDerogateStep(activeWorkflow)) {
+        <label class="mt-2 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 cursor-pointer">
+          <input type="checkbox" class="mt-0.5" [(ngModel)]="workflowDerogation">
+          <span>
+            <strong>Dérogation</strong> — cette étape est assignée au rôle « {{ activeWorkflow.etapeCourante }} ».
+            En cochant, vous décidez à sa place ; un commentaire est obligatoire et l'action sera tracée.
+          </span>
+        </label>
+        }
         <div class="wf-actions-buttons">
           <button class="btn-primary-sm" (click)="validateWorkflow()" [disabled]="workflowLoading">
             @if (workflowLoading && workflowAction === 'valider') {
             <span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
             } @else {
-            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            <span class="material-symbols-outlined text-[16px]">{{ workflowDerogation ? 'key' : 'check_circle' }}</span>
             }
-            Valider
+            {{ workflowDerogation ? 'Débloquer' : 'Valider' }}
           </button>
           <button class="wf-btn-reject" (click)="rejectWorkflow()" [disabled]="workflowLoading">
             @if (workflowLoading && workflowAction === 'rejeter') {

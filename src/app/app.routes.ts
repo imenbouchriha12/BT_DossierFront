@@ -4,6 +4,10 @@ import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
+    path: 'portal/:token',
+    loadComponent: () => import('./pages/portal/portal.component').then(m => m.PortalComponent),
+  },
+  {
     path: '',
     loadComponent: () => import('./layouts/marketing-layout/marketing-layout.component').then(m => m.MarketingLayoutComponent),
     children: [
@@ -27,6 +31,7 @@ export const routes: Routes = [
       { path: 'modifier-client/:id', loadComponent: () => import('./pages/nouveau-client/nouveau-client.component').then(m => m.NouveauClientComponent) },
       { path: 'client/:id', loadComponent: () => import('./pages/detail-client/detail-client.component').then(m => m.DetailClientComponent) },
       { path: 'gestion-documents', loadComponent: () => import('./pages/gestion-documents/gestion-documents.component').then(m => m.GestionDocumentsComponent) },
+      { path: 'mes-validations', loadComponent: () => import('./pages/mes-validations/mes-validations.component').then(m => m.MesValidationsComponent) },
       { path: 'agenda-taches', loadComponent: () => import('./pages/agenda-taches/agenda-taches.component').then(m => m.AgendaTachesComponent) },
       { path: 'agenda', redirectTo: 'agenda-taches' },
       { path: 'taskboard', redirectTo: 'agenda-taches' },
@@ -37,7 +42,6 @@ export const routes: Routes = [
       { path: 'surveillance-fraude', loadComponent: () => import('./pages/surveillance-fraude/surveillance-fraude.component').then(m => m.SurveillanceFraudeComponent) },
       { path: 'parametres', loadComponent: () => import('./pages/parametres/parametres.component').then(m => m.ParametresComponent) },
       { path: 'historique-modifications', loadComponent: () => import('./pages/historique-modifications/historique-modifications.component').then(m => m.HistoriqueModificationsComponent) },
-      { path: 'portal', loadComponent: () => import('./pages/portal/portal.component').then(m => m.PortalComponent) },
       {
         path: 'gestion-utilisateurs',
         loadComponent: () => import('./pages/gestion-utilisateurs/gestion-utilisateurs.component').then(m => m.GestionUtilisateursComponent),

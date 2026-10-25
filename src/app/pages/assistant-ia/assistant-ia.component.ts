@@ -25,7 +25,7 @@ export class AssistantIaComponent {
     {
       role: 'assistant',
       content:
-        "Bonjour, je suis l'assistant IA de BT DocCenter. Posez-moi une question en langage naturel sur vos clients, leurs comptes, leurs mouvements, leurs documents ou les alertes de fraude. Exemple : « combien de clients VIP sont en attente de documents ? »",
+        "Bonjour, je suis l'assistant IA de BT DocCenter. Posez-moi une question en langage naturel sur vos clients, leurs comptes, leurs mouvements, leurs documents ou les alertes de fraude. Exemple : « combien de documents sont en attente de validation ? »",
       time: new Date(),
     },
   ];
@@ -34,11 +34,11 @@ export class AssistantIaComponent {
   error = '';
 
   suggestions: string[] = [
-    'Combien de clients VIP sont en attente de documents ?',
     'Montre-moi les alertes de fraude actives',
-    'Quel est le score de risque du client Ahmed Ben Salah ?',
-    'Résume le dossier du client dont le code est 0100100100',
-    'Quels sont les mouvements récents du client Ben Salah ?',
+    'Combien de documents sont en attente de validation ?',
+    'Donne-moi les statistiques globales de la banque',
+    'Quels sont les agents et superviseurs de l\'équipe ?',
+    'Quelles sont les tâches et rappels à venir ?',
   ];
 
   constructor(private aiService: AiService, private toast: ToastService) {}

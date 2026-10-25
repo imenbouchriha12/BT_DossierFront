@@ -42,12 +42,12 @@ export class WorkflowService {
     return this.http.get<WorkflowValidationDto>(`${this.apiUrl}/${id}`);
   }
 
-  valider(id: number, commentaire?: string): Observable<WorkflowValidationDto> {
-    return this.http.post<WorkflowValidationDto>(`${this.apiUrl}/${id}/valider`, { commentaire });
+  valider(id: number, commentaire?: string, derogation = false): Observable<WorkflowValidationDto> {
+    return this.http.post<WorkflowValidationDto>(`${this.apiUrl}/${id}/valider`, { commentaire, derogation });
   }
 
-  rejeter(id: number, commentaire: string): Observable<WorkflowValidationDto> {
-    return this.http.post<WorkflowValidationDto>(`${this.apiUrl}/${id}/rejeter`, { commentaire });
+  rejeter(id: number, commentaire: string, derogation = false): Observable<WorkflowValidationDto> {
+    return this.http.post<WorkflowValidationDto>(`${this.apiUrl}/${id}/rejeter`, { commentaire, derogation });
   }
 
   relancer(id: number, commentaire?: string): Observable<WorkflowValidationDto> {

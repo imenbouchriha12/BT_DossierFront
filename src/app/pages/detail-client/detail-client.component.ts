@@ -663,34 +663,6 @@ export class DetailClientComponent implements OnInit {
     });
   }
 
-  validateDocument(id: number) {
-    this.documentService.updateValidation(id, 'Validé').subscribe({
-      next: () => {
-        this.loadDocuments();
-        this.toast.success('Document validé avec succès.');
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Erreur lors de la validation.';
-        this.toast.error(this.error);
-        this.clearAlerts();
-      }
-    });
-  }
-
-  rejectDocument(id: number) {
-    this.documentService.updateValidation(id, 'Rejeté').subscribe({
-      next: () => {
-        this.loadDocuments();
-        this.toast.info('Document rejeté.');
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Erreur lors du rejet.';
-        this.toast.error(this.error);
-        this.clearAlerts();
-      }
-    });
-  }
-
   async deleteDocument(id: number) {
     const ok = await lastValueFrom(this.toast.confirm('Supprimer ce document définitivement ?'));
     if (!ok) return;
